@@ -33,6 +33,22 @@ result.asText();         // canonical JSON (deterministic text for LLM APIs)
 
 **One import. One function call. Deterministic output.**
 
+```mermaid
+graph LR
+    A[JSON/Data] --> B(Contex Encode)
+    B --> C{TENS Binary}
+    C -->|Hash| D[Cache Store]
+    C -->|Generate| E[Deterministic Tokens]
+    E --> F[LLM Context]
+    style B fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    style C fill:#10b981,stroke:#047857,color:#fff
+    style E fill:#f59e0b,stroke:#b45309,color:#fff
+```
+
+> [!TIP]
+> **Why Deterministic?**
+> Standard JSON serializers are non-deterministic (key order, whitespace). Contex guarantees that `encode(data)` always produces the exact same bytes, maximizing **Prefix Cache** hits on engines like vLLM and SGLang.
+
 ---
 ## ⚡ The Solution
 
@@ -42,99 +58,69 @@ Contex acts as a **Token Compiler**.
 2.  **Lazy Materialization**: We generate model-specific token arrays **once** and cache them (`.tens.cache`).
 3.  **Deterministic Injection**: We inject **canonical text** or **token arrays** that are mathematically guaranteed to be identical, triggering **100% prefix cache hits**.
 
-| Feature | Without Contex | With Contex |
-| :--- | :--- | :--- |
-| **Tokenization** | Redundant (every request) | **Once** (cached) |
-| **Cache Hits** | Random / Flaky | **Guaranteed** (Deterministic) |
-| **Cost** | Full price | **-90%** (Anthropic/Google/OpenAI) |
-| **Latency** | Network + Tokenization | **Zero-latency** injection |
+### Efficiency Comparison
+
+| Feature | Contex (TENS) | JSON | Difference |
+| :--- | :--- | :--- | :--- |
+| **Token Cost** (1k rows) | **~24k** | ~60k | <span style="color:green">**-59%**</span> |
+| **Decode Speed** | **870k ops/s** | 128k ops/s | <span style="color:green">**6.8x Faster**</span> |
+| **Cache Hits** | **100% Guaranteed** | Random | <span style="color:green">**Stable**</span> |
+| **Type Safety** | ✅ Full Types | ❌ Strings only | — |
+
+[View detailed benchmarks](./docs/benchmarks.md)
+
+> [!NOTE]
+> Benchmarks run on Node.js v22, Intel Core i9. Dataset: 10,000 structured e-commerce records.
 
 ---
 
 ## 🚀 Quick Start
 
-### Install
+### 1. Install
 
 ```bash
 pnpm add @contex/core @contex/engine @contex/middleware @contex/cli
 ```
 
-### 1. CLI: Analyze & Optimize
+### 2. Optimize (CLI)
 
-Use the CLI to inspect your data and see the token savings tokens.
+Analyze your training data to see immediate gains.
 
 ```bash
-# Materialize tokens for a specific model (e.g. Claude 3.5 Sonnet)
 npx contex materialize my_data.json --model claude-3-5-sonnet
 
-# Output:
-#   Input:       my_data.json
-#   IR Hash:     a1b2c3d4...
-#   Tokens:      14,205 (vs 22,000 JSON)
-#   Cached:      ✅ (.contex/cache/...)
+# ┌──────────────────────────────────────────────┐
+# │  Input:    my_data.json                      │
+# │  Tokens:   14,205 (vs 22,000 JSON)           │
+# │  Savings:  35% 🟢                            │
+# │  Cache:    .contex/cache/a1b2c3...           │
+# └──────────────────────────────────────────────┘
 ```
 
-### 2. SDK: Drop-in Middleware
+### 3. Integrate (SDK)
 
-Wrap your existing OpenAI/Anthropic client. No prompt changes needed.
-
-**Anthropic Example (with Automatic Caching):**
-Contex automatically adds `cache_control` breakpoints to large injected payloads (>3.5k chars), saving you 90% on input costs.
+One line of code to enable **structural caching** for Anthropic or OpenAI.
 
 ```typescript
 import Anthropic from '@anthropic-ai/sdk';
 import { createContexAnthropic } from '@contex/middleware';
 
-// 1. Wrap the client
+// Wrap your client
 const client = createContexAnthropic(new Anthropic(), {
   data: { 
-    tickets: myLargeDataset // Injects as {{CONTEX:tickets}}
-  },
-  onInject: (info) => console.log(`Injected ${info.tokenCount} tokens from cache`),
+    tickets: myLargeDataset // Injects automatically as {{CONTEX:tickets}}
+  }
 });
 
-// 2. Use normally
-const msg = await client.messages.create({
+// Use as normal
+await client.messages.create({
   model: 'claude-3-5-sonnet-20240620',
   max_tokens: 1024,
-  messages: [
-    // The placeholder is replaced by deterministic canonical text
-    { role: 'user', content: 'Analyze the {{CONTEX:tickets}} and look for patterns.' } 
-  ],
+  messages: [{ 
+    role: 'user', 
+    content: 'Analyze these tickets: {{CONTEX:tickets}}' 
+  }],
 });
-```
-
-**OpenAI Example:**
-
-```typescript
-import OpenAI from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
-
-const openai = createContexOpenAI(new OpenAI(), {
-   data: { tickets: myTickets } 
-});
-
-const response = await openai.chat.completions.create({
-   model: 'gpt-4o',
-   messages: [{ role: 'user', content: 'Analyze {{CONTEX:tickets}}' }]
-});
-```
-
-### 3. TENS SDK: Full Control (Phase 10 API)
-
-For advanced usage, interact directly with the **TENS** object. This is the canonical way to work with Contex IR.
-
-```typescript
-import { Tens } from '@contex/core';
-
-// 1. Encode: Your data becomes a deterministic, immutable TENS object
-const tens = Tens.encode(myData);
-
-console.log(tens.hash);       // SHA-256 Content Hash (Source of Truth)
-console.log(tens.toString()); // Canonical Text for Prompt Injection
-
-// 2. Materialize: Generate tokens for specific models (Cached!)
-const tokens = tens.materialize('gpt-4o', { maxTokens: 1000 });
 ```
 
 ### 4. CLI Power Tools
