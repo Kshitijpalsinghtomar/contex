@@ -1,0 +1,32 @@
+{
+    "name": "@contex/middleware",
+    "version": "0.2.0",
+    "description": "Contex middleware for OpenAI/Anthropic/Gemini SDKs — v3 IR pipeline",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@contex/core": "workspace:*"
+    },
+    "peerDependencies": {
+        "openai": "^4.0.0",
+        "@anthropic-ai/sdk": "^0.18.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.2",
+        "typescript": "^5.7.2",
+        "openai": "^4.76.0",
+        "@anthropic-ai/sdk": "^0.33.1",
+        "vitest": "^1.6.0"
+    }
+}

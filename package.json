@@ -1,0 +1,29 @@
+{
+    "name": "contex",
+    "version": "0.1.0",
+    "private": true,
+    "license": "MIT",
+    "author": "Contex Team",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/contex/contex.git"
+    },
+    "description": "The token compiler for LLMs — canonical IR, deterministic tokens, prefix cache hits",
+    "packageManager": "pnpm@9.15.4",
+    "scripts": {
+        "build": "turbo run build",
+        "test": "turbo run test",
+        "lint": "biome check .",
+        "lint:fix": "biome check --apply .",
+        "format": "biome format --write .",
+        "benchmark": "turbo run benchmark",
+        "clean": "turbo run clean"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.9.0",
+        "@types/node": "^22.0.0",
+        "tsx": "^4.19.0",
+        "turbo": "^2.3.0",
+        "typescript": "^5.7.0"
+    }
+}

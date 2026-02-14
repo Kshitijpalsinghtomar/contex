@@ -1,0 +1,43 @@
+{
+    "name": "@contex/cli",
+    "version": "0.1.0",
+    "description": "Contex CLI — encode, decode, stats, benchmark",
+    "license": "MIT",
+    "author": "Contex Team",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/contex/contex.git",
+        "directory": "packages/cli"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "bin": {
+        "contex": "./dist/cli.js"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "benchmark": "tsx src/benchmark.ts",
+        "clean": "rimraf dist"
+    },
+    "dependencies": {
+        "@contex/core": "workspace:*",
+        "@contex/engine": "workspace:*",
+        "@contex/middleware": "workspace:*",
+        "openai": "^4.0.0",
+        "@anthropic-ai/sdk": "^0.33.1",
+        "js-yaml": "^4.1.1",
+        "xml-js": "^1.6.11"
+    },
+    "devDependencies": {
+        "@types/js-yaml": "^4.0.9",
+        "tsx": "^4.19.0",
+        "typescript": "^5.7.0",
+        "rimraf": "^5.0.0"
+    }
+}

@@ -1,0 +1,511 @@
+{
+    "models": {
+        "gpt-4o": {
+            "name": "GPT-4o",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 2.50,
+            "outputPricePer1M": 10.00,
+            "cachedInputPricePer1M": 1.25,
+            "releaseDate": "2024-05-13",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode"
+            ]
+        },
+        "gpt-4o-mini": {
+            "name": "GPT-4o Mini",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 0.15,
+            "outputPricePer1M": 0.60,
+            "cachedInputPricePer1M": 0.075,
+            "releaseDate": "2024-07-18",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode"
+            ]
+        },
+        "gpt-4.1": {
+            "name": "GPT-4.1",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 2.00,
+            "outputPricePer1M": 8.00,
+            "cachedInputPricePer1M": 0.50,
+            "releaseDate": "2025-04-14",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode"
+            ]
+        },
+        "gpt-4.1-mini": {
+            "name": "GPT-4.1 Mini",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.40,
+            "outputPricePer1M": 1.60,
+            "cachedInputPricePer1M": 0.10,
+            "releaseDate": "2025-04-14",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode"
+            ]
+        },
+        "gpt-4.1-nano": {
+            "name": "GPT-4.1 Nano",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.10,
+            "outputPricePer1M": 0.40,
+            "cachedInputPricePer1M": 0.025,
+            "releaseDate": "2025-04-14",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "json_mode"
+            ]
+        },
+        "gpt-5": {
+            "name": "GPT-5",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 400000,
+            "inputPricePer1M": 1.25,
+            "outputPricePer1M": 10.00,
+            "cachedInputPricePer1M": 0.125,
+            "releaseDate": "2025-08-07",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode",
+                "reasoning"
+            ]
+        },
+        "gpt-5-mini": {
+            "name": "GPT-5 Mini",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 400000,
+            "inputPricePer1M": 0.25,
+            "outputPricePer1M": 2.00,
+            "cachedInputPricePer1M": 0.025,
+            "releaseDate": "2025-08-07",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode"
+            ]
+        },
+        "gpt-5-nano": {
+            "name": "GPT-5 Nano",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 400000,
+            "inputPricePer1M": 0.05,
+            "outputPricePer1M": 0.40,
+            "cachedInputPricePer1M": 0.005,
+            "releaseDate": "2025-08-07",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "json_mode"
+            ]
+        },
+        "gpt-5.2": {
+            "name": "GPT-5.2",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 400000,
+            "inputPricePer1M": 2.50,
+            "outputPricePer1M": 10.00,
+            "cachedInputPricePer1M": 0.25,
+            "releaseDate": "2025-12-15",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "json_mode",
+                "reasoning"
+            ]
+        },
+        "gpt-5.3-codex": {
+            "name": "GPT-5.3 Codex",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 400000,
+            "inputPricePer1M": 2.50,
+            "outputPricePer1M": 10.00,
+            "cachedInputPricePer1M": 0.25,
+            "releaseDate": "2026-02-01",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "json_mode",
+                "reasoning"
+            ]
+        },
+        "o3-mini": {
+            "name": "o3-mini",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 1.10,
+            "outputPricePer1M": 4.40,
+            "cachedInputPricePer1M": 0.55,
+            "releaseDate": "2025-01-31",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "reasoning"
+            ]
+        },
+        "o4-mini": {
+            "name": "o4-mini",
+            "provider": "openai",
+            "encoding": "o200k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 1.10,
+            "outputPricePer1M": 4.40,
+            "cachedInputPricePer1M": 0.275,
+            "releaseDate": "2025-04-16",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "reasoning"
+            ]
+        },
+        "claude-3-5-sonnet": {
+            "name": "Claude 3.5 Sonnet",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 3.00,
+            "outputPricePer1M": 15.00,
+            "cachedInputPricePer1M": 0.30,
+            "releaseDate": "2024-06-20",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "claude-3-7-sonnet": {
+            "name": "Claude 3.7 Sonnet",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 3.00,
+            "outputPricePer1M": 15.00,
+            "cachedInputPricePer1M": 0.30,
+            "releaseDate": "2025-02-24",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "reasoning"
+            ]
+        },
+        "claude-4-sonnet": {
+            "name": "Claude Sonnet 4",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 3.00,
+            "outputPricePer1M": 15.00,
+            "cachedInputPricePer1M": 0.30,
+            "releaseDate": "2025-05-22",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "claude-4-5-sonnet": {
+            "name": "Claude 4.5 Sonnet",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 3.00,
+            "outputPricePer1M": 15.00,
+            "cachedInputPricePer1M": 0.30,
+            "releaseDate": "2025-09-29",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "claude-opus-4-5": {
+            "name": "Claude Opus 4.5",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 5.00,
+            "outputPricePer1M": 25.00,
+            "cachedInputPricePer1M": 0.50,
+            "releaseDate": "2025-11-24",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "reasoning"
+            ]
+        },
+        "claude-3-5-haiku": {
+            "name": "Claude 3.5 Haiku",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 0.80,
+            "outputPricePer1M": 4.00,
+            "cachedInputPricePer1M": 0.08,
+            "releaseDate": "2024-11-04",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "claude-haiku-4-5": {
+            "name": "Claude Haiku 4.5",
+            "provider": "anthropic",
+            "encoding": "cl100k_base",
+            "contextWindow": 200000,
+            "inputPricePer1M": 1.00,
+            "outputPricePer1M": 5.00,
+            "cachedInputPricePer1M": 0.10,
+            "releaseDate": "2025-10-15",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "gemini-2-0-flash": {
+            "name": "Gemini 2.0 Flash",
+            "provider": "google",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.10,
+            "outputPricePer1M": 0.40,
+            "cachedInputPricePer1M": 0.025,
+            "releaseDate": "2025-02-05",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "gemini-2-5-flash": {
+            "name": "Gemini 2.5 Flash",
+            "provider": "google",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.15,
+            "outputPricePer1M": 0.60,
+            "cachedInputPricePer1M": 0.0375,
+            "releaseDate": "2025-06-17",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "reasoning"
+            ]
+        },
+        "gemini-2-5-flash-lite": {
+            "name": "Gemini 2.5 Flash-Lite",
+            "provider": "google",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.10,
+            "outputPricePer1M": 0.40,
+            "cachedInputPricePer1M": 0.025,
+            "releaseDate": "2025-06-17",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "gemini-2-5-pro": {
+            "name": "Gemini 2.5 Pro",
+            "provider": "google",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 1.25,
+            "outputPricePer1M": 10.00,
+            "cachedInputPricePer1M": 0.125,
+            "releaseDate": "2025-06-17",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision",
+                "reasoning"
+            ]
+        },
+        "llama-4-maverick": {
+            "name": "Llama 4 Maverick",
+            "provider": "meta",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.15,
+            "outputPricePer1M": 0.60,
+            "releaseDate": "2025-04-05",
+            "capabilities": [
+                "streaming",
+                "vision"
+            ]
+        },
+        "llama-4-scout": {
+            "name": "Llama 4 Scout",
+            "provider": "meta",
+            "encoding": "cl100k_base",
+            "contextWindow": 1000000,
+            "inputPricePer1M": 0.08,
+            "outputPricePer1M": 0.30,
+            "releaseDate": "2025-04-05",
+            "capabilities": [
+                "streaming",
+                "vision"
+            ]
+        },
+        "deepseek-v3-2": {
+            "name": "DeepSeek V3.2",
+            "provider": "deepseek",
+            "encoding": "cl100k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 0.28,
+            "outputPricePer1M": 0.42,
+            "cachedInputPricePer1M": 0.07,
+            "releaseDate": "2025-06-15",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "deepseek-r1": {
+            "name": "DeepSeek R1",
+            "provider": "deepseek",
+            "encoding": "cl100k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 0.55,
+            "outputPricePer1M": 2.19,
+            "cachedInputPricePer1M": 0.14,
+            "releaseDate": "2025-01-20",
+            "capabilities": [
+                "streaming",
+                "reasoning"
+            ]
+        },
+        "grok-3": {
+            "name": "Grok 3",
+            "provider": "xai",
+            "encoding": "cl100k_base",
+            "contextWindow": 131072,
+            "inputPricePer1M": 3.00,
+            "outputPricePer1M": 15.00,
+            "releaseDate": "2025-02-17",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        },
+        "grok-4-fast": {
+            "name": "Grok 4 Fast",
+            "provider": "xai",
+            "encoding": "cl100k_base",
+            "contextWindow": 131072,
+            "inputPricePer1M": 0.20,
+            "outputPricePer1M": 0.50,
+            "releaseDate": "2025-07-10",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "mistral-large": {
+            "name": "Mistral Large 2",
+            "provider": "mistral",
+            "encoding": "cl100k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 2.00,
+            "outputPricePer1M": 6.00,
+            "releaseDate": "2024-07-24",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "mistral-small": {
+            "name": "Mistral Small",
+            "provider": "mistral",
+            "encoding": "cl100k_base",
+            "contextWindow": 32000,
+            "inputPricePer1M": 0.20,
+            "outputPricePer1M": 0.60,
+            "releaseDate": "2024-09-18",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "cohere-command-r-plus": {
+            "name": "Cohere Command R+",
+            "provider": "cohere",
+            "encoding": "cl100k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 2.50,
+            "outputPricePer1M": 10.00,
+            "releaseDate": "2024-04-04",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "qwen-2-5-72b": {
+            "name": "Qwen 2.5 72B",
+            "provider": "qwen",
+            "encoding": "cl100k_base",
+            "contextWindow": 128000,
+            "inputPricePer1M": 0.90,
+            "outputPricePer1M": 3.00,
+            "releaseDate": "2024-09-19",
+            "capabilities": [
+                "streaming",
+                "function_calling"
+            ]
+        },
+        "amazon-nova-pro": {
+            "name": "Amazon Nova Pro",
+            "provider": "amazon",
+            "encoding": "cl100k_base",
+            "contextWindow": 300000,
+            "inputPricePer1M": 0.80,
+            "outputPricePer1M": 3.20,
+            "releaseDate": "2024-12-03",
+            "capabilities": [
+                "streaming",
+                "function_calling",
+                "vision"
+            ]
+        }
+    }
+}

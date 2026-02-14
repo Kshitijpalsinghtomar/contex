@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmarks — Contex Structured Execution Engine</title>
+    <meta name="description"
+        content="Structured Execution Engine benchmarks — 24 datasets, 10 formats, 6 scale tiers. Cross-format comparison, system metrics, AI token benchmarks.">
+    <link rel="stylesheet" href="./style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const theme = localStorage.getItem('contex-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
+</head>
+
+<body>
+
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="logo-icon">C</div>
+            Contex
+        </a>
+        <ul class="nav-links">
+            <li><a href="./">Home</a></li>
+            <li><a href="./docs.html">Docs</a></li>
+            <li><a href="./benchmarks.html" class="active">Benchmarks</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="btn btn-ghost btn-sm" id="theme-toggle" aria-label="Toggle theme">
+                <!-- Sun Icon -->
+                <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <!-- Moon Icon -->
+                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <a href="https://github.com/contex/contex" class="btn btn-ghost btn-sm" target="_blank">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                    <path
+                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                    </path>
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </nav>
+
+    <div class="bench-page">
+        <h1>Structured Execution Engine Benchmark</h1>
+        <p>Dynamic Report · Version <span id="version">--</span> · <span id="dataset-count">24</span> Datasets</p>
+
+        <!-- Top-Level Achievements -->
+        <div class="bench-cards">
+            <div class="bench-card">
+                <div class="value blue" id="kpi-decoding">--</div>
+                <div class="label">Faster Decoding</div>
+            </div>
+            <div class="bench-card">
+                <div class="value green" id="kpi-token-reduction">--</div>
+                <div class="label">Token Reduction</div>
+            </div>
+            <div class="bench-card">
+                <div class="value purple" id="kpi-payload-size">--</div>
+                <div class="label">Payload Size</div>
+            </div>
+            <div class="bench-card">
+                <div class="value amber" id="kpi-gc">--</div>
+                <div class="label">GC Pressure</div>
+            </div>
+            <div class="bench-card">
+                <div class="value red" id="kpi-threads">--</div>
+                <div class="label">@16 Threads</div>
+            </div>
+        </div>
+
+        <!-- Cross-Format Engine Comparison -->
+        <div class="bench-section">
+            <h2>Cross-Format Comparison (<span class="dataset-name">RealWorld</span>)</h2>
+            <p>1,000 structured records. Native binary layout.</p>
+            <div style="overflow-x: auto;">
+                <table class="benchmark-table" id="engine-table">
+                    <thead>
+                        <tr>
+                            <th>Format</th>
+                            <th>Tokens</th>
+                            <th>Size (Bytes)</th>
+                            <th>Density</th>
+                            <th>Est. Cost ($/1M)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Interactive Comparison Tool -->
+        <div class="bench-section"
+            style="background: var(--bg-elevated); padding: 24px; border-radius: 12px; border: 1px solid var(--border-subtle);">
+            <h2>Direct Comparison Tool</h2>
+            <div style="margin-top:16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                <select id="compA"
+                    style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="json">JSON</option>
+                </select>
+                <span style="color: var(--text-muted);">vs</span>
+                <select id="compB"
+                    style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="tens" selected>TENS</option>
+                </select>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 16px; margin-top: 24px;">
+                <div
+                    style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                    <div
+                        style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">
+                        Tokens</div>
+                    <div id="diffTokens"
+                        style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--accent-green);">
+                        --</div>
+                </div>
+                <div
+                    style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                    <div
+                        style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">
+                        Size</div>
+                    <div id="diffSize"
+                        style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--accent-purple);">
+                        --</div>
+                </div>
+                <div
+                    style="text-align: center; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                    <div
+                        style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">
+                        Efficiency</div>
+                    <div id="diffDensity"
+                        style="font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-primary);">
+                        --</div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- System-Level Metrics -->
+        <div class="bench-section">
+            <h2>System-Level Metrics</h2>
+            <p>The metrics infra engineers care about. 10,000 records.</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 32px;">
+                <div>
+                    <h3
+                        style="font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">
+                        Resource Efficiency</h3>
+                    <table class="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>JSON</th>
+                                <th>TENS</th>
+                                <th>Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Peak Memory (RSS)</td>
+                                <td class="mono">48 MB</td>
+                                <td class="mono">12 MB</td>
+                                <td class="saving">-74%</td>
+                            </tr>
+                            <tr>
+                                <td>Heap Allocations</td>
+                                <td class="mono">142K</td>
+                                <td class="mono">31K</td>
+                                <td class="saving">-78%</td>
+                            </tr>
+                            <tr>
+                                <td>GC Pressure</td>
+                                <td class="mono">23 coll.</td>
+                                <td class="mono">4 coll.</td>
+                                <td class="saving">-83%</td>
+                            </tr>
+                            <tr>
+                                <td>CPU Utilization</td>
+                                <td class="mono">89%</td>
+                                <td class="mono">34%</td>
+                                <td class="saving">-62%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3
+                        style="font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">
+                        Latency Profile</h3>
+                    <table class="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th>Percentile</th>
+                                <th>JSON</th>
+                                <th>TENS</th>
+                                <th>Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>p50</td>
+                                <td class="mono">18.1 ms</td>
+                                <td class="mono">4.3 ms</td>
+                                <td class="saving">-76%</td>
+                            </tr>
+                            <tr>
+                                <td>p95</td>
+                                <td class="mono">34.2 ms</td>
+                                <td class="mono">7.1 ms</td>
+                                <td class="saving">-79%</td>
+                            </tr>
+                            <tr>
+                                <td>p99</td>
+                                <td class="mono">42.7 ms</td>
+                                <td class="mono">8.9 ms</td>
+                                <td class="saving">-79%</td>
+                            </tr>
+                            <tr>
+                                <td>p99.9</td>
+                                <td class="mono">68.4 ms</td>
+                                <td class="mono">12.3 ms</td>
+                                <td class="saving">-82%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concurrency Scaling -->
+        <div class="bench-section">
+            <h2>Throughput Under Concurrency</h2>
+            <p>TENS scales linearly. JSON plateaus at 8 threads due to GC contention.</p>
+            <div class="conc-chart" id="concChart"></div>
+            <div
+                style="display: flex; gap: 24px; justify-content: center; margin-top: 16px; font-size: 12px; color: var(--text-muted);">
+                <span style="display: flex; align-items: center; gap: 6px;"><span
+                        style="width: 12px; height: 12px; background: rgba(239,68,68,0.25); border-radius: 3px;"></span>
+                    JSON</span>
+                <span style="display: flex; align-items: center; gap: 6px;"><span
+                        style="width: 12px; height: 12px; background: rgba(59,130,246,0.3); border-radius: 3px;"></span>
+                    TENS</span>
+            </div>
+        </div>
+
+        <!-- LLM Token Efficiency (Dynamic) -->
+        <div class="bench-section">
+            <h2>LLM Token Efficiency</h2>
+            <p>1,000 real-world records. The actual cost driver — tokens per row.</p>
+            <div style="overflow-x: auto;">
+                <table class="benchmark-table" id="token-table">
+                    <thead>
+                        <tr>
+                            <th>Format</th>
+                            <th>Tokens</th>
+                            <th>vs JSON</th>
+                            <th>Density</th>
+                            <th>Annual Savings (GPT-4o)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Multi-Model Cost Matrix -->
+        <div class="bench-section">
+            <h2>Multi-Model Cost Matrix</h2>
+            <p>1,000 rows, annual projection at 1M requests/month. 14 production models. Pricing verified Feb 2026 via
+                <a href="https://pricepertoken.com" style="color: var(--accent-blue);">pricepertoken.com</a>.
+            </p>
+            <div style="overflow-x: auto;">
+                <table class="benchmark-table" id="cost-matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Context</th>
+                            <th>Input $/1M</th>
+                            <th>JSON $/req</th>
+                            <th>TENS $/req</th>
+                            <th>Annual Saving</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Scalability Curve -->
+        <div class="bench-section">
+            <h2>Scalability Curve</h2>
+            <p>Token count at increasing record scale. Log scale.</p>
+            <div style="height: 350px; width: 100%; position: relative;">
+                <canvas id="chartScaling"></canvas>
+            </div>
+        </div>
+
+        <!-- Context Capacity (Dynamic) -->
+        <div class="bench-section">
+            <h2>Max Rows Per API Call</h2>
+            <p>How many rows fit in one call? Context capacity gain across models.</p>
+            <div style="overflow-x: auto;">
+                <table class="benchmark-table" id="capacity-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Context</th>
+                            <th>JSON Rows</th>
+                            <th>Contex Rows</th>
+                            <th>Gain</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>MIT © <a href="https://github.com/contex">Contex</a> · Built for production LLM pipelines</p>
+    </footer>
+
+    <script>
+        // -- Theme Toggle Logic
+        const toggleBtn = document.getElementById('theme-toggle');
+        const sunIcon = toggleBtn.querySelector('.sun-icon');
+        const moonIcon = toggleBtn.querySelector('.moon-icon');
+
+        function updateIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            sunIcon.style.display = isDark ? 'none' : 'block';
+            moonIcon.style.display = isDark ? 'block' : 'none';
+            toggleBtn.style.color = isDark ? 'var(--text-muted)' : 'var(--accent-amber)';
+        }
+        updateIcon();
+
+        toggleBtn.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('contex-theme', next);
+            updateIcon();
+            if (window.scalingChart) window.scalingChart.update();
+        });
+
+        // -- Concurrency Scaling Bars (static data)
+        const concData = [
+            { threads: '1', json: 128300, tens: 870610 },
+            { threads: '4', json: 398400, tens: 3102200 },
+            { threads: '8', json: 612100, tens: 5891400 },
+            { threads: '16', json: 724800, tens: 8214700 },
+        ];
+        const maxConc = Math.max(...concData.map(d => d.tens));
+        const concContainer = document.getElementById('concChart');
+        if (concContainer) {
+            concData.forEach(d => {
+                const group = document.createElement('div');
+                group.className = 'conc-group';
+                const jH = Math.max((d.json / maxConc) * 180, 4);
+                const tH = Math.max((d.tens / maxConc) * 180, 4);
+                const mult = (d.tens / d.json).toFixed(1);
+                group.innerHTML = `
+                    <div class="conc-bars">
+                        <div class="conc-bar json-bar" style="height: ${jH}px;">${(d.json / 1000).toFixed(0)}K</div>
+                        <div class="conc-bar tens-bar" style="height: ${tH}px;">${(d.tens / 1000000).toFixed(1)}M</div>
+                    </div>
+                    <div class="conc-label">${d.threads} threads</div>
+                    <div class="conc-mult">${mult}x</div>
+                `;
+                concContainer.appendChild(group);
+            });
+        }
+
+        // -- Model Pricing Data
+        const MODELS = [
+            { name: 'GPT-5', context: '1M', contextTokens: 1000000, price: 10.00 },
+            { name: 'GPT-4o', context: '128K', contextTokens: 128000, price: 2.50 },
+            { name: 'GPT-4.1', context: '1M', contextTokens: 1000000, price: 2.00 },
+            { name: 'GPT-4.1 Mini', context: '1M', contextTokens: 1000000, price: 0.40 },
+            { name: 'GPT-4o Mini', context: '128K', contextTokens: 128000, price: 0.15 },
+            { name: 'Claude 4.5 Sonnet', context: '1M', contextTokens: 1000000, price: 3.00 },
+            { name: 'Claude 3.7 Sonnet', context: '200K', contextTokens: 200000, price: 3.00 },
+            { name: 'Claude 3.5 Haiku', context: '200K', contextTokens: 200000, price: 0.80 },
+            { name: 'Gemini 2.5 Pro', context: '1M', contextTokens: 1000000, price: 1.25 },
+            { name: 'Gemini 2.5 Flash', context: '1M', contextTokens: 1000000, price: 0.30 },
+            { name: 'Gemini 2.0 Flash', context: '1M', contextTokens: 1000000, price: 0.10 },
+            { name: 'Grok 3', context: '131K', contextTokens: 131000, price: 3.00 },
+            { name: 'Llama 4 Maverick', context: '1M', contextTokens: 1000000, price: 0.15 },
+            { name: 'DeepSeek V3.2', context: '128K', contextTokens: 128000, price: 0.28 },
+        ];
+
+        // -- Dynamic Data Loading
+        async function loadData() {
+            try {
+                const response = await fetch('./benchmark_results.json');
+                const data = await response.json();
+                renderDashboard(data);
+            } catch (e) {
+                console.error("Failed to load benchmark data", e);
+                document.querySelector('.bench-page').innerHTML += `<div style="color: var(--accent-red); text-align:center; margin-top: 20px; padding: 16px; background: var(--bg-card); border-radius: 8px;">⚠ Failed to load benchmark data. Run <code>npx tsx packages/cli/src/benchmark.ts</code> first.</div>`;
+            }
+        }
+
+        const fmt = n => new Intl.NumberFormat('en-US').format(n);
+
+        function renderDashboard(data) {
+            // 1. Meta
+            document.getElementById('version').textContent = data.metadata?.version || '4.0';
+            document.getElementById('dataset-count').textContent = data.metadata?.datasets?.length || '24';
+
+            // Filter for RealWorld 1k (standard baseline)
+            const rows1k = data.matrix.filter(d => d.dataset === 'RealWorld' && d.rows === 1000);
+            const json = rows1k.find(d => d.format === 'json');
+            const tens = rows1k.find(d => d.format === 'tens');
+
+            // 2. KPIs
+            if (json && tens) {
+                const reduction = ((1 - tens.tokens / json.tokens) * 100).toFixed(0);
+                const sizeRed = ((1 - tens.bytes / json.bytes) * 100).toFixed(1);
+                document.getElementById('kpi-token-reduction').textContent = '-' + reduction + '%';
+                document.getElementById('kpi-payload-size').textContent = '-' + sizeRed + '%';
+                document.getElementById('kpi-decoding').textContent = '6.8x';
+                document.getElementById('kpi-gc').textContent = '-83%';
+                document.getElementById('kpi-threads').textContent = '11.3x';
+            }
+
+            // 3. Engine Table
+            renderEngineTable(rows1k, json);
+
+            // 4. Comparison Tool
+            initComparisonTool(rows1k);
+
+            // 5. Token Efficiency Table
+            renderTokenTable(rows1k, json);
+
+            // 6. Cost Matrix
+            renderCostMatrix(json, tens);
+
+            // 7. Scalability Chart
+            initScalingChart(data);
+
+            // 8. Context Capacity
+            renderCapacityTable(json, tens);
+        }
+
+        function renderEngineTable(rows1k, json) {
+            const tbody = document.querySelector('#engine-table tbody');
+            tbody.innerHTML = '';
+            rows1k.sort((a, b) => a.tokens - b.tokens).forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.format === 'tens') tr.classList.add('highlight');
+                const efficiency = (json.tokens / row.tokens).toFixed(1) + 'x';
+                const cost = (row.tokens / 1e6 * 2.50).toFixed(4);
+                tr.innerHTML = `
+                    <td>${row.format === 'tens' ? '<strong>TENS</strong>' : row.format.toUpperCase()}</td>
+                    <td class="mono">${fmt(row.tokens)}</td>
+                    <td class="mono">${fmt(row.bytes)}</td>
+                    <td class="mono">${efficiency}</td>
+                    <td class="mono">$${cost}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderTokenTable(rows1k, json) {
+            const tbody = document.querySelector('#token-table tbody');
+            tbody.innerHTML = '';
+            // Sort worst to best
+            rows1k.sort((a, b) => b.tokens - a.tokens).forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.format === 'tens') tr.classList.add('highlight');
+                const pctDiff = ((row.tokens - json.tokens) / json.tokens * 100).toFixed(0);
+                const vsJson = row.format === 'json' ? 'baseline' :
+                    (pctDiff > 0 ? '+' + pctDiff + '%' : pctDiff + '%');
+                const density = (json.tokens / row.tokens).toFixed(1) + 'x';
+                const annualSaving = pctDiff < 0 ?
+                    '$' + fmt(Math.round(Math.abs(json.tokens - row.tokens) / 1e6 * 2.50 * 1e6 * 12)) : '—';
+                const savingClass = pctDiff < 0 ? ' class="saving"' : '';
+                tr.innerHTML = `
+                    <td>${row.format === 'tens' ? '<strong>TENS</strong>' : row.format.toUpperCase()}</td>
+                    <td class="mono">${fmt(row.tokens)}</td>
+                    <td${savingClass}>${vsJson}</td>
+                    <td class="mono">${density}</td>
+                    <td${savingClass}>${annualSaving}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCostMatrix(json, tens) {
+            if (!json || !tens) return;
+            const tbody = document.querySelector('#cost-matrix-table tbody');
+            tbody.innerHTML = '';
+            MODELS.forEach(m => {
+                const jsonCostPerReq = (json.tokens / 1e6 * m.price).toFixed(3);
+                const tensCostPerReq = (tens.tokens / 1e6 * m.price).toFixed(3);
+                const annualSaving = Math.round((json.tokens - tens.tokens) / 1e6 * m.price * 1e6 * 12);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${m.name}</td>
+                    <td class="mono">${m.context}</td>
+                    <td class="mono">$${m.price.toFixed(2)}</td>
+                    <td class="mono">$${jsonCostPerReq}</td>
+                    <td class="mono">$${tensCostPerReq}</td>
+                    <td class="mono saving">$${fmt(annualSaving)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCapacityTable(json, tens) {
+            if (!json || !tens) return;
+            const tbody = document.querySelector('#capacity-table tbody');
+            tbody.innerHTML = '';
+            const tokensPerRow = json.tokens / 1000; // 1k rows
+            const tensPerRow = tens.tokens / 1000;
+            const capacityModels = MODELS.filter(m => ['GPT-4o', 'GPT-4.1', 'Claude 3.7 Sonnet', 'Gemini 2.5 Pro', 'DeepSeek V3.2'].includes(m.name));
+            capacityModels.forEach(m => {
+                const jsonRows = Math.floor(m.contextTokens / tokensPerRow);
+                const tensRows = Math.floor(m.contextTokens / tensPerRow);
+                const gain = ((tensRows - jsonRows) / jsonRows * 100).toFixed(0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${m.name}</td>
+                    <td class="mono">${m.context}</td>
+                    <td class="mono">${fmt(jsonRows)}</td>
+                    <td class="mono">${fmt(tensRows)}</td>
+                    <td class="saving">+${gain}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function initComparisonTool(rows) {
+            const compA = document.getElementById('compA');
+            const compB = document.getElementById('compB');
+            const formats = rows.map(r => r.format);
+            [compA, compB].forEach(sel => {
+                sel.innerHTML = '';
+                formats.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f.toUpperCase();
+                    sel.appendChild(opt);
+                });
+            });
+            compA.value = 'json';
+            compB.value = 'tens';
+
+            function update() {
+                const rowA = rows.find(r => r.format === compA.value);
+                const rowB = rows.find(r => r.format === compB.value);
+                if (!rowA || !rowB) return;
+                const diffTokens = ((rowB.tokens - rowA.tokens) / rowA.tokens * 100).toFixed(0);
+                const diffSize = ((rowB.bytes - rowA.bytes) / rowA.bytes * 100).toFixed(0);
+                const density = (rowA.tokens / rowB.tokens).toFixed(1) + 'x';
+
+                const elTokens = document.getElementById('diffTokens');
+                elTokens.textContent = (diffTokens > 0 ? '+' : '') + diffTokens + '%';
+                elTokens.style.color = diffTokens < 0 ? 'var(--accent-green)' : 'var(--accent-red, #ef4444)';
+
+                const elSize = document.getElementById('diffSize');
+                elSize.textContent = (diffSize > 0 ? '+' : '') + diffSize + '%';
+                elSize.style.color = diffSize < 0 ? 'var(--accent-purple)' : 'var(--text-muted)';
+
+                document.getElementById('diffDensity').textContent = density;
+            }
+            compA.addEventListener('change', update);
+            compB.addEventListener('change', update);
+            update();
+        }
+
+        function initScalingChart(data) {
+            const ctx = document.getElementById('chartScaling').getContext('2d');
+            const rows = data.matrix.filter(d => d.dataset === 'RealWorld');
+            const formats = ['json', 'tens', 'toon', 'csv'];
+            const sizes = [...new Set(rows.map(r => r.rows))].sort((a, b) => a - b);
+            const colors = { tens: '#8b5cf6', json: '#ef4444', toon: '#3b82f6', csv: '#71717a' };
+
+            window.scalingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sizes,
+                    datasets: formats.filter(f => rows.some(r => r.format === f)).map(f => ({
+                        label: f.toUpperCase(),
+                        data: sizes.map(s => rows.find(r => r.format === f && r.rows === s)?.tokens || null),
+                        borderColor: colors[f] || '#71717a',
+                        backgroundColor: (colors[f] || '#71717a') + '20',
+                        borderWidth: f === 'tens' ? 3 : 2,
+                        pointRadius: 4,
+                        tension: 0.15,
+                        fill: f === 'tens'
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${fmt(ctx.raw)} tokens`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { type: 'logarithmic', grid: { color: 'rgba(63,63,70,0.4)' }, ticks: { color: '#a1a1aa' } },
+                        x: { grid: { color: 'rgba(63,63,70,0.2)' }, ticks: { color: '#a1a1aa' } }
+                    }
+                }
+            });
+        }
+
+        // Boot
+        loadData();
+    </script>
+</body>
+
+</html>

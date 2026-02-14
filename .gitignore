@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Benchmark output
+benchmark_v2.txt
+
+# Binary artifacts
+*.tens
+*.tens.ir
+*.tokens.bin
+
+# Token Memory storage
+.contex/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

@@ -1,0 +1,1667 @@
+| url | repository_url | labels_url | comments_url | events_url | html_url | id | node_id | number | title | user | labels | state | locked | assignee | assignees | milestone | comments | created_at | updated_at | closed_at | author_association | type | active_lock_reason | draft | pull_request | body | closed_by | reactions | timeline_url | performed_via_github_app | state_reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| https://api.github.com/repos/facebook/react/issues/35777 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35777/labels{/name} | https://api.github.com/repos/facebook/react/issues/35777/comments | https://api.github.com/repos/facebook/react/issues/35777/events | https://github.com/facebook/react/pull/35777 | 3938087509 | PR_kwDOAJy2Ks7Dmp5g | 35777 | Avoid incrementing the "RT" "last revealed boundary" throttle time when 'revealing' a boundary that is inside a hidden boundary | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-13T16:55:26Z | 2026-02-13T17:15:26Z |  | CONTRIBUTOR |  |  | true | [object Object] | When setting the timeout for revealing completed boundaries, we should not be adding the 300ms throttle for "the last time we revealed a  boundary" if the boundary we revealed was just moved inside of a "still suspended" boundary. Using the same logic here as what we do for View Transitions to determine if ParentInstance is a "hidden" boundary to avoid animation.
+
+
+
+<!--
+  Thanks for submitting a pull request!
+  We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory.
+
+  Before submitting a pull request, please make sure the following is done:
+
+  1. Fork [the repository](https://github.com/facebook/react) and create your branch from `main`.
+  2. Run `yarn` in the repository root.
+  3. If you've fixed a bug or added code that should be tested, add tests!
+  4. Ensure the test suite passes (`yarn test`). Tip: `yarn test --watch TestName` is helpful in development.
+  5. Run `yarn test --prod` to test in the production environment. It supports the same options as `yarn test`.
+  6. If you need a debugger, run `yarn test --debug --watch TestName`, open `chrome://inspect`, and press "Inspect".
+  7. Format your code with [prettier](https://github.com/prettier/prettier) (`yarn prettier`).
+  8. Make sure your code lints (`yarn lint`). Tip: `yarn linc` to only check changed files.
+  9. Run the [Flow](https://flowtype.org/) type checks (`yarn flow`).
+  10. If you haven't already, complete the CLA.
+
+  Learn more about contributing: https://reactjs.org/docs/how-to-contribute.html
+-->
+
+## Summary
+
+<!--
+ Explain the **motivation** for making this change. What existing problem does the pull request solve?
+-->
+
+## How did you test this change?
+
+<!--
+  Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes the user interface.
+  How exactly did you verify that your PR solves the issue you wanted to solve?
+  If you leave this empty, your PR will very likely be closed.
+-->
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35777/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35776 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35776/labels{/name} | https://api.github.com/repos/facebook/react/issues/35776/comments | https://api.github.com/repos/facebook/react/issues/35776/events | https://github.com/facebook/react/pull/35776 | 3937838855 | PR_kwDOAJy2Ks7Dl0zm | 35776 | [Flight] Walk parsed JSON instead of using reviver for parsing RSC payload | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-13T15:53:56Z | 2026-02-13T19:42:46Z |  | CONTRIBUTOR |  |  | true | [object Object] | <!--
+  Thanks for submitting a pull request!
+  We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory.
+
+  Before submitting a pull request, please make sure the following is done:
+
+  1. Fork [the repository](https://github.com/facebook/react) and create your branch from `main`.
+  2. Run `yarn` in the repository root.
+  3. If you've fixed a bug or added code that should be tested, add tests!
+  4. Ensure the test suite passes (`yarn test`). Tip: `yarn test --watch TestName` is helpful in development.
+  5. Run `yarn test --prod` to test in the production environment. It supports the same options as `yarn test`.
+  6. If you need a debugger, run `yarn test --debug --watch TestName`, open `chrome://inspect`, and press "Inspect".
+  7. Format your code with [prettier](https://github.com/prettier/prettier) (`yarn prettier`).
+  8. Make sure your code lints (`yarn lint`). Tip: `yarn linc` to only check changed files.
+  9. Run the [Flow](https://flowtype.org/) type checks (`yarn flow`).
+  10. If you haven't already, complete the CLA.
+
+  Learn more about contributing: https://reactjs.org/docs/how-to-contribute.html
+-->
+
+## Summary
+
+Follow-up to https://github.com/vercel/next.js/pull/89823 with the actual changes to React.
+
+Replaces the `JSON.parse` reviver callback in `initializeModelChunk` with a two-step approach: plain `JSON.parse()` followed by a recursive `walkParsedJSON()` post-process. This yields a **~75% speedup** in RSC chunk deserialization.
+
+| Payload | Original (ms) | Walk (ms) | Speedup |
+|---------|---------------|-----------|---------|
+| Small (2 elements, 142B) | 0.0024 | 0.0007 | **+72%** |
+| Medium (~12 elements, 914B) | 0.0116 | 0.0031 | **+73%** |
+| Large (~90 elements, 16.7KB) | 0.1836 | 0.0451 | **+75%** |
+| XL (~200 elements, 25.7KB) | 0.3742 | 0.0913 | **+76%** |
+| Table (1000 rows, 110KB) | 3.0862 | 0.6887 | **+78%** |
+
+## Problem
+
+`createFromJSONCallback` returns a reviver function passed as the second argument to `JSON.parse()`. This reviver is called for **every key-value pair** in the parsed JSON. While the logic inside the reviver is lightweight, the dominant cost is the **C++ → JavaScript boundary crossing** — V8's `JSON.parse` is implemented in C++, and calling back into JavaScript for every node incurs significant overhead.
+
+Even a trivial no-op reviver `(k, v) => v` makes `JSON.parse` **~4x slower** than bare `JSON.parse` without a reviver:
+
+```
+108 KB payload:
+  Bare JSON.parse:    0.60 ms
+  Trivial reviver:    2.95 ms  (+391%)
+```
+
+## Change
+
+Replace the reviver with a two-step process:
+
+1. `JSON.parse(resolvedModel)` — parse the entire payload in C++ with no callbacks
+2. `_walkJSON` — recursively walk the resulting object in pure JavaScript to apply RSC transformations (resolving `$`-prefixed special strings, constructing React elements, handling `initializingHandler` protocol)
+
+The `_walkJSON` function includes additional optimizations over the original reviver:
+- **Short-circuits plain strings**: only calls `parseModelString` when the string starts with `$`, skipping the vast majority of strings (class names, text content, etc.)
+- **Recognizes React element arrays** (`["$", type, key, props]`) upfront and processes each field with knowledge of its expected type, avoiding generic traversal
+- **Stays entirely in JavaScript** — no C++ boundary crossings during the walk
+
+## Results
+
+You can find the related applications in the [Next.js PR ](https://github.com/vercel/next.js/pull/89823)as I've been testing this on Next.js applications.
+
+### Table as Server Component with 1000 items
+
+Before:
+
+```
+    "min": 13.782875000000786,
+    "max": 22.23400000000038,
+    "avg": 17.116868530000083,
+    "p50": 17.10766700000022,
+    "p75": 18.50787499999933,
+    "p95": 20.426249999998618,
+    "p99": 21.814125000000786
+```
+
+After:
+
+```
+    "min": 10.963916999999128,
+    "max": 18.096083000000363,
+    "avg": 13.543286884999988,
+    "p50": 13.58350000000064,
+    "p75": 14.871791999999914,
+    "p95": 16.08429099999921,
+    "p99": 17.591458000000785
+```
+
+### Table as Client Component with 1000 items
+
+Before:
+
+```
+    "min": 3.888875000000553,
+    "max": 9.044959000000745,
+    "avg": 4.651271475000067,
+    "p50": 4.555749999999534,
+    "p75": 4.966624999999112,
+    "p95": 5.47754200000054,
+    "p99": 6.109499999998661
+````
+
+After:
+
+```
+    "min": 3.5986250000005384,
+    "max": 5.374291000000085,
+    "avg": 4.142990245000046,
+    "p50": 4.10570799999914,
+    "p75": 4.392041999999492,
+    "p95": 4.740084000000934,
+    "p99": 5.1652500000000146
+```
+
+### Nested Suspense
+
+Before:
+
+```
+  Requests:  200
+  Min:       73ms
+  Max:       106ms
+  Avg:       78ms
+  P50:       77ms
+  P75:       80ms
+  P95:       85ms
+  P99:       94ms
+```
+
+After:
+
+```
+  Requests:  200
+  Min:       56ms
+  Max:       67ms
+  Avg:       59ms
+  P50:       58ms
+  P75:       60ms
+  P95:       65ms
+  P99:       66ms
+```
+
+### Even more nested Suspense (double-level Suspense)
+
+Before:
+
+```
+  Requests:  200
+  Min:       159ms
+  Max:       208ms
+  Avg:       169ms
+  P50:       167ms
+  P75:       173ms
+  P95:       183ms
+  P99:       188ms
+```
+
+After:
+
+```
+  Requests:  200
+  Min:       125ms
+  Max:       170ms
+  Avg:       134ms
+  P50:       132ms
+  P75:       138ms
+  P95:       148ms
+  P99:       160ms
+```
+
+## How did you test this change?
+
+Ran it across many Next.js benchmark applications.
+
+The entire Next.js test suite passes with this change.
+
+<!--
+  Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes the user interface.
+  How exactly did you verify that your PR solves the issue you wanted to solve?
+  If you leave this empty, your PR will very likely be closed.
+-->
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35776/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35774 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35774/labels{/name} | https://api.github.com/repos/facebook/react/issues/35774/comments | https://api.github.com/repos/facebook/react/issues/35774/events | https://github.com/facebook/react/issues/35774 | 3936967186 | I_kwDOAJy2Ks7qqVoS | 35774 | Bug: 404 Error on 'JSX Example HTML File' Link | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-13T12:35:11Z | 2026-02-13T14:08:55Z |  | NONE |  |  |  |  | <!--
+  Please provide a clear and concise description of what the bug is. Include
+  screenshots if needed. Please test using the latest version of the relevant
+  React packages to make sure your issue has not already been fixed.
+-->
+
+React version:
+
+## Steps To Reproduce
+
+1. Go to [React official documentation](https://ko.legacy.reactjs.org/docs/add-react-to-a-website.html)
+ page.
+2. Click on the "JSX를 사용한 예시 HTML 파일" (JSX example HTML file) link.
+3. A 404 error page appears.
+
+Link to code example:
+- URL of the documentation page: https://ko.legacy.reactjs.org/docs/add-react-to-a-website.html
+
+<!--
+  Your bug will get fixed much faster if we can run your code and it doesn't
+  have dependencies other than React. Issues without reproduction steps or
+  code examples may be immediately closed as not actionable.
+-->
+
+<!--
+  Please provide a CodeSandbox (https://codesandbox.io/s/new), a link to a
+  repository on GitHub, or provide a minimal code example that reproduces the
+  problem. You may provide a screenshot of the application if you think it is
+  relevant to your bug report. Here are some tips for providing a minimal
+  example: https://stackoverflow.com/help/mcve.
+-->
+
+## The current behavior
+Clicking on the "JSX를 사용한 예시 HTML 파일" link results in a 404 error page instead of the expected HTML example file.
+
+The HTML file that should be displayed is not loading.
+
+
+## The expected behavior
+When clicking the link, the expected JSX example HTML file should be displayed properly.
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35774/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35772 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35772/labels{/name} | https://api.github.com/repos/facebook/react/issues/35772/comments | https://api.github.com/repos/facebook/react/issues/35772/events | https://github.com/facebook/react/issues/35772 | 3933572174 | I_kwDOAJy2Ks7qdYxO | 35772 | [react-compiler-healthcheck] Add --verbose to list components that failed compilation | [object Object] | [object Object],[object Object] | open | false |  |  |  | 0 | 2026-02-12T19:17:39Z | 2026-02-12T19:18:41Z |  | NONE |  |  |  |  | ### What kind of issue is this?
+
+- [ ] React Compiler core (the JS output is incorrect, or your app works incorrectly after optimization)
+- [ ] babel-plugin-react-compiler (build issue installing or using the Babel plugin)
+- [ ] eslint-plugin-react-hooks (build issue installing or using the eslint plugin)
+- [x] react-compiler-healthcheck (build issue installing or using the healthcheck script)
+
+### Link to repro
+
+N/A — feature request.
+
+### Repro steps
+
+Healthcheck only prints "Successfully compiled X out of Y components" and does not show which components failed.
+
+**Proposal:** Add a `--verbose` flag to print for each failed component:
+- file path
+- location (line/column when available)
+- error reason
+
+The data is already collected in `ActionableFailures` / `OtherFailures` in `reactCompiler.ts`; it only needs to be printed when the flag is set. That would make it possible to fix remaining violations and to trust the reported counts.
+
+**Related:** #29078 (closed), #29677 (open — "how do I find the remaining components?").
+
+### How often does this bug happen?
+
+Every time
+
+### What version of React are you using?
+
+19.2.4
+
+### What version of React Compiler are you using?
+
+babel-plugin-react-compiler@1.0.0 (via Expo SDK 54); react-compiler-healthcheck@19.1.0-rc.3 |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35772/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35764 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35764/labels{/name} | https://api.github.com/repos/facebook/react/issues/35764/comments | https://api.github.com/repos/facebook/react/issues/35764/events | https://github.com/facebook/react/pull/35764 | 3927699274 | PR_kwDOAJy2Ks7DELhJ | 35764 | Enables Basic View Transition support for React Native Fabric renderer | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-11T17:18:00Z | 2026-02-13T17:38:16Z |  | NONE |  |  | false | [object Object] | ## Summary
+
+Enables Basic View Transition support for React Native Fabric renderer.
+
+**Implemented:**
+- Added FabricUIManager bindings for view transition methods: `measureInstance`, `applyViewTransitionName`, `startViewTransition`, `restoreViewTransitionName`, and `cancelViewTransitionName`
+- Implemented `startViewTransition` with proper callback orchestration (mutation → layout → afterMutation → spawnedWork → passive)
+- Added fallback behavior that flushes work synchronously when Fabric's `startViewTransition` returns false (e.g., when the ViewTransition ReactNativeFeatureFlag is not enabled)
+- Added Flow type declarations for new FabricUIManager methods
+
+**Stubbed with `__DEV__` warnings (not yet implemented):**
+- `cancelRootViewTransitionName`
+- `restoreRootViewTransitionName`
+- `cloneRootViewTransitionContainer`
+- `removeRootViewTransitionClone`
+- `measureClonedInstance`
+- `hasInstanceChanged`
+- `hasInstanceAffectedParent`
+- `startGestureTransition`
+- `stopViewTransition`
+- `getCurrentGestureOffset`
+
+This allows React Native apps using Fabric to leverage the View Transition API for coordinated animations during state transitions, with graceful degradation when the native side doesn't support it.
+
+Below are diagrams of proposed architecture in fabric, and observation of what/when config functions get called during a basic shared transition example
+<img width="4916" height="3153" alt="Untitled-2026-02-11-1156" src="https://github.com/user-attachments/assets/b9466bc8-f2cd-45ab-8878-c7415328a037" />
+
+
+## How did you test this change?
+
+- `yarn flow fabric` - Flow type checks pass
+- `yarn lint` - Lint checks pass
+- Manually tested in Android catalyst app with enableViewTransition in `ReactFeatureFlags.test-renderer.native-fb.js` and View Transition enabled via ReactNativeFeatureFlag
+- Verified in the minified `ReactFabric-dev.fb.js` that the 'shim' config functions are not included
+- Verified fallback behavior logs warning in `__DEV__` and flushes work synchronously when ViewTransition flag isn't enabled in Fabric |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35764/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35762 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35762/labels{/name} | https://api.github.com/repos/facebook/react/issues/35762/comments | https://api.github.com/repos/facebook/react/issues/35762/events | https://github.com/facebook/react/issues/35762 | 3926598259 | I_kwDOAJy2Ks7qCyJz | 35762 | [Compiler Bug]: Closure dependency cache keys eagerly evaluate property accesses, causing TypeError on nullable objects | [object Object] | [object Object],[object Object] | open | false |  |  |  | 1 | 2026-02-11T13:34:24Z | 2026-02-11T14:38:00Z |  | NONE |  |  |  |  | ### What kind of issue is this?
+
+- [x] React Compiler core (the JS output is incorrect, or your app works incorrectly after optimization)
+- [ ] babel-plugin-react-compiler (build issue installing or using the Babel plugin)
+- [ ] eslint-plugin-react-hooks (build issue installing or using the eslint plugin)
+- [ ] react-compiler-healthcheck (build issue installing or using the healthcheck script)
+
+### Link to repro
+
+https://playground.react.dev/#N4Igzg9grgTgxgUxALhHCA7MAXABAWQE8BhCAWwAdMEM8BeXACmFyjARlwF8BKXOgHy5gAHQy5c6LHgAWAQwwATADYJiygJZwA1vyZ9BwsRIlTIqgHTKIAc0ZsOFjHLIIeAbmPdPGLxoBmTACEDjB8MAjYsOIYUMrKPl4RUTDiADwARlDY2Ji4mOpa2nTA8kqqhTpcApXaaQD0WTmYAj5c7iAANGiY-ho2KCAalBAweNiEFAjCuAAKylA2GhgA8hTYGphg3Lj+MOS4AOQZchkIygC0FAtLGBcRcnDYF+iUGqow9YoaOIeJGMwvPV6q8KO85BtMPgIIoEMhcCIQHJ4oixFxcGAIT8+ghtvNFss1pCsB4uuAZBAAO4ASVoHGcyjAKH8yPYXCAA
+
+### Repro steps
+
+1. Create a component that receives a nullable prop
+2. Access that prop's properties inside a closure (event handler)
+3. Add an early return guard: if (!prop) return null
+4. Pass null/undefined as the prop
+5. Component throws TypeError during render
+
+------------------------
+
+# React Compiler hoists closure property accesses into cache keys, causing TypeError
+
+## Summary
+
+The React Compiler generates memoization cache keys by eagerly evaluating property accesses that were originally deferred inside closures (event handlers). This causes `TypeError` at render time when the object is `null`/`undefined`, even though the original code would never access the property during render.
+
+Early returns (`if (!x) return null`) do not help — the compiler hoists the cache key check above the guard.
+
+JSX expressions are not affected — the compiler correctly extracts them to intermediate variables.
+
+## Reproduction
+
+[React Compiler Playground](https://playground.react.dev/)
+
+### Minimal case
+
+```jsx
+const MyComponent = ({ user }) => {
+  const handleClick = () => {
+    console.log(user.name);
+  };
+
+  if (!user) return null;
+
+  return <button onClick={handleClick}>Click</button>;
+};
+```
+
+Compiled output:
+
+```js
+const MyComponent = (t0) => {
+  const $ = _c(4);
+  const { user } = t0;
+
+  // Cache key runs BEFORE the null guard — throws when user is null
+  if ($[0] !== user.name) {
+    t1 = () => {
+      console.log(user.name);
+    };
+    $[0] = user.name;
+    $[1] = t1;
+  }
+
+  // The null guard comes AFTER — too late
+  if (!user) {
+    return null;
+  }
+
+  // ...
+};
+```
+
+The source code is safe: `user.name` is only inside a click handler, and the early return prevents the button from rendering when `user` is null. But the compiler hoists `user.name` into a cache key that runs on **every render**, before the guard.
+
+### With nested access and JSX
+
+```jsx
+const MyComponent = ({ user }) => {
+  const [visible, setVisible] = useState(false);
+  const [link, setLink] = useState(null);
+
+  const handleClick = async () => {
+    console.log(user.company.id);
+    console.log(user.email);
+  };
+
+  return (
+    <div onClick={() => setVisible(false)}>
+      <span>{user?.email}</span>
+      <button onClick={handleClick}>Click</button>
+    </div>
+  );
+};
+```
+
+Compiled output (simplified):
+
+```js
+// The compiler hoists user.company.id and user.email from the closure
+// into cache key checks that run on EVERY render:
+if ($[0] !== user.company.id || $[1] !== user.email) {
+    t1 = async () => {
+      console.log(user.company.id);
+      console.log(user.email);
+    };
+    $[0] = user.company.id;
+    $[1] = user.email;
+    $[2] = t1;
+}
+
+// JSX — correctly extracted to variable (safe)
+const t4 = user?.email;
+if ($[7] !== t4) {
+    t5 = <span>{t4}</span>;
+}
+```
+
+## Expected behavior
+
+The compiler should not introduce runtime errors that the source code would not produce. Property accesses hoisted from closures into cache keys should be guarded, e.g. by extracting to intermediate variables:
+
+```js
+const t0 = user?.name;
+if ($[0] !== t0) {
+    t1 = () => {
+      console.log(user.name);
+    };
+    $[0] = t0;
+    $[1] = t1;
+}
+```
+
+## Workarounds
+
+### 1. Extract to variables
+
+Extract property accesses into variables before using them in closures. The compiler then caches on the primitive values:
+
+```jsx
+const companyId = user?.company?.id;
+const email = user?.email;
+
+const handleClick = async () => {
+  console.log(companyId);
+  console.log(email);
+};
+```
+
+### 2. Add optional chaining to every closure access
+
+Adding `?.` to every property access inside closures makes the compiler preserve it in cache keys. Note that **every** access must have `?.` — missing it on even one will produce an unsafe cache key for that property path:
+
+```jsx
+const handleClick = async () => {
+  console.log(user?.company.id);
+  console.log(user?.email);
+};
+```
+
+### 3. Use nullish coalescing on destructuring
+
+Using `?? {}` when destructuring the nullable object anywhere in the component signals to the compiler that the value can be nullish. This makes the compiler generate `?.` in **all** cache keys for that object:
+
+```jsx
+const handleClick = () => {
+  const { name, email } = user ?? {};
+  console.log(name, email);
+};
+```
+
+This produces `$[x] !== user?.name` instead of `$[x] !== user.name` in cache keys across the component.
+
+### 4. Add a null guard inside the closure
+
+Adding a null check before the property access inside the closure makes the compiler use the **object reference** as the cache key instead of the property path:
+
+```jsx
+const handleClick = () => {
+  if (!user) return;
+  console.log(user.company.id);
+  console.log(user.email);
+};
+```
+
+This produces `$[x] !== user` (the reference) instead of `$[x] !== user.company.id` (the property access) in the cache key. Comparing a reference to `null`/`undefined` never throws.
+
+## Environment
+
+- React Compiler (babel plugin via `react-compiler-runtime`)
+- Webpack 5 with HMR
+- Observed in both HMR hot-update bundles and regular builds
+
+
+### How often does this bug happen?
+
+Every time
+
+### What version of React are you using?
+
+18.3.1
+
+### What version of React Compiler are you using?
+
+1.0.0 |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35762/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35761 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35761/labels{/name} | https://api.github.com/repos/facebook/react/issues/35761/comments | https://api.github.com/repos/facebook/react/issues/35761/events | https://github.com/facebook/react/issues/35761 | 3924918051 | I_kwDOAJy2Ks7p8X8j | 35761 | Bug: react-reconciler v0.33+ in dev mode emits performance info which is not correctly cleaned up, leading to OOM errors | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-11T06:14:04Z | 2026-02-11T09:42:00Z |  | NONE |  |  |  |  | <!--
+  Please provide a clear and concise description of what the bug is. Include
+  screenshots if needed. Please test using the latest version of the relevant
+  React packages to make sure your issue has not already been fixed.
+-->
+
+React version: 19.2.4
+
+## Steps To Reproduce
+
+Full steps are in this thread: https://github.com/vadimdemedes/ink/issues/869
+
+Short version is when using react-reconciler in dev mode, do something that causes frequent rerenders. 
+Eventually it will OOM.
+
+<img width="3091" height="818" alt="Image" src="https://github.com/user-attachments/assets/57a33f6b-10eb-4030-856b-94ec6893049b" />
+
+<!--
+  Your bug will get fixed much faster if we can run your code and it doesn't
+  have dependencies other than React. Issues without reproduction steps or
+  code examples may be immediately closed as not actionable.
+-->
+
+Link to code example: https://github.com/rmaclean/ink-memory-leak
+
+<!--
+  Please provide a CodeSandbox (https://codesandbox.io/s/new), a link to a
+  repository on GitHub, or provide a minimal code example that reproduces the
+  problem. You may provide a screenshot of the application if you think it is
+  relevant to your bug report. Here are some tips for providing a minimal
+  example: https://stackoverflow.com/help/mcve.
+-->
+
+## The current behavior
+
+react-reconciler v0.33+ emits performance.measure() entries on every commit for profiling purposes.
+these are not properly cleaned up, so will not be properly GC'd away
+overtime, these will lead to an OOM situation
+
+## The expected behavior
+
+No OOM cause the entries are cleaned up |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35761/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35759 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35759/labels{/name} | https://api.github.com/repos/facebook/react/issues/35759/comments | https://api.github.com/repos/facebook/react/issues/35759/events | https://github.com/facebook/react/pull/35759 | 3922417317 | PR_kwDOAJy2Ks7Cyq39 | 35759 | Refactor `ReactProfilerTimer` to Track Transition Timers Per Lane | [object Object] | [object Object] | open | false |  |  |  | 6 | 2026-02-10T16:30:08Z | 2026-02-12T09:17:06Z |  | NONE |  |  | false | [object Object] | ## Summary
+This PR refactors `ReactProfilerTimer.js` to correctly track transition timers on a per-lane basis, addressing a long-standing TODO (`// TODO: This should really be one per Transition lane.`).
+
+Previously, transition timings (start time, update time, event time) were stored in global variables (`transitionStartTime`, `transitionUpdateTime`, etc.). This caused issues when multiple transitions were being processed concurrently or interleaved, as the global state could be overwritten, leading to inaccurate profiling data.
+
+## Key Changes
+
+### `packages/react-reconciler/src/ReactProfilerTimer.js`
+* Replaced global transition timer variables with a `transitionTimers` Map, keyed by `Lane`.
+* Introduced `WeakMap`s (`pendingTransitionStartTimes`, `pendingTransitionEventInfo`) to buffer timing data associated with a `Transition` object before a specific `Lane` is assigned.
+* Updated `startUpdateTimerByLane`, `startHostActionTimer`, `startAsyncTransitionTimer`, and other helper functions to read/write from the `transitionTimers` Map instead of global variables.
+* Added `getTransitionTimers(lane)` to safely retrieve timer data for a specific lane.
+
+### `packages/react-reconciler/src/ReactFiberWorkLoop.js`
+* Updated the `includesTransitionLane` block in the work loop logic.
+* It now iterates through all active transition lanes using `getHighestPriorityLane`.
+* For each lane, it retrieves the corresponding timer data and logs the transition start/update.
+* Ensures `clearTransitionTimer(lane)` is called for the specific lane being processed, rather than a global clear.
+
+## Verification
+
+### Automated Tests
+* Passed `yarn test packages/react-reconciler/src/__tests__/ReactTransitionTracing-test.js`
+* Passed `yarn test packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js`
+
+### Manual Verification
+* Verified that no regressions were introduced in basic profiling behavior.
+
+## Related Issues
+Fixes TODO in `ReactProfilerTimer.js`. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35759/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35758 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35758/labels{/name} | https://api.github.com/repos/facebook/react/issues/35758/comments | https://api.github.com/repos/facebook/react/issues/35758/events | https://github.com/facebook/react/issues/35758 | 3922269709 | I_kwDOAJy2Ks7pyRYN | 35758 | Bug: eslint-plugin-react-hooks does not support ESLint 10 in peerDependencies | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-10T15:59:56Z | 2026-02-11T18:55:21Z |  | NONE |  |  |  |  | <!--
+  Please provide a clear and concise description of what the bug is. Include
+  screenshots if needed. Please test using the latest version of the relevant
+  React packages to make sure your issue has not already been fixed.
+-->
+
+React version: 19.x
+
+## Steps To Reproduce
+
+1. Create a React project with `eslint-plugin-react-hooks@7.0.1`
+2. Upgrade ESLint to version 10.0.0
+3. Run `npm install`
+
+<!--
+  Your bug will get fixed much faster if we can run your code and it doesn't
+  have dependencies other than React. Issues without reproduction steps or
+  code examples may be immediately closed as not actionable.
+-->
+
+Link to code example:
+
+```json
+{
+  "devDependencies": {
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.0.1"
+  }
+}
+```
+<!--
+  Please provide a CodeSandbox (https://codesandbox.io/s/new), a link to a
+  repository on GitHub, or provide a minimal code example that reproduces the
+  problem. You may provide a screenshot of the application if you think it is
+  relevant to your bug report. Here are some tips for providing a minimal
+  example: https://stackoverflow.com/help/mcve.
+-->
+
+## The current behavior
+npm error ERESOLVE could not resolve
+npm error Could not resolve dependency:
+npm error peer eslint@"^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0" from eslint-plugin-react-hooks@7.0.1
+
+## The expected behavior
+"eslint": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0" |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35758/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35757 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35757/labels{/name} | https://api.github.com/repos/facebook/react/issues/35757/comments | https://api.github.com/repos/facebook/react/issues/35757/events | https://github.com/facebook/react/issues/35757 | 3922260890 | I_kwDOAJy2Ks7pyPOa | 35757 | Bug: ReactProfilerTimer transition timers are global, causing conflicts with concurrent transitions | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-10T15:58:05Z | 2026-02-10T15:58:05Z |  | NONE |  |  |  |  | ## Description
+The `ReactProfilerTimer.js` module currently uses a set of global variables (`transitionStartTime`, `transitionUpdateTime`, `transitionUpdateType`, etc.) to track performance metrics for transitions.
+
+This implementation assumes only one transition is being tracked at a time. However, with concurrent rendering, multiple transitions can be in progress simultaneously in different lanes.
+
+There is an explicit TODO in the code acknowledging this issue:
+
+```javascript
+// packages/react-reconciler/src/ReactProfilerTimer.js
+
+// TODO: This should really be one per Transition lane.
+export let transitionClampTime: number = -0;
+export let transitionStartTime: number = -1.1; // First startTransition call before setState.
+export let transitionUpdateTime: number = -1.1; // First transition setState scheduled.
+```
+## Impact
+When multiple concurrent transitions occur, the following issues arise:
+
+1. **Data Overwrites:** Concurrent transitions will overwrite each other's timing data in these global variables.
+2. **Inaccurate Profiling:** `ReactFiberWorkLoop` will read incorrect start/update times, leading to inaccurate performance profiling data.
+3. **Race Conditions:** It may cause race conditions where the wrong transition's data is logged or used for heuristics.
+
+## Proposed Solution
+Refactor `ReactProfilerTimer.js` to avoid global state for transition timings.
+
+* **Structure:** Store transition timing data in a structure keyed by the transition lane, such as `Map<Lane, TransitionTimers>`.
+* **Implementation:** The `ReactFiberWorkLoop` and other consumers should be updated to pass the relevant `Lane` when recording or reading transition timings, ensuring that data is isolated per transition.
+
+## Affected Files
+* `packages/react-reconciler/src/ReactProfilerTimer.js`
+* `packages/react-reconciler/src/ReactFiberWorkLoop.js` |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35757/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35738 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35738/labels{/name} | https://api.github.com/repos/facebook/react/issues/35738/comments | https://api.github.com/repos/facebook/react/issues/35738/events | https://github.com/facebook/react/pull/35738 | 3918684329 | PR_kwDOAJy2Ks7Cmi-s | 35738 | Fix typos across documentation markdown files | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-09T23:42:01Z | 2026-02-09T23:45:23Z |  | CONTRIBUTOR |  |  | false | [object Object] | ## Summary
+
+Fix 34 typos across 16 markdown documentation files, including:
+- Spelling errors (`explicitlyu`, `errros`, `consdier`, `outweight`, `resister`, `compromised of`, `CreatFrom`)
+- Grammar fixes (subject-verb agreement, missing articles, missing words)
+- Punctuation corrections (missing periods, capitalization, apostrophes)
+- Factual correction (OVERVIEW.md listed "5 numbers" but 7 items followed)
+- Wrong word fixes (`effect` → `affect`, `it's` → `its`, `HIR form` → `SSA form`, `compiler` → `compiled`)
+
+### Files changed
+
+| File | Fixes |
+|------|-------|
+| `compiler/CLAUDE.md` | 2 |
+| `compiler/README.md` | 1 |
+| `compiler/docs/DESIGN_GOALS.md` | 4 |
+| `compiler/docs/DEVELOPMENT_GUIDE.md` | 1 |
+| `compiler/packages/babel-plugin-react-compiler/README.md` | 1 |
+| `compiler/packages/babel-plugin-react-compiler/src/Inference/MUTABILITY_ALIASING_MODEL.md` | 7 |
+| `compiler/packages/react-mcp-server/README.md` | 1 |
+| `compiler/packages/react-mcp-server/todo.md` | 1 |
+| `packages/dom-event-testing-library/README.md` | 1 |
+| `packages/eslint-plugin-react-hooks/src/code-path-analysis/README.md` | 1 |
+| `packages/react-devtools/CONTRIBUTING.md` | 1 |
+| `packages/react-devtools/OVERVIEW.md` | 2 |
+| `packages/react-devtools/README.md` | 1 |
+| `packages/react-server/README.md` | 7 |
+| `scripts/error-codes/README.md` | 1 |
+| `scripts/release/README.md` | 1 |
+
+## Test plan
+
+- [x] Changes are documentation-only (no code changes)
+- [x] Each fix was verified against the original file content
+- [x] No code blocks, identifiers, or technical terms were modified |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35738/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35732 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35732/labels{/name} | https://api.github.com/repos/facebook/react/issues/35732/comments | https://api.github.com/repos/facebook/react/issues/35732/events | https://github.com/facebook/react/pull/35732 | 3917586879 | PR_kwDOAJy2Ks7Ci4NZ | 35732 | [Compiler] Fix false positive for setState after await in useEffect | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-09T18:20:36Z | 2026-02-11T11:03:56Z |  | NONE |  |  | false | [object Object] | ## Summary
+
+Fixes #34905
+
+The `set-state-in-effect` validation (`ValidateNoSetStateInEffects`) was incorrectly flagging `setState` calls that appear **after an `await`** expression inside async functions called from `useEffect`.
+
+After an `await`, execution continues asynchronously in a microtask — meaning the `setState` call is no longer synchronous within the effect body and should not trigger this lint.
+
+### Root cause
+
+In `getSetStateCall()`, the function walks through the HIR of the effect callback and returns the first `setState` call it finds, without distinguishing whether that call appears after an `Await` instruction.
+
+### Fix
+
+Added `Await` instruction tracking within each block in `getSetStateCall()`:
+- When an `Await` instruction is encountered, a `seenAwait` flag is set for the current block
+- Any subsequent `setState` call in the same block after an `Await` is skipped (not reported as synchronous)
+
+This is a conservative fix scoped to intra-block tracking. Cross-block `await` dominator analysis can be added as a follow-up if needed.
+
+## How did you test this change?
+
+Added 3 new test fixtures:
+
+| Fixture | Expected | Description |
+|---------|----------|-------------|
+| `allow-setState-in-useEffect-after-await` | ✅ No error | setState after `await` via `useCallback` + `useEffect` (exact issue repro) |
+| `allow-setState-in-useEffect-async-callback` | ✅ No error | setState after `await` in nested async function inside `useEffect` |
+| `invalid-setState-in-useEffect-before-await` | ❌ Error reported | setState **before** `await` is still correctly flagged |
+
+All existing tests continue to pass:
+
+```
+$ yarn snap -- -p "invalid-setState-in-useEffect*"
+5 Tests, 5 Passed, 0 Failed
+
+$ yarn workspace eslint-plugin-react-compiler test
+Test Suites: 8 passed, 8 total
+Tests:       31 passed, 31 total
+``` |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35732/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35729 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35729/labels{/name} | https://api.github.com/repos/facebook/react/issues/35729/comments | https://api.github.com/repos/facebook/react/issues/35729/events | https://github.com/facebook/react/issues/35729 | 3915417119 | I_kwDOAJy2Ks7pYIYf | 35729 | Bug: [eslint-plugin-react] Compatibility issue with ESLint 10.x.x | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-09T09:36:44Z | 2026-02-10T09:42:39Z |  | NONE |  |  |  |  | It appears that `eslint-plugin-react` is not compatible with `ESLint` version 10.x.x.
+When attempting to use `eslint` 10.x.x with eslint-plugin-react, I encounter dependency resolution issues, specifically that the plugin does not support ESLint 10.
+
+React version: `19.2.4`
+
+## Steps To Reproduce
+
+1. Install `eslint` 10.x.x along with `eslint-plugin-react@7.37.5`.
+2. Install dependencies
+3. Encounter peer dependency conflict or related errors.
+
+## The current behavior
+- Peer dependency conflicts or errors occur during installation or usage of ESLint 10 with this plugin.
+
+## The expected behavior
+- `eslint-plugin-react` should support ESLint 10.x.x without errors. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35729/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35728 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35728/labels{/name} | https://api.github.com/repos/facebook/react/issues/35728/comments | https://api.github.com/repos/facebook/react/issues/35728/events | https://github.com/facebook/react/issues/35728 | 3914710524 | I_kwDOAJy2Ks7pVb38 | 35728 | Bug: View Deployment is not working across react.dev and i18n documentation | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-09T06:29:14Z | 2026-02-09T06:30:03Z |  | NONE |  |  |  |  | This issue was escalated from the react.dev repository because there was no reply for over a week.
+
+https://github.com/reactjs/react.dev/issues/8281
+
+> ### Summary
+> Hi team,
+> 
+> Currently, the "View Deployment" for change previews isn't working, causing contributors to be directed to incorrect Vercel links.
+> 
+> * "View Deployment" Button:
+> 
+> <img alt="image" width="860" height="64" src="https://private-user-images.githubusercontent.com/119669540/542204231-e527c3e6-dbbc-445f-8e20-76209e33f2bc.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA2MTg3MzQsIm5iZiI6MTc3MDYxODQzNCwicGF0aCI6Ii8xMTk2Njk1NDAvNTQyMjA0MjMxLWU1MjdjM2U2LWRiYmMtNDQ1Zi04ZTIwLTc2MjA5ZTMzZjJiYy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjYwMjA5JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDIwOVQwNjI3MTRaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT03MDdiYjVhZTdkZmNiMWMwM2EwNTc2MjkzYzVhNTZmYjZkYTY5MDdkMGM5MTc3NzQxMGQ4OTczMjQzNGYzNGRjJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.kdIW6LZkKOhNGsaaFLEjWpHqJJl5pAY3x3X1vOKrzPk">
+> * When I click the button:
+> 
+> <img alt="image" width="1880" height="450" src="https://private-user-images.githubusercontent.com/119669540/542187154-da6acf1f-71b7-4243-9a2a-73583e510beb.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA2MTg3MzQsIm5iZiI6MTc3MDYxODQzNCwicGF0aCI6Ii8xMTk2Njk1NDAvNTQyMTg3MTU0LWRhNmFjZjFmLTcxYjctNDI0My05YTJhLTczNTgzZTUxMGJlYi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjYwMjA5JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI2MDIwOVQwNjI3MTRaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0zY2JkYjY1MjRmNTUxYzZhM2FjZmE3Yjk0ZTdhMTdjM2EyYjkzNTViZmYxYzVjNjY0OGUyZmJhNmZjYzkwYzIxJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.qJt8nV73pAanV6qN7S1I_y2eIWldB6b73tf0J6W-ozQ">
+> It stopped working at some point, and from my investigation, this problem affects the entire React documentation site, including react.dev and other i18n documentation.
+> 
+> cc. [@rickhanlonii](https://github.com/rickhanlonii)
+> 
+> ### Page
+> [#8277](https://github.com/reactjs/react.dev/pull/8277)
+> 
+> ### Details
+> [#8277](https://github.com/reactjs/react.dev/pull/8277)
+> 
+> Clicking the 'View Deployment' button in the link above doesn't work for external contributors.
+
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35728/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35726 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35726/labels{/name} | https://api.github.com/repos/facebook/react/issues/35726/comments | https://api.github.com/repos/facebook/react/issues/35726/events | https://github.com/facebook/react/pull/35726 | 3913660455 | PR_kwDOAJy2Ks7CV5cx | 35726 | fix: initialize transition start time with performance.now() | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-08T21:59:43Z | 2026-02-10T11:52:37Z |  | NONE |  |  | false | [object Object] | ## Details
+
+* `packages/react/src/ReactStartTransition.js`: Added a `now()` helper (using `performance.now()` with a `Date.now()` fallback) and used it to set `currentTransition.startTime`.
+* `packages/react-reconciler/src/ReactFiberWorkLoop.js`: Removed the check for `transition.startTime === -1` and the subsequent assignment, as it is no longer needed.
+
+## Motivation
+
+Previously, `startTime` was initialized to `-1` and lazily updated upon scheduling an update. This behavior was inconsistent with `useTransition` and could lead to inaccurate timestamps if there was a delay between the transition start and the actual update scheduling. This change standardizes the behavior and ensures accurate timing for transition tracing.
+
+## How to Test
+
+1. Enable `enableTransitionTracing` feature flag.
+2. Run `yarn test ReactTransitionTracing`.
+3. Verify that tests pass and that transition start times are reasonable (non-negative).
+
+## Checklist
+
+- [x] Tests passed locally (`yarn test ReactTransitionTracing`).
+- [x] I have addressed the TODOs in the codebase.
+
+## Fixes #35725 |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35726/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35725 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35725/labels{/name} | https://api.github.com/repos/facebook/react/issues/35725/comments | https://api.github.com/repos/facebook/react/issues/35725/events | https://github.com/facebook/react/issues/35725 | 3913642800 | I_kwDOAJy2Ks7pRXMw | 35725 | Bug: Initialize transition start time in startTransition and startGestureTransition | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-08T21:46:53Z | 2026-02-08T21:46:53Z |  | NONE |  |  |  |  | ## Description
+Currently, calls to `startTransition` and `startGestureTransition` in `packages/react/src/ReactStartTransition.js` initialize `currentTransition.startTime` to `-1`. There is a TODO comment indicating that this should read the timestamp.
+
+The timestamp is currently lazily set in `ReactFiberWorkLoop.js` when an update is scheduled. This behavior differs from `useTransition`, which correctly sets the start time immediately.
+
+This issue proposes to:
+
+1. Initialize `startTime` using `performance.now()` (falling back to `Date.now()`) directly in `startTransition` and `startGestureTransition`.
+2. Remove the lazy initialization logic in `ReactFiberWorkLoop.js`.
+
+This ensures the timestamp accurately reflects when the transition was started, even if updates are processed later.
+
+## Relevant Files
+* `packages/react/src/ReactStartTransition.js`
+* `packages/react-reconciler/src/ReactFiberWorkLoop.js`
+
+## Steps to Reproduce (or verify)
+1. Enable `enableTransitionTracing`.
+2. Inspect `currentTransition.startTime` immediately after creating a transition via `startTransition`. Ideally, it should hold a valid timestamp instead of `-1`. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35725/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35722 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35722/labels{/name} | https://api.github.com/repos/facebook/react/issues/35722/comments | https://api.github.com/repos/facebook/react/issues/35722/events | https://github.com/facebook/react/issues/35722 | 3912620652 | I_kwDOAJy2Ks7pNdps | 35722 | [eslint-plugin-react-hooks] sync plugin version with package.json | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-08T12:13:39Z | 2026-02-08T12:35:29Z |  | NONE |  |  |  |  | The version in `packages/eslint-plugin-react-hooks/src/index.ts` is currently hardcoded as a string (e.g., `'7.0.0'`). This violates the Single Source of Truth (SSOT) principle for version management.
+
+While `scripts/shared/ReactVersions.js` manages package versions during the release process and updates `package.json`, it does not update this hardcoded string in the source file. Since this package is published without a bundling step that injects the version (based on the `files` field in `package.json`), it relies on manual updates, which are prone to human error and version mismatches.
+
+**React version:** `main` branch
+
+## Steps To Reproduce
+
+1. Go to `packages/eslint-plugin-react-hooks/src/index.ts` in the main branch.
+2. Check the `meta.version` property in the exported plugin object.
+3. Observe that it is a hardcoded string rather than a dynamic reference to `package.json`.
+
+**Link to code example:**
+https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.ts
+
+## The current behavior
+
+The version is explicitly hardcoded in the source file, which creates a risk of metadata inconsistency if the release script updates `package.json` but misses this file.
+```typescript
+// Current implementation
+const plugin = {
+  meta: {
+    name: 'eslint-plugin-react-hooks',
+    version: '7.0.0', // Hardcoded string
+  },
+  rules,
+  configs,
+};
+```
+
+## The expected behavior
+
+Since ESLint plugins run in a Node.js environment, the version should be dynamically retrieved from `package.json`. This ensures that the runtime version always matches the published package metadata without requiring manual synchronization or complex build injections.
+
+Since the codebase uses TypeScript with ES modules, we should use `import` to dynamically load the version, which is the idiomatic approach in TypeScript/ESM for ensuring SSOT.
+```typescript
+// Proposed change
+import pkg from '../package.json';
+
+const plugin = {
+  meta: {
+    name: 'eslint-plugin-react-hooks',
+    version: pkg.version, // Dynamic reference from package.json
+  },
+  rules,
+  configs,
+};
+
+export default plugin;
+```
+**References:** 
+[ESLint official documentation on Plugin Metadata](https://eslint.org/docs/latest/extend/plugins#meta-data-in-plugins). While the documentation shows various examples, the principle of dynamically sourcing metadata from `package.json` is a recommended best practice for maintaining version consistency. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35722/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35719 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35719/labels{/name} | https://api.github.com/repos/facebook/react/issues/35719/comments | https://api.github.com/repos/facebook/react/issues/35719/events | https://github.com/facebook/react/pull/35719 | 3911681735 | PR_kwDOAJy2Ks7CPthc | 35719 | fix: detect autofilled values on focus for controlled inputs | [object Object] | [object Object] | open | false |  |  |  | 3 | 2026-02-08T01:01:14Z | 2026-02-08T17:04:04Z |  | NONE |  |  | false | [object Object] | ## Human View
+
+### Summary
+
+Fixes #1159 — an 11-year-old bug where browser autofill breaks controlled components.
+
+When browsers autofill form fields (saved passwords, address autocomplete, password managers), they may set the input value **without firing `input` or `change` events**. This causes controlled components to have stale state — the user sees filled data but React state remains empty. On form submission, data is lost.
+
+#### Root Cause
+
+React's `ChangeEventPlugin` detects value changes via `getTargetInstForInputOrChangeEvent()`, which only checks values when `input` or `change` DOM events fire. When browsers autofill without events (e.g., Chrome on iOS, some password managers), React never checks and never fires `onChange`.
+
+#### Fix
+
+Add value change detection on `focusin` events for text inputs. The `focusin` event is already registered as a dependency of `onChange` but was unused for modern browsers. When a user focuses an autofilled field, React now checks if the DOM value differs from its tracked value (via `updateValueIfChanged()`) and fires `onChange` if so.
+
+This is safe because:
+- `updateValueIfChanged()` compares the value tracker with the actual DOM value — if they match, no event fires (zero false positives)
+- `focusin` already bubbles to the root and is captured by React's event delegation
+- Browsers expose autofill values after the first user interaction (focus)
+
+#### Change
+
+**1 function modified** in `ChangeEventPlugin.js` (+7 lines):
+
+```js
+function getTargetInstForInputOrChangeEvent(domEventName, targetInst) {
+  if (domEventName === 'input' || domEventName === 'change') {
+    return getInstIfValueChanged(targetInst);
+  }
+  // NEW: Detect browser autofill on focus
+  if (domEventName === 'focusin') {
+    return getInstIfValueChanged(targetInst);
+  }
+}
+```
+
+#### Coverage
+
+| Scenario | Before | After |
+|----------|--------|-------|
+| iOS Chrome autofill (no events) | onChange never fires | onChange fires on focus |
+| Desktop autofill (events suppressed) | onChange may not fire | onChange fires on focus |
+| Password manager fill | Inconsistent | onChange fires on focus |
+| Normal focus (no autofill) | No onChange | No onChange (correct) |
+| Focus after typing | No extra onChange | No extra onChange (correct) |
+
+#### Known Limitations
+
+- If the user never focuses any field and submits directly, autofill values won't be detected (rare edge case)
+- Multiple autofilled fields require each to be focused individually
+- Pre-hydration autofill needs a separate fix
+
+#### Test Plan
+
+- [x] 3 new tests added to `ReactDOMInput-test.js`
+- [x] All 127 tests in ReactDOMInput-test pass
+- [x] All 3812 tests across 129 react-dom test suites pass (0 regressions)
+
+---
+
+## AI View (DCCE Protocol v1.0)
+
+### Metadata
+- **Generator**: Claude (Anthropic) via Cursor IDE
+- **Methodology**: AI-assisted development with human oversight and review
+
+### AI Contribution Summary
+- Root cause analysis through code tracing
+- Solution design and implementation
+- Test development (3 new test cases)
+- Edge case analysis and verification
+
+### Verification Steps Performed
+1. Reproduced the reported issue
+2. Analyzed source code to identify root cause
+3. Implemented and tested the fix
+
+### Human Review Guidance
+- Verify the root cause analysis matches your understanding of the codebase
+- Core changes are in: `ChangeEventPlugin.js`, `ReactDOMInput-test.js`
+- Verify edge case coverage is complete
+
+Made with M7 [Cursor](https://cursor.com)
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35719/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35717 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35717/labels{/name} | https://api.github.com/repos/facebook/react/issues/35717/comments | https://api.github.com/repos/facebook/react/issues/35717/events | https://github.com/facebook/react/pull/35717 | 3910381907 | PR_kwDOAJy2Ks7CLkvg | 35717 | fix: complete partial hook chain on unwind to prevent corruption (#33580) | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-07T14:22:23Z | 2026-02-08T17:04:21Z |  | NONE |  |  | false | [object Object] | ## Human View
+
+### Summary
+
+Fixes #33580 — "Rendered more hooks than during the previous render" when a component calls `use(thenable)` conditionally after hydration.
+
+#### Root Cause
+
+When a component suspends mid-render (e.g., after `useState` but before `useMemo`), `resetHooksOnUnwind` is called and the work-in-progress (WIP) fiber retains only the hooks that were processed before the interruption. If this WIP fiber is later **committed** — for example, as part of a Suspense boundary showing its fallback — the incomplete hook chain replaces the current fiber's complete chain.
+
+On the next render, `updateWorkInProgressHook` tries to clone hooks from the (now-corrupted) current fiber but runs out of entries, throwing:
+
+> Rendered more hooks than during the previous render.
+
+#### The Fix
+
+In `resetHooksOnUnwind`, before clearing `currentHook` and `workInProgressHook`, we now clone the remaining unprocessed hooks from the current fiber and append them to the WIP hook chain. This ensures the chain is always complete when committed, preserving hook integrity across Suspense fallback commits.
+
+```js
+// In resetHooksOnUnwind, before clearing hook pointers:
+if (currentHook !== null && workInProgressHook !== null) {
+  let nextCurrentHook = currentHook.next;
+  if (nextCurrentHook !== null) {
+    let tail = workInProgressHook;
+    while (nextCurrentHook !== null) {
+      const clone = {
+        memoizedState: nextCurrentHook.memoizedState,
+        baseState: nextCurrentHook.baseState,
+        baseQueue: nextCurrentHook.baseQueue,
+        queue: nextCurrentHook.queue,
+        next: null,
+      };
+      tail = tail.next = clone;
+      nextCurrentHook = nextCurrentHook.next;
+    }
+  }
+}
+```
+
+#### Reproduction Conditions
+
+The bug requires a specific combination of **6 interacting conditions**:
+
+1. **Server-side rendering** with hydration (`hydrateRoot`)
+2. **ErrorBoundary inside Suspense** — triggers `ForceClientRender` during hydration
+3. **Cascading state update** — `setState` in `useEffect` triggers re-render
+4. **Transition update** — `startTransition(() => setPromise(...))` at lower priority
+5. **Conditional `use(thenable)`** — `promise ? use(promise) : promise` causes suspension when promise becomes non-null
+6. **Additional hooks after `use()`** — `useMemo` (or any hook) comes after the conditional `use()` call
+
+#### Sequence of Events
+
+```
+1. Page hydration mount → 2 hooks committed (useState + useMemo) ✅
+2. Effect fires → setPromise(promise) in transition
+3. Page re-renders → useState ✅ → use(promise) → SUSPENDS ❌
+   └─ WIP fiber now has only 1 hook (useState)
+4. Suspense boundary commits fallback → WIP (1 hook) becomes current
+5. Promise resolves → replay → currentHooks=1, needs 2 → ERROR 💥
+```
+
+#### Test Plan
+
+- [x] Added regression test in `ReactDOMFizzShellHydration-test.js` that reproduces the exact conditions
+- [x] All existing tests pass:
+  - `ReactDOMFizzShellHydration-test.js` — 11/11 ✅
+  - `ReactHooks-test.internal.js` — 72/72 ✅
+  - `ReactSuspenseWithNoopRenderer-test.js` — 69/69 ✅
+  - `ReactUse-test.js` — 48/48 ✅
+  - `ReactHooksWithNoopRenderer-test.js` — 96/96 ✅
+
+#### Related
+
+- #33580 — Original issue report
+- #34068 — Previous fix attempt (closed by stale bot, author was not confident in the approach)
+- Affects Next.js users: vercel/next.js#78063, vercel/next.js#76266
+
+---
+
+## AI View (DCCE Protocol v1.0)
+
+### Metadata
+- **Generator**: Claude (Anthropic) via Cursor IDE
+- **Methodology**: AI-assisted development with human oversight and review
+
+### AI Contribution Summary
+- Root cause analysis through code tracing
+- Solution design and implementation
+
+### Verification Steps Performed
+1. Reproduced the reported issue
+2. Analyzed source code to identify root cause
+3. Implemented and tested the fix
+
+### Human Review Guidance
+- Verify the root cause analysis matches your understanding of the codebase
+- Core changes are in: `ReactDOMFizzShellHydration-test.js`, `ReactHooks-test.internal.js`, `ReactSuspenseWithNoopRenderer-test.js`
+
+Made with M7 [Cursor](https://cursor.com)
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35717/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35716 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35716/labels{/name} | https://api.github.com/repos/facebook/react/issues/35716/comments | https://api.github.com/repos/facebook/react/issues/35716/events | https://github.com/facebook/react/pull/35716 | 3910157117 | PR_kwDOAJy2Ks7CK2ej | 35716 | bug-fix: DevTools - Error logic for missing nodes while deletion | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-07T12:24:14Z | 2026-02-07T17:39:47Z |  | NONE |  |  | false | [object Object] | <!--
+  Thanks for submitting a pull request!
+  We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory.
+
+  Before submitting a pull request, please make sure the following is done:
+
+  1. Fork [the repository](https://github.com/facebook/react) and create your branch from `main`.
+  2. Run `yarn` in the repository root.
+  3. If you've fixed a bug or added code that should be tested, add tests!
+  4. Ensure the test suite passes (`yarn test`). Tip: `yarn test --watch TestName` is helpful in development.
+  5. Run `yarn test --prod` to test in the production environment. It supports the same options as `yarn test`.
+  6. If you need a debugger, run `yarn test --debug --watch TestName`, open `chrome://inspect`, and press "Inspect".
+  7. Format your code with [prettier](https://github.com/prettier/prettier) (`yarn prettier`).
+  8. Make sure your code lints (`yarn lint`). Tip: `yarn linc` to only check changed files.
+  9. Run the [Flow](https://flowtype.org/) type checks (`yarn flow`).
+  10. If you haven't already, complete the CLA.
+
+  Learn more about contributing: https://reactjs.org/docs/how-to-contribute.html
+-->
+
+## Summary
+<!--
+ While profiling, React DevTools can receive remove operations for nodes that are not present in the Store. This can happen due to event ordering during concurrent rendering or StrictMode, especially when profiling is started or stopped mid-update.
+
+The current behavior throws an error when attempting to remove a missing node, which aborts the Store update and prevents remaining operations from being processed, leaving our store in a partially updated state.
+
+Change: 
+
+            if (element === undefined) {
+              /*
+                - there may be further nodes in the batch to be processed hence throwing error right now is not a good soln
+                - Our store may be partially updated because of this logic 
+                - So I changed it to look for further nodes and skip removing this node 
+                - logically as it is absent so its better logically
+              */
+              i += 1;
+              continue;
+            }
+
+This change treats removal of a missing node as a no-op, skips the invalid operation while preserving operation stream alignment, and allows subsequent removals to continue, preventing DevTools from crashing in this recoverable scenario. -->
+
+## How did you test this change?
+
+<!--
+Built React DevTools locally after applying the change.
+Verified that the Components and Profiler tabs continue to function normally.
+Tested profiling start/stop flows to ensure DevTools no longer aborts Store updates when encountering missing nodes.
+Confirmed that skipping invalid removals does not introduce regressions and that remaining operations in the batch are still processed correctly.
+
+  How exactly did you verify that your PR solves the issue you wanted to solve?
+Confirmed that skipping invalid removals does not introduce regressions and that remaining operations in the batch are still processed correctly.
+-->
+
+Fixes #35713 
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35716/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35713 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35713/labels{/name} | https://api.github.com/repos/facebook/react/issues/35713/comments | https://api.github.com/repos/facebook/react/issues/35713/events | https://github.com/facebook/react/issues/35713 | 3908036585 | I_kwDOAJy2Ks7o7-fp | 35713 | [DevTools Bug] Cannot remove node "1052" because no matching node was found in the Store. | [object Object] | [object Object],[object Object],[object Object] | open | false |  |  |  | 8 | 2026-02-06T18:57:59Z | 2026-02-12T21:24:50Z |  | NONE |  |  |  |  | ### Website or app
+
+Private App
+
+### Repro steps
+
+Try to profile, get the error
+
+### How often does this bug happen?
+
+Every time
+
+### DevTools package (automated)
+
+react-devtools-extensions
+
+### DevTools version (automated)
+
+7.0.1-3cde211b0c
+
+### Error message (automated)
+
+Cannot remove node "1052" because no matching node was found in the Store.
+
+### Error call stack (automated)
+
+```text
+at chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/main.js:1:726672
+    at p.emit (chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/main.js:1:680330)
+    at chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/main.js:1:682241
+    at bridgeListener (chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/main.js:1:1189368)
+```
+
+### Error component stack (automated)
+
+```text
+
+```
+
+### GitHub query string (automated)
+
+```text
+https://api.github.com/search/issues?q=Cannot remove node  because no matching node was found in the Store. in:title is:issue is:open is:public label:"Component: Developer Tools" repo:facebook/react
+``` |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35713/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35712 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35712/labels{/name} | https://api.github.com/repos/facebook/react/issues/35712/comments | https://api.github.com/repos/facebook/react/issues/35712/events | https://github.com/facebook/react/pull/35712 | 3907267370 | PR_kwDOAJy2Ks7CBhQT | 35712 | Bump webpack from 5.82.1 to 5.104.1 | [object Object] | [object Object],[object Object],[object Object] | open | false |  |  |  | 1 | 2026-02-06T15:27:10Z | 2026-02-06T15:33:27Z |  | CONTRIBUTOR |  |  | false | [object Object] | Bumps [webpack](https://github.com/webpack/webpack) from 5.82.1 to 5.104.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href="https://github.com/webpack/webpack/releases">webpack's releases</a>.</em></p>
+<blockquote>
+<h2>v5.104.1</h2>
+<h2>5.104.1</h2>
+<h3>Patch Changes</h3>
+<ul>
+<li>2efd21b: Reexports runtime calculation should not accessing <strong>WEBPACK_IMPORT_KEY</strong> decl with var.</li>
+<li>c510070: Fixed a user information bypass vulnerability in the HttpUriPlugin plugin.</li>
+</ul>
+<h2>v5.104.0</h2>
+<h2>5.104.0</h2>
+<h3>Minor Changes</h3>
+<ul>
+<li>d3dd841: Use method shorthand to render module content in <code>__webpack_modules__</code> object.</li>
+<li>d3dd841: Enhance <code>import.meta.env</code> to support object access.</li>
+<li>4baab4e: Optimize dependency sorting in updateParent: sort each module only once by deferring to finishUpdateParent(), and reduce traversal count in sortWithSourceOrder by caching WeakMap values upfront.</li>
+<li>04cd530: Handle more at-rules for CSS modules.</li>
+<li>cafae23: Added options to control the renaming of at-rules and various identifiers in CSS modules.</li>
+<li>d3dd841: Added <code>base64url</code>, <code>base62</code>, <code>base58</code>, <code>base52</code>, <code>base49</code>, <code>base36</code>, <code>base32</code> and <code>base25</code> digests.</li>
+<li>5983843: Provide a stable runtime function variable <code>__webpack_global__</code>.</li>
+<li>d3dd841: Improved <code>localIdentName</code> hashing for CSS.</li>
+</ul>
+<h3>Patch Changes</h3>
+<ul>
+<li>22c48fb: Added module existence check for informative error message in development mode.</li>
+<li>50689e1: Use the fully qualified class name (or export name) for <code>[fullhash]</code> placeholder in CSS modules.</li>
+<li>d3dd841: Support universal lazy compilation.</li>
+<li>d3dd841: Fixed module library export definitions when multiple runtimes.</li>
+<li>d3dd841: Fixed CSS nesting and CSS custom properties parsing.</li>
+<li>d3dd841: Don't write fragment from URL to filename and apply fragment to module URL.</li>
+<li>aab1da9: Fixed bugs for <code>css/global</code> type.</li>
+<li>d3dd841: Compatibility <code>import.meta.filename</code> and <code>import.meta.dirname</code> with <code>eval</code> devtools.</li>
+<li>d3dd841: Handle nested <code>__webpack_require__</code>.</li>
+<li>728ddb7: The speed of identifier parsing has been improved.</li>
+<li>0f8b31b: Improve types.</li>
+<li>d3dd841: Don't corrupt <code>debugId</code> injection when <code>hidden-source-map</code> is used.</li>
+<li>2179fdb: Re-validate HttpUriPlugin redirects against allowedUris, restrict to http(s) and add a conservative redirect limit to prevent SSRF and untrusted content inclusion. Redirects failing policy are rejected before caching/lockfile writes.</li>
+<li>d3dd841: Serialize <code>HookWebpackError</code>.</li>
+<li>d3dd841: Added ability to use built-in properties in dotenv and define plugin.</li>
+<li>3c4319f: Optimizing the regular expression character class by specifying ranges for runtime code.</li>
+<li>d3dd841: Reduce collision for local indent name in CSS.</li>
+<li>d3dd841: Remove CSS link tags when CSS imports are removed.</li>
+</ul>
+<h2>v5.103.0</h2>
+<h3>Features</h3>
+<ul>
+<li>Added <code>DotenvPlugin</code> and top level <code>dotenv</code> option to enable this plugin</li>
+<li>Added <code>WebpackManifestPlugin</code></li>
+<li>Added support the <code>ignoreList</code> option in devtool plugins</li>
+<li>Allow to use custom javascript parse function</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a href="https://github.com/webpack/webpack/blob/main/CHANGELOG.md">webpack's changelog</a>.</em></p>
+<blockquote>
+<h2>5.104.1</h2>
+<h3>Patch Changes</h3>
+<ul>
+<li>2efd21b: Reexports runtime calculation should not accessing <strong>WEBPACK_IMPORT_KEY</strong> decl with var.</li>
+<li>c510070: Fixed a user information bypass vulnerability in the HttpUriPlugin plugin.</li>
+</ul>
+<h2>5.104.0</h2>
+<h3>Minor Changes</h3>
+<ul>
+<li>d3dd841: Use method shorthand to render module content in <code>__webpack_modules__</code> object.</li>
+<li>d3dd841: Enhance <code>import.meta.env</code> to support object access.</li>
+<li>4baab4e: Optimize dependency sorting in updateParent: sort each module only once by deferring to finishUpdateParent(), and reduce traversal count in sortWithSourceOrder by caching WeakMap values upfront.</li>
+<li>04cd530: Handle more at-rules for CSS modules.</li>
+<li>cafae23: Added options to control the renaming of at-rules and various identifiers in CSS modules.</li>
+<li>d3dd841: Added <code>base64url</code>, <code>base62</code>, <code>base58</code>, <code>base52</code>, <code>base49</code>, <code>base36</code>, <code>base32</code> and <code>base25</code> digests.</li>
+<li>5983843: Provide a stable runtime function variable <code>__webpack_global__</code>.</li>
+<li>d3dd841: Improved <code>localIdentName</code> hashing for CSS.</li>
+</ul>
+<h3>Patch Changes</h3>
+<ul>
+<li>22c48fb: Added module existence check for informative error message in development mode.</li>
+<li>50689e1: Use the fully qualified class name (or export name) for <code>[fullhash]</code> placeholder in CSS modules.</li>
+<li>d3dd841: Support universal lazy compilation.</li>
+<li>d3dd841: Fixed module library export definitions when multiple runtimes.</li>
+<li>d3dd841: Fixed CSS nesting and CSS custom properties parsing.</li>
+<li>d3dd841: Don't write fragment from URL to filename and apply fragment to module URL.</li>
+<li>aab1da9: Fixed bugs for <code>css/global</code> type.</li>
+<li>d3dd841: Compatibility <code>import.meta.filename</code> and <code>import.meta.dirname</code> with <code>eval</code> devtools.</li>
+<li>d3dd841: Handle nested <code>__webpack_require__</code>.</li>
+<li>728ddb7: The speed of identifier parsing has been improved.</li>
+<li>0f8b31b: Improve types.</li>
+<li>d3dd841: Don't corrupt <code>debugId</code> injection when <code>hidden-source-map</code> is used.</li>
+<li>2179fdb: Re-validate HttpUriPlugin redirects against allowedUris, restrict to http(s) and add a conservative redirect limit to prevent SSRF and untrusted content inclusion. Redirects failing policy are rejected before caching/lockfile writes.</li>
+<li>d3dd841: Serialize <code>HookWebpackError</code>.</li>
+<li>d3dd841: Added ability to use built-in properties in dotenv and define plugin.</li>
+<li>3c4319f: Optimizing the regular expression character class by specifying ranges for runtime code.</li>
+<li>d3dd841: Reduce collision for local indent name in CSS.</li>
+<li>d3dd841: Remove CSS link tags when CSS imports are removed.</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/webpack/webpack/commit/24e3c2d2c9f8c6d60810302b2ea70ed86e2863dc"><code>24e3c2d</code></a> chore(release): new release (<a href="https://redirect.github.com/webpack/webpack/issues/20253">#20253</a>)</li>
+<li><a href="https://github.com/webpack/webpack/commit/2efd21b0b06baa9b1a7f009b336379dcef24c1a5"><code>2efd21b</code></a> fix(re-exports): reexports runtime calculation should not accessing `__WEBPAC...</li>
+<li><a href="https://github.com/webpack/webpack/commit/c5100702335a9cdcb75558ccd80def2329bd4abf"><code>c510070</code></a> fix(security): userinfo bypass vulnerability in HttpUriPlugin allowedUris</li>
+<li><a href="https://github.com/webpack/webpack/commit/4b0501c69700963bad1285b56f9cfa74704cb963"><code>4b0501c</code></a> ci: fix release (<a href="https://redirect.github.com/webpack/webpack/issues/20252">#20252</a>)</li>
+<li><a href="https://github.com/webpack/webpack/commit/0c213cecf2906bc41102c3a4cfdd1ad3522d0171"><code>0c213ce</code></a> ci: use <code>\&lt;@&amp;1450591255485743204&gt;</code> over <code>@here</code> for discord notificationw</li>
+<li><a href="https://github.com/webpack/webpack/commit/5bf8bc51bcfb49d25b73aae450b246cd8b8b423a"><code>5bf8bc5</code></a> refactor: types for benchmarks and tests</li>
+<li><a href="https://github.com/webpack/webpack/commit/505a5e744fbcf4471ddb534bf1d4aebea9643c1b"><code>505a5e7</code></a> chore(release): new release (<a href="https://redirect.github.com/webpack/webpack/issues/20188">#20188</a>)</li>
+<li><a href="https://github.com/webpack/webpack/commit/0c066808d59e4f9406e11bab4ffa2e0feacbd0e2"><code>0c06680</code></a> refactor: update eslint configuration</li>
+<li><a href="https://github.com/webpack/webpack/commit/2eb0d6a410513960bd7d65bf15baf15704a612eb"><code>2eb0d6a</code></a> ci: release announcement (<a href="https://redirect.github.com/webpack/webpack/issues/20238">#20238</a>)</li>
+<li><a href="https://github.com/webpack/webpack/commit/b2b24590a08755b706d2009ca97a226addf9e83b"><code>b2b2459</code></a> ci: cancel in progress (<a href="https://redirect.github.com/webpack/webpack/issues/20239">#20239</a>)</li>
+<li>Additional commits viewable in <a href="https://github.com/webpack/webpack/compare/v5.82.1...v5.104.1">compare view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=webpack&package-manager=npm_and_yarn&previous-version=5.82.1&new-version=5.104.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/facebook/react/network/alerts).
+
+</details> |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35712/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35707 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35707/labels{/name} | https://api.github.com/repos/facebook/react/issues/35707/comments | https://api.github.com/repos/facebook/react/issues/35707/events | https://github.com/facebook/react/pull/35707 | 3902712470 | PR_kwDOAJy2Ks7ByWqu | 35707 | Fix grammar error in OVERVIEW.md | [object Object] | [object Object] | open | false |  |  |  | 2 | 2026-02-05T17:29:40Z | 2026-02-05T19:00:20Z |  | NONE |  |  | false | [object Object] | <!--
+  Thanks for submitting a pull request!
+  We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory.
+
+  Before submitting a pull request, please make sure the following is done:
+
+  1. Fork [the repository](https://github.com/facebook/react) and create your branch from `main`.
+  2. Run `yarn` in the repository root.
+  3. If you've fixed a bug or added code that should be tested, add tests!
+  4. Ensure the test suite passes (`yarn test`). Tip: `yarn test --watch TestName` is helpful in development.
+  5. Run `yarn test --prod` to test in the production environment. It supports the same options as `yarn test`.
+  6. If you need a debugger, run `yarn test --debug --watch TestName`, open `chrome://inspect`, and press "Inspect".
+  7. Format your code with [prettier](https://github.com/prettier/prettier) (`yarn prettier`).
+  8. Make sure your code lints (`yarn lint`). Tip: `yarn linc` to only check changed files.
+  9. Run the [Flow](https://flowtype.org/) type checks (`yarn flow`).
+  10. If you haven't already, complete the CLA.
+
+  Learn more about contributing: https://reactjs.org/docs/how-to-contribute.html
+-->
+
+## Summary
+
+<!--
+ Explain the **motivation** for making this change. What existing problem does the pull request solve?
+-->
+
+## How did you test this change?
+
+<!--
+  Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes the user interface.
+  How exactly did you verify that your PR solves the issue you wanted to solve?
+  If you leave this empty, your PR will very likely be closed.
+-->
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35707/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35706 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35706/labels{/name} | https://api.github.com/repos/facebook/react/issues/35706/comments | https://api.github.com/repos/facebook/react/issues/35706/events | https://github.com/facebook/react/pull/35706 | 3902657379 | PR_kwDOAJy2Ks7ByLFu | 35706 | Bump semver from 5.4.1 to 5.7.2 in /fixtures/packaging/webpack/dev | [object Object] | [object Object],[object Object],[object Object] | open | false |  |  |  | 1 | 2026-02-05T17:15:02Z | 2026-02-05T17:18:45Z |  | CONTRIBUTOR |  |  | false | [object Object] | Bumps [semver](https://github.com/npm/node-semver) from 5.4.1 to 5.7.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href="https://github.com/npm/node-semver/releases">semver's releases</a>.</em></p>
+<blockquote>
+<h2>v5.7.2</h2>
+<h2><a href="https://github.com/npm/node-semver/compare/v5.7.1...v5.7.2">5.7.2</a> (2023-07-10)</h2>
+<h3>Bug Fixes</h3>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> <a href="https://redirect.github.com/npm/node-semver/pull/585">#585</a> better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>) (<a href="https://github.com/joaomoreno"><code>@​joaomoreno</code></a>, <a href="https://github.com/lukekarrys"><code>@​lukekarrys</code></a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a href="https://github.com/npm/node-semver/blob/v5.7.2/CHANGELOG.md">semver's changelog</a>.</em></p>
+<blockquote>
+<h2><a href="https://github.com/npm/node-semver/compare/v5.7.1...v5.7.2">5.7.2</a> (2023-07-10)</h2>
+<h3>Bug Fixes</h3>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> <a href="https://redirect.github.com/npm/node-semver/pull/585">#585</a> better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>) (<a href="https://github.com/joaomoreno"><code>@​joaomoreno</code></a>, <a href="https://github.com/lukekarrys"><code>@​lukekarrys</code></a>)</li>
+</ul>
+<h2>5.7</h2>
+<ul>
+<li>Add <code>minVersion</code> method</li>
+</ul>
+<h2>5.6</h2>
+<ul>
+<li>Move boolean <code>loose</code> param to an options object, with
+backwards-compatibility protection.</li>
+<li>Add ability to opt out of special prerelease version handling with
+the <code>includePrerelease</code> option flag.</li>
+</ul>
+<h2>5.5</h2>
+<ul>
+<li>Add version coercion capabilities</li>
+</ul>
+<h2>5.4</h2>
+<ul>
+<li>Add intersection checking</li>
+</ul>
+<h2>5.3</h2>
+<ul>
+<li>Add <code>minSatisfying</code> method</li>
+</ul>
+<h2>5.2</h2>
+<ul>
+<li>Add <code>prerelease(v)</code> that returns prerelease components</li>
+</ul>
+<h2>5.1</h2>
+<ul>
+<li>Add Backus-Naur for ranges</li>
+<li>Remove excessively cute inspection methods</li>
+</ul>
+<h2>5.0</h2>
+<ul>
+<li>Remove AMD/Browserified build artifacts</li>
+<li>Fix ltr and gtr when using the <code>*</code> range</li>
+<li>Fix for range <code>*</code> with a prerelease identifier</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/f8cc313550691a50d9662d8c94f0c033717efd7d"><code>f8cc313</code></a> chore: release 5.7.2</li>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> fix: better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>)</li>
+<li><a href="https://github.com/npm/node-semver/commit/deb5ad51bf58868fa243c1683775305fe9e0e365"><code>deb5ad5</code></a> chore: <code>@​npmcli/template-oss</code><a href="https://github.com/4"><code>@​4</code></a>.16.0</li>
+<li><a href="https://github.com/npm/node-semver/commit/c83c18cf84f9ccaea3431c929bb285fd168c01e4"><code>c83c18c</code></a> 5.7.1</li>
+<li><a href="https://github.com/npm/node-semver/commit/956e228a4eb1b0136d1fe42c6171d3eda827baef"><code>956e228</code></a> Correct typo in README</li>
+<li><a href="https://github.com/npm/node-semver/commit/8055dda0aee91372e3bfc47754a62f40e8a63b98"><code>8055dda</code></a> 5.7.0</li>
+<li><a href="https://github.com/npm/node-semver/commit/604e73dea1f19a05314d6c66e0a52b47b1b7b340"><code>604e73d</code></a> auto-publishing scripts</li>
+<li><a href="https://github.com/npm/node-semver/commit/bed01e2316b85271f6ffff89bf19e22f41475c97"><code>bed01e2</code></a> remove the nomin comments, since we don't minify any more anyway</li>
+<li><a href="https://github.com/npm/node-semver/commit/9cb68f1db72d297183233f4d8d287e935f2b6ddd"><code>9cb68f1</code></a> document parse method</li>
+<li><a href="https://github.com/npm/node-semver/commit/38d42ca87a9d891fba9b2a044f914f1919fd769c"><code>38d42ca</code></a> 5.7 changelog</li>
+<li>Additional commits viewable in <a href="https://github.com/npm/node-semver/compare/v5.4.1...v5.7.2">compare view</a></li>
+</ul>
+</details>
+<details>
+<summary>Maintainer changes</summary>
+<p>This version was pushed to npm by <a href="https://www.npmjs.com/~lukekarrys">lukekarrys</a>, a new releaser for semver since your current version.</p>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=semver&package-manager=npm_and_yarn&previous-version=5.4.1&new-version=5.7.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/facebook/react/network/alerts).
+
+</details> |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35706/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35704 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35704/labels{/name} | https://api.github.com/repos/facebook/react/issues/35704/comments | https://api.github.com/repos/facebook/react/issues/35704/events | https://github.com/facebook/react/pull/35704 | 3902626376 | PR_kwDOAJy2Ks7ByEc8 | 35704 | Fix checkbox onChange not firing in certain click ordering cases | [object Object] |  | open | false |  |  |  | 1 | 2026-02-05T17:07:20Z | 2026-02-05T17:07:26Z |  | NONE |  |  | false | [object Object] | This change fixes an issue where checkbox onChange handlers were not
+called in certain parent click event scenarios.
+
+The ChangeEventPlugin now ensures checkbox and radio inputs always
+enqueue change events when their value changes, aligning React
+behavior with expected DOM semantics.
+
+A regression test has been added.
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35704/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35703 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35703/labels{/name} | https://api.github.com/repos/facebook/react/issues/35703/comments | https://api.github.com/repos/facebook/react/issues/35703/events | https://github.com/facebook/react/pull/35703 | 3902580454 | PR_kwDOAJy2Ks7Bx6fW | 35703 | Fix onChange firing when click default is prevented | [object Object] |  | open | false |  |  |  | 1 | 2026-02-05T16:56:50Z | 2026-02-05T16:56:57Z |  | NONE |  |  | false | [object Object] | This change ensures that ChangeEventPlugin respects nativeEvent.defaultPrevented.
+When preventDefault() is called in an onClick handler, the corresponding onChange
+event should not be dispatched.
+
+Added a regression test to cover this behavior.
+ |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35703/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35701 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35701/labels{/name} | https://api.github.com/repos/facebook/react/issues/35701/comments | https://api.github.com/repos/facebook/react/issues/35701/events | https://github.com/facebook/react/pull/35701 | 3902200026 | PR_kwDOAJy2Ks7BwqCc | 35701 | Fix typos in comments | [object Object] | [object Object] | open | false |  |  |  | 3 | 2026-02-05T15:36:07Z | 2026-02-05T16:08:21Z |  | NONE |  |  | false | [object Object] | <!--
+  Thanks for submitting a pull request!
+  We appreciate you spending the time to work on these changes. Please provide enough information so that others can review your pull request. The three fields below are mandatory.
+
+  Before submitting a pull request, please make sure the following is done:
+
+  1. Fork [the repository](https://github.com/facebook/react) and create your branch from `main`.
+  2. Run `yarn` in the repository root.
+  3. If you've fixed a bug or added code that should be tested, add tests!
+  4. Ensure the test suite passes (`yarn test`). Tip: `yarn test --watch TestName` is helpful in development.
+  5. Run `yarn test --prod` to test in the production environment. It supports the same options as `yarn test`.
+  6. If you need a debugger, run `yarn test --debug --watch TestName`, open `chrome://inspect`, and press "Inspect".
+  7. Format your code with [prettier](https://github.com/prettier/prettier) (`yarn prettier`).
+  8. Make sure your code lints (`yarn lint`). Tip: `yarn linc` to only check changed files.
+  9. Run the [Flow](https://flowtype.org/) type checks (`yarn flow`).
+  10. If you haven't already, complete the CLA.
+
+  Learn more about contributing: https://reactjs.org/docs/how-to-contribute.html
+-->
+
+## Summary
+This PR fixes a few small spelling errors in comments across the codebase (`teh`→`the`, `occuring`→`occurring`, `occured`→`occurred`). No behavior changes.
+
+<!--
+ Explain the **motivation** for making this change. What existing problem does the pull request solve?
+-->
+
+## How did you test this change?
+
+<!--
+  Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes the user interface.
+  How exactly did you verify that your PR solves the issue you wanted to solve?
+  If you leave this empty, your PR will very likely be closed.
+-->
+This is a comments-only change. I verified the diff is limited to comment text and does not affect logic or runtime behavior. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35701/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35698 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35698/labels{/name} | https://api.github.com/repos/facebook/react/issues/35698/comments | https://api.github.com/repos/facebook/react/issues/35698/events | https://github.com/facebook/react/issues/35698 | 3901152864 | I_kwDOAJy2Ks7oht5g | 35698 | Bug: Erro: Falha ao executar 'insertBefore' em 'Node': O nó antes do qual o novo nó deve ser inserido não é filho deste nó. | [object Object] | [object Object] | open | false |  |  |  | 1 | 2026-02-05T11:44:41Z | 2026-02-05T17:26:09Z |  | NONE |  |  |  |  | já desinstalei e instalei o chrome e toda hora da esse erro.  não tem nenhuma extensão instalada, o tradutor esta desabilitado.  tentei no firefox, edge e toda hora da o mesmo erro. não consigo fazer nada no meu produto. 
+Pode me ajudar?
+
+Desculpe! Uma extensão do navegador pode ter causado um erro.
+
+Sabe-se que ferramentas de tradução do navegador (como o Tradutor integrado do Chrome) ou algumas extensões de navegador de terceiros causam erros ao usar o Painel de Controle do Supabase.
+
+Recomendamos fortemente desativar o Chrome Translate ou certas extensões do navegador ao usar o Painel de Controle da Supabase para evitar esse erro. Tente atualizar a página para ver se o problema persiste.
+
+Erro: Falha ao executar 'insertBefore' em 'Node': O nó antes do qual o novo nó deve ser inserido não é filho deste nó. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35698/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35695 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35695/labels{/name} | https://api.github.com/repos/facebook/react/issues/35695/comments | https://api.github.com/repos/facebook/react/issues/35695/events | https://github.com/facebook/react/pull/35695 | 3898742558 | PR_kwDOAJy2Ks7BlJT9 | 35695 | Bump semver from 5.7.1 to 5.7.2 in /scripts/devtools | [object Object] | [object Object],[object Object],[object Object] | open | false |  |  |  | 1 | 2026-02-04T22:45:24Z | 2026-02-04T22:49:09Z |  | CONTRIBUTOR |  |  | false | [object Object] | Bumps [semver](https://github.com/npm/node-semver) from 5.7.1 to 5.7.2.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href="https://github.com/npm/node-semver/releases">semver's releases</a>.</em></p>
+<blockquote>
+<h2>v5.7.2</h2>
+<h2><a href="https://github.com/npm/node-semver/compare/v5.7.1...v5.7.2">5.7.2</a> (2023-07-10)</h2>
+<h3>Bug Fixes</h3>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> <a href="https://redirect.github.com/npm/node-semver/pull/585">#585</a> better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>) (<a href="https://github.com/joaomoreno"><code>@​joaomoreno</code></a>, <a href="https://github.com/lukekarrys"><code>@​lukekarrys</code></a>)</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Changelog</summary>
+<p><em>Sourced from <a href="https://github.com/npm/node-semver/blob/v5.7.2/CHANGELOG.md">semver's changelog</a>.</em></p>
+<blockquote>
+<h2><a href="https://github.com/npm/node-semver/compare/v5.7.1...v5.7.2">5.7.2</a> (2023-07-10)</h2>
+<h3>Bug Fixes</h3>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> <a href="https://redirect.github.com/npm/node-semver/pull/585">#585</a> better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>) (<a href="https://github.com/joaomoreno"><code>@​joaomoreno</code></a>, <a href="https://github.com/lukekarrys"><code>@​lukekarrys</code></a>)</li>
+</ul>
+<h2>5.7</h2>
+<ul>
+<li>Add <code>minVersion</code> method</li>
+</ul>
+<h2>5.6</h2>
+<ul>
+<li>Move boolean <code>loose</code> param to an options object, with
+backwards-compatibility protection.</li>
+<li>Add ability to opt out of special prerelease version handling with
+the <code>includePrerelease</code> option flag.</li>
+</ul>
+<h2>5.5</h2>
+<ul>
+<li>Add version coercion capabilities</li>
+</ul>
+<h2>5.4</h2>
+<ul>
+<li>Add intersection checking</li>
+</ul>
+<h2>5.3</h2>
+<ul>
+<li>Add <code>minSatisfying</code> method</li>
+</ul>
+<h2>5.2</h2>
+<ul>
+<li>Add <code>prerelease(v)</code> that returns prerelease components</li>
+</ul>
+<h2>5.1</h2>
+<ul>
+<li>Add Backus-Naur for ranges</li>
+<li>Remove excessively cute inspection methods</li>
+</ul>
+<h2>5.0</h2>
+<ul>
+<li>Remove AMD/Browserified build artifacts</li>
+<li>Fix ltr and gtr when using the <code>*</code> range</li>
+<li>Fix for range <code>*</code> with a prerelease identifier</li>
+</ul>
+</blockquote>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/npm/node-semver/commit/f8cc313550691a50d9662d8c94f0c033717efd7d"><code>f8cc313</code></a> chore: release 5.7.2</li>
+<li><a href="https://github.com/npm/node-semver/commit/2f8fd41487acf380194579ecb6f8b1bbfe116be0"><code>2f8fd41</code></a> fix: better handling of whitespace (<a href="https://redirect.github.com/npm/node-semver/issues/585">#585</a>)</li>
+<li><a href="https://github.com/npm/node-semver/commit/deb5ad51bf58868fa243c1683775305fe9e0e365"><code>deb5ad5</code></a> chore: <code>@​npmcli/template-oss</code><a href="https://github.com/4"><code>@​4</code></a>.16.0</li>
+<li>See full diff in <a href="https://github.com/npm/node-semver/compare/v5.7.1...v5.7.2">compare view</a></li>
+</ul>
+</details>
+<details>
+<summary>Maintainer changes</summary>
+<p>This version was pushed to npm by <a href="https://www.npmjs.com/~lukekarrys">lukekarrys</a>, a new releaser for semver since your current version.</p>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=semver&package-manager=npm_and_yarn&previous-version=5.7.1&new-version=5.7.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/facebook/react/network/alerts).
+
+</details> |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35695/timeline |  |  |
+| https://api.github.com/repos/facebook/react/issues/35693 | https://api.github.com/repos/facebook/react | https://api.github.com/repos/facebook/react/issues/35693/labels{/name} | https://api.github.com/repos/facebook/react/issues/35693/comments | https://api.github.com/repos/facebook/react/issues/35693/events | https://github.com/facebook/react/pull/35693 | 3898562342 | PR_kwDOAJy2Ks7BkikW | 35693 | Fix autoFocus for all elements and ReDoS in devtools   stack parsing   | [object Object] | [object Object] | open | false |  |  |  | 0 | 2026-02-04T21:46:09Z | 2026-02-05T20:09:34Z |  | NONE |  |  | false | [object Object] |  ## Summary
+
+  This PR addresses two open issues:
+
+  ### 1. Support autoFocus as a global HTML attribute
+  (#35656)
+
+  `autoFocus` is a [global HTML
+  attribute](https://developer.mozilla.org/en-US/docs/W
+  eb/HTML/Global_attributes/autofocus) per the spec,
+  but React only handled it for `button`, `input`,
+  `select`, and `textarea`. This change treats
+  `autoFocus` as a global attribute so it works on
+  **any focusable element** — anchor tags, `<div
+  tabIndex={0}>`, `<dialog>`, `<details>`, etc.
+
+  Changes:
+  - `finalizeInitialChildren`: default case now returns
+   `!!props.autoFocus`
+  - `commitMount`: default case now calls `.focus()`
+  when `autoFocus` is set
+  - Added tests for `<a autoFocus>` and `<div
+  tabIndex={0} autoFocus>`
+
+  ### 2. Fix ReDoS vulnerabilities in stack trace
+  parsing (#35490)
+
+  Two regex patterns in `parseStackTrace.js` are
+  vulnerable to catastrophic backtracking:
+
+  - **`firefoxFrameRegExp`**: `(?:.*".+")?[^@]*`
+  contains overlapping quantifiers. Replaced with
+  `[^@"]*(?:"[^"]*"[^@"]*)*` using non-overlapping
+  character classes.
+  - **`CHROME_STACK_REGEXP`**: `.*(\S+:\d+|\(native\))`
+   causes O(n²) backtracking. Simplified to `/^\s*at
+  /m`. |  | [object Object] | https://api.github.com/repos/facebook/react/issues/35693/timeline |  |  |

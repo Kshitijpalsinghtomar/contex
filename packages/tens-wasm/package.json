@@ -1,0 +1,23 @@
+{
+    "name": "@contex/tens-wasm",
+    "version": "0.1.0",
+    "description": "High-performance TENS encoder/decoder for contex (WASM)",
+    "main": "pkg/contex_tens_wasm.js",
+    "types": "pkg/contex_tens_wasm.d.ts",
+    "files": [
+        "pkg"
+    ],
+    "scripts": {
+        "build": "wasm-pack build --target nodejs",
+        "build:web": "wasm-pack build --target web",
+        "test": "cargo test"
+    },
+    "keywords": [
+        "contex",
+        "wasm",
+        "rust",
+        "tens"
+    ],
+    "author": "contex Team",
+    "license": "MIT"
+}
