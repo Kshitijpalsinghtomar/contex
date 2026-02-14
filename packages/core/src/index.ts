@@ -6,6 +6,10 @@
 export { TokenStreamEncoder } from './token_stream_encoder.js';
 export { TokenStreamDecoder } from './decoder.js';
 
+// High-level API
+export { compile } from './contex.js';
+export type { CompileOptions } from './contex.js';
+
 export * from './tens/hashing.js';
 export { TokenizerManager } from './tokenizer.js';
 export { SchemaRegistry, inferType, flattenObject } from './schema.js';

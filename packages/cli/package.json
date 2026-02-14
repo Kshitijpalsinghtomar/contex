@@ -26,18 +26,23 @@
         "clean": "rimraf dist"
     },
     "dependencies": {
+        "@ai-sdk/openai": "^3.0.29",
+        "@anthropic-ai/sdk": "^0.33.1",
         "@contex/core": "workspace:*",
         "@contex/engine": "workspace:*",
         "@contex/middleware": "workspace:*",
-        "openai": "^4.0.0",
-        "@anthropic-ai/sdk": "^0.33.1",
+        "@google/generative-ai": "^0.24.1",
+        "ai": "^6.0.86",
         "js-yaml": "^4.1.1",
+        "openai": "^4.0.0",
         "xml-js": "^1.6.11"
     },
     "devDependencies": {
         "@types/js-yaml": "^4.0.9",
+        "dotenv": "^16.6.1",
+        "rimraf": "^5.0.0",
+        "tiktoken": "^1.0.22",
         "tsx": "^4.19.0",
-        "typescript": "^5.7.0",
-        "rimraf": "^5.0.0"
+        "typescript": "^5.7.0"
     }
 }
