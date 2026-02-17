@@ -47,11 +47,11 @@ const tensEncoder = new TokenStreamEncoder();
 const SEED = 42;
 
 // ---- Helpers ----
-function extractLeafValues(obj: any): string[] {
+function extractLeafValues(obj: unknown): string[] {
   if (obj === null || obj === undefined) return [];
   if (typeof obj !== 'object') return [String(obj)];
   if (Array.isArray(obj)) return obj.flatMap(extractLeafValues);
-  return Object.values(obj).flatMap(extractLeafValues);
+  return Object.values(obj as Record<string, unknown>).flatMap(extractLeafValues);
 }
 
 const padR = (s: string, n: number) => s.padEnd(n);
@@ -237,13 +237,13 @@ console.log(
 );
 console.log(`  ${thinLine}`);
 
-const stressResults: any[] = [];
+const stressResults: Array<{ tensWins: boolean }> = [];
 
 for (const ds of allDatasets) {
   for (const rows of rowCounts) {
-    let data: any[];
+    let data: Record<string, unknown>[];
     try {
-      data = ds.fn(rows);
+      data = ds.fn(rows) as Record<string, unknown>[];
     } catch {
       continue;
     }
@@ -354,14 +354,14 @@ for (const ds of mapDatasets) {
   );
 }
 
-console.log(`\n  Legend:`);
-console.log(`    Schema  = SCHEMA_DEF + field name tokens + field separators`);
-console.log(`    RowBrk  = ROW_BREAK delimiters between rows`);
-console.log(`    FxdArr  = FIXED_ARRAY + length tokens (per array value)`);
-console.log(`    PrsMsk  = PRESENCE_MASK + mask chunk tokens (per sparse row)`);
-console.log(`    NulBol  = NULL_VAL + BOOL_TRUE + BOOL_FALSE control tokens`);
-console.log(`    ObjBnd  = OBJ_START + OBJ_END (multi-schema only)`);
-console.log(`    OH%     = (all structural tokens / total tokens) x 100`);
+console.log('\n  Legend:');
+console.log('    Schema  = SCHEMA_DEF + field name tokens + field separators');
+console.log('    RowBrk  = ROW_BREAK delimiters between rows');
+console.log('    FxdArr  = FIXED_ARRAY + length tokens (per array value)');
+console.log('    PrsMsk  = PRESENCE_MASK + mask chunk tokens (per sparse row)');
+console.log('    NulBol  = NULL_VAL + BOOL_TRUE + BOOL_FALSE control tokens');
+console.log('    ObjBnd  = OBJ_START + OBJ_END (multi-schema only)');
+console.log('    OH%     = (all structural tokens / total tokens) x 100');
 
 // ============================================================================
 // Section 3: Per-category breakdown for top datasets
@@ -387,16 +387,16 @@ for (const name of detailDatasets) {
     bd.objBoundary +
     bd.schemaRef +
     bd.valueSeparators;
-  const pct = (v: number) => (bd.total > 0 ? ((v / bd.total) * 100).toFixed(1) + '%' : '0%');
+  const pct = (v: number) => (bd.total > 0 ? `${((v / bd.total) * 100).toFixed(1)}%` : '0%');
 
   console.log(`\n  ${name} (500 rows, ${bd.total} total tokens):`);
-  console.log(`    ┌────────────────────────┬─────────┬─────────┐`);
-  console.log(`    │ Category               │  Tokens │   Share │`);
-  console.log(`    ├────────────────────────┼─────────┼─────────┤`);
+  console.log('    ┌────────────────────────┬─────────┬─────────┐');
+  console.log('    │ Category               │  Tokens │   Share │');
+  console.log('    ├────────────────────────┼─────────┼─────────┤');
   console.log(
     `    │ Data (real values)      │ ${padL(String(bd.dataTokens), 7)} │ ${padL(pct(bd.dataTokens), 7)} │`,
   );
-  console.log(`    ├────────────────────────┼─────────┼─────────┤`);
+  console.log('    ├────────────────────────┼─────────┼─────────┤');
   console.log(
     `    │ Schema definition       │ ${padL(String(schemaTotal), 7)} │ ${padL(pct(schemaTotal), 7)} │`,
   );
@@ -418,14 +418,14 @@ for (const name of detailDatasets) {
   console.log(
     `    │ Schema ref              │ ${padL(String(bd.schemaRef), 7)} │ ${padL(pct(bd.schemaRef), 7)} │`,
   );
-  console.log(`    ├────────────────────────┼─────────┼─────────┤`);
+  console.log('    ├────────────────────────┼─────────┼─────────┤');
   console.log(
     `    │ TOTAL STRUCTURAL        │ ${padL(String(structTotal), 7)} │ ${padL(pct(structTotal), 7)} │`,
   );
   console.log(
     `    │ TOTAL DATA              │ ${padL(String(bd.dataTokens), 7)} │ ${padL(pct(bd.dataTokens), 7)} │`,
   );
-  console.log(`    └────────────────────────┴─────────┴─────────┘`);
+  console.log('    └────────────────────────┴─────────┴─────────┘');
 }
 
 console.log(`\n${line}`);

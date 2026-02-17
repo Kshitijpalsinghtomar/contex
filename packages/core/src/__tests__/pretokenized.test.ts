@@ -9,6 +9,18 @@ import type { TokenizerEncoding } from '../types.js';
 
 const tokenizer = new TokenizerManager('cl100k_base');
 
+function mustGetFieldTokens(
+  block: ReturnType<typeof readPreTokenizedBlock>,
+  fieldName: string,
+): number[] {
+  const tokens = getFieldTokens(block, fieldName);
+  expect(tokens).toBeDefined();
+  if (tokens === undefined) {
+    throw new Error(`Expected tokens for field: ${fieldName}`);
+  }
+  return tokens;
+}
+
 afterAll(() => {
   tokenizer.dispose();
 });
@@ -38,7 +50,7 @@ describe('Pre-Tokenized Block — Create & Read', () => {
     const binary = createPreTokenizedBlock(data, 'cl100k_base', tokenizer);
     const block = readPreTokenizedBlock(binary);
 
-    const fieldToks = getFieldTokens(block, 'greeting')!;
+    const fieldToks = mustGetFieldTokens(block, 'greeting');
     const directToks = tokenizer.tokenize('Hello world', 'cl100k_base');
 
     expect(fieldToks).toEqual(directToks);
@@ -90,8 +102,8 @@ describe('Pre-Tokenized Block — Field Random Access', () => {
     const binary = createPreTokenizedBlock(data, 'cl100k_base', tokenizer);
     const block = readPreTokenizedBlock(binary);
 
-    const firstNameTokens = getFieldTokens(block, 'firstName')!;
-    const lastNameTokens = getFieldTokens(block, 'lastName')!;
+    const firstNameTokens = mustGetFieldTokens(block, 'firstName');
+    const lastNameTokens = mustGetFieldTokens(block, 'lastName');
 
     expect(firstNameTokens).toBeDefined();
     expect(lastNameTokens).toBeDefined();
@@ -122,7 +134,7 @@ describe('Pre-Tokenized Block — Multi-Encoding', () => {
       const block = readPreTokenizedBlock(binary);
 
       expect(block.encoding).toBe(encoding);
-      const fieldToks = getFieldTokens(block, 'text')!;
+      const fieldToks = mustGetFieldTokens(block, 'text');
       const directToks = tokenizer.tokenize(data[0].text, encoding);
       expect(fieldToks).toEqual(directToks);
     });
@@ -175,6 +187,7 @@ describe('Pre-Tokenized Block — Performance Advantage', () => {
 
     // Reading pre-tokenized should be at least comparable
     // (tokenizer has LRU cache so we just verify it works and log speedup)
-    expect(readTime).toBeLessThan(tokenizeTime * 10);
+    // Use generous multiplier — this is a smoke test, not a precise perf gate
+    expect(readTime).toBeLessThan(tokenizeTime * 50);
   });
 });

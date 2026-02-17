@@ -32,6 +32,15 @@ contex inject data.json --provider anthropic
 # Compose multiple data blocks into one context
 contex compose config.json
 
+# Check server and provider readiness
+contex status --url http://127.0.0.1:3000
+
+# JSON output for CI checks
+contex status --url http://127.0.0.1:3000 --json
+
+# Fail CI if server/provider readiness is not fully green
+pnpm cli:status:ci
+
 # Encode JSON to TENS (raw IR)
 contex encode data.json
 

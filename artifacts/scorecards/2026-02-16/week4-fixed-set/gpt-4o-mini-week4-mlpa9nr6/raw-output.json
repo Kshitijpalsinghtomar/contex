@@ -1,0 +1,140 @@
+{
+  "analyzeRuns": [
+    {
+      "dataset": "my_test_data.json",
+      "family": "baseline",
+      "code": 0,
+      "stdout": "\n\n╭──────────────────────────────────────────────────────────╮\n│                     CONTEXT ANALYSIS                     │\n│──────────────────────────────────────────────────────────│\n│ Input:        my_test_data.json                          │\n│ Rows:         30                                         │\n│ Fields:       32                                         │\n│ Model:        GPT-4o Mini                                │\n│ JSON Tokens:  45,433                                     │\n│ Contex Tokens: 35,696 ██░░░░░░░░ 21.4%                   │\n│ Savings:      $5331.01/year @10k req/day                 │\n╰──────────────────────────────────────────────────────────╯\n\n\n╔══════════════════════════════════════════════════════╗\n║                        Models                        ║\n╔══════════════════════════════════════════════════════╗\n║ Model             ║ Savings     ║ Cost             ║\n╠───────────────────╦─────────────╦──────────────────╣\n║ GPT-4o Mini       ║ 21.4% saved ║ $5.35/1K calls   ║\n║ Claude 3.5 Sonnet ║ 21.4% saved ║ $107.79/1K calls ║\n║ Gemini 2.5 Flash  ║ 21.4% saved ║ $5.39/1K calls   ║\n╚──────────────────────────────────────────────────────╝\n\n\n╔═════════════════════════════════════════════╗\n║                 Strategies                  ║\n╔═════════════════════════════════════════════╗\n║ Strategy ║ Tokens ║ Reduction ║ Auto Pick ║\n╠──────────╦────────╦───────────╦───────────╣\n║ contex   ║ 35,696 ║ 21.4%     ║ -         ║\n║ auto     ║ 26,740 ║ 41.1%     ║ csv       ║\n╚─────────────────────────────────────────────╝\n\n\n╭──────────────────────────────────────╮\n│           Token Reduction            │\n│──────────────────────────────────────│\n│ JSON:    161251 bytes / 45433 tokens │\n│ Contex:  142805 bytes / 35696 tokens │\n│ Bytes:   -11.4%                      │\n│ Tokens:  -21.4%                      │\n╰──────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────╮\n│                      Breakthrough Potential                      │\n│──────────────────────────────────────────────────────────────────│\n│ Best now:     CSV (26,740 tokens)                                │\n│ Reduction:    41.1% vs JSON                                      │\n│ Uplift:       +25.1 points vs Contex                             │\n│ Action:       Contex-only policy active for user traffic         │\n╰──────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Auto Strategy Confidence                        │\n│────────────────────────────────────────────────────────────────────────│\n│ Auto pick:    csv (26,740 tokens)                                      │\n│ Confidence:   42% (low)                                                │\n│ Token margin: 3.63% vs runner-up                                       │\n│ Reason:       Outperforms Contex by 25.1% on token count               │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Semantic Relation Guard                         │\n│────────────────────────────────────────────────────────────────────────│\n│ Status:   PASS (Semantic relation integrity preserved)                 │\n│ Rows:     30/30                                                        │\n│ Fields:   100.0% (target >= 95%)                                       │\n│ RowMatch: 100.0% (target >= 95%)                                       │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────────────╮\n│                           Auto Confidence Gate                           │\n│──────────────────────────────────────────────────────────────────────────│\n│ Enabled:     no (informational)                                          │\n│ Confidence:  42% (low)                                                   │\n│ Threshold:   55% (FAIL)                                                  │\n│ Decision:    csv (26,740 tokens)                                         │\n╰──────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                            Hard Target Gate                            │\n│────────────────────────────────────────────────────────────────────────│\n│ Datasets: 1 (latest per input path)                                    │\n│ Floor:    21.43% (FAIL, target >= 35%)                                 │\n│ Median:   21.43% (FAIL, target >= 60%)                                 │\n│ Policy:   Contex-only enabled                                          │\n╰────────────────────────────────────────────────────────────────────────╯\n\n  Snapshot: artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\analyze-report.json\n\n\n",
+      "stderr": ""
+    },
+    {
+      "dataset": ".contex/dummy_1000.json",
+      "family": "synthetic-small",
+      "code": 0,
+      "stdout": "\n\n╭──────────────────────────────────────────────────────────╮\n│                     CONTEXT ANALYSIS                     │\n│──────────────────────────────────────────────────────────│\n│ Input:        dummy_1000.json                            │\n│ Rows:         1,000                                      │\n│ Fields:       5                                          │\n│ Model:        GPT-4o Mini                                │\n│ JSON Tokens:  79,202                                     │\n│ Contex Tokens: 28,915 ██████░░░░ 63.5%                   │\n│ Savings:      $27532.13/year @10k req/day                │\n╰──────────────────────────────────────────────────────────╯\n\n\n╔═════════════════════════════════════════════════════╗\n║                       Models                        ║\n╔═════════════════════════════════════════════════════╗\n║ Model             ║ Savings     ║ Cost            ║\n╠───────────────────╦─────────────╦─────────────────╣\n║ GPT-4o Mini       ║ 63.5% saved ║ $4.34/1K calls  ║\n║ Claude 3.5 Sonnet ║ 69.2% saved ║ $86.76/1K calls ║\n║ Gemini 2.5 Flash  ║ 69.2% saved ║ $4.34/1K calls  ║\n╚─────────────────────────────────────────────────────╝\n\n\n╔═════════════════════════════════════════════╗\n║                 Strategies                  ║\n╔═════════════════════════════════════════════╗\n║ Strategy ║ Tokens ║ Reduction ║ Auto Pick ║\n╠──────────╦────────╦───────────╦───────────╣\n║ contex   ║ 28,915 ║ 63.5%     ║ -         ║\n║ auto     ║ 28,915 ║ 63.5%     ║ contex    ║\n╚─────────────────────────────────────────────╝\n\n\n╭──────────────────────────────────────╮\n│           Token Reduction            │\n│──────────────────────────────────────│\n│ JSON:    287930 bytes / 79202 tokens │\n│ Contex:  115681 bytes / 28915 tokens │\n│ Bytes:   -59.8%                      │\n│ Tokens:  -63.5%                      │\n╰──────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────╮\n│                      Breakthrough Potential                      │\n│──────────────────────────────────────────────────────────────────│\n│ Best now:     Contex (28,915 tokens)                             │\n│ Reduction:    63.5% vs JSON                                      │\n│ Uplift:       0.0 points vs Contex                               │\n│ Action:       Contex-only policy active for user traffic         │\n╰──────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Auto Strategy Confidence                        │\n│────────────────────────────────────────────────────────────────────────│\n│ Auto pick:    contex (28,915 tokens)                                   │\n│ Confidence:   100% (high)                                              │\n│ Token margin: 137.48% vs runner-up                                     │\n│ Reason:       High structure consistency (100.0%) and value repetition (100%) favor Contex dictionary encoding │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Semantic Relation Guard                         │\n│────────────────────────────────────────────────────────────────────────│\n│ Status:   PASS (Semantic relation integrity preserved)                 │\n│ Rows:     1000/1000                                                    │\n│ Fields:   100.0% (target >= 95%)                                       │\n│ RowMatch: 100.0% (target >= 95%)                                       │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────────────╮\n│                           Auto Confidence Gate                           │\n│──────────────────────────────────────────────────────────────────────────│\n│ Enabled:     no (informational)                                          │\n│ Confidence:  100% (high)                                                 │\n│ Threshold:   55% (PASS)                                                  │\n│ Decision:    contex (28,915 tokens)                                      │\n╰──────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                            Hard Target Gate                            │\n│────────────────────────────────────────────────────────────────────────│\n│ Datasets: 2 (latest per input path)                                    │\n│ Floor:    21.43% (FAIL, target >= 35%)                                 │\n│ Median:   42.46% (FAIL, target >= 60%)                                 │\n│ Policy:   Contex-only enabled                                          │\n╰────────────────────────────────────────────────────────────────────────╯\n\n  Snapshot: artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\analyze-report.json\n\n\n",
+      "stderr": ""
+    },
+    {
+      "dataset": ".contex/dummy_2000.json",
+      "family": "synthetic-large",
+      "code": 0,
+      "stdout": "\n\n╭──────────────────────────────────────────────────────────╮\n│                     CONTEXT ANALYSIS                     │\n│──────────────────────────────────────────────────────────│\n│ Input:        dummy_2000.json                            │\n│ Rows:         2,000                                      │\n│ Fields:       5                                          │\n│ Model:        GPT-4o Mini                                │\n│ JSON Tokens:  1,58,433                                   │\n│ Contex Tokens: 40,915 ███████░░░ 74.2%                   │\n│ Savings:      $64341.10/year @10k req/day                │\n╰──────────────────────────────────────────────────────────╯\n\n\n╔══════════════════════════════════════════════════════╗\n║                        Models                        ║\n╔══════════════════════════════════════════════════════╗\n║ Model             ║ Savings     ║ Cost             ║\n╠───────────────────╦─────────────╦──────────────────╣\n║ GPT-4o Mini       ║ 74.2% saved ║ $6.14/1K calls   ║\n║ Claude 3.5 Sonnet ║ 78.2% saved ║ $122.76/1K calls ║\n║ Gemini 2.5 Flash  ║ 78.2% saved ║ $6.14/1K calls   ║\n╚──────────────────────────────────────────────────────╝\n\n\n╔═════════════════════════════════════════════╗\n║                 Strategies                  ║\n╔═════════════════════════════════════════════╗\n║ Strategy ║ Tokens ║ Reduction ║ Auto Pick ║\n╠──────────╦────────╦───────────╦───────────╣\n║ contex   ║ 40,915 ║ 74.2%     ║ -         ║\n║ auto     ║ 40,915 ║ 74.2%     ║ contex    ║\n╚─────────────────────────────────────────────╝\n\n\n╭──────────────────────────────────────╮\n│           Token Reduction            │\n│──────────────────────────────────────│\n│ JSON:    575977 bytes / 158433 tokens │\n│ Contex:  163681 bytes / 40915 tokens │\n│ Bytes:   -71.6%                      │\n│ Tokens:  -74.2%                      │\n╰──────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────╮\n│                      Breakthrough Potential                      │\n│──────────────────────────────────────────────────────────────────│\n│ Best now:     Contex (40,915 tokens)                             │\n│ Reduction:    74.2% vs JSON                                      │\n│ Uplift:       0.0 points vs Contex                               │\n│ Action:       Contex-only policy active for user traffic         │\n╰──────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Auto Strategy Confidence                        │\n│────────────────────────────────────────────────────────────────────────│\n│ Auto pick:    contex (40,915 tokens)                                   │\n│ Confidence:   100% (high)                                              │\n│ Token margin: 235.71% vs runner-up                                     │\n│ Reason:       High structure consistency (100.0%) and value repetition (100%) favor Contex dictionary encoding │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                        Semantic Relation Guard                         │\n│────────────────────────────────────────────────────────────────────────│\n│ Status:   PASS (Semantic relation integrity preserved)                 │\n│ Rows:     2000/2000                                                    │\n│ Fields:   100.0% (target >= 95%)                                       │\n│ RowMatch: 100.0% (target >= 95%)                                       │\n╰────────────────────────────────────────────────────────────────────────╯\n\n\n╭──────────────────────────────────────────────────────────────────────────╮\n│                           Auto Confidence Gate                           │\n│──────────────────────────────────────────────────────────────────────────│\n│ Enabled:     no (informational)                                          │\n│ Confidence:  100% (high)                                                 │\n│ Threshold:   55% (PASS)                                                  │\n│ Decision:    contex (40,915 tokens)                                      │\n╰──────────────────────────────────────────────────────────────────────────╯\n\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                            Hard Target Gate                            │\n│────────────────────────────────────────────────────────────────────────│\n│ Datasets: 3 (latest per input path)                                    │\n│ Floor:    21.43% (FAIL, target >= 35%)                                 │\n│ Median:   63.49% (PASS, target >= 60%)                                 │\n│ Policy:   Contex-only enabled                                          │\n╰────────────────────────────────────────────────────────────────────────╯\n\n  Snapshot: artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\analyze-report.json\n\n\n",
+      "stderr": ""
+    }
+  ],
+  "scorecardRun": {
+    "code": 0,
+    "stdout": "\n\n╭────────────────────────────────────────────────────────────────────────╮\n│                             Scorecard Gate                             │\n│────────────────────────────────────────────────────────────────────────│\n│ Input snapshot: artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\analyze-report.json │\n│ Model:          gpt-4o-mini                                            │\n│ Datasets:       3 (PASS, target >= 3)                                  │\n│ Floor:          21.43% (FAIL, target >= 35%)                           │\n│ Median:         63.49% (PASS, target >= 60%)                           │\n│ Gate:           FAIL                                                   │\n╰────────────────────────────────────────────────────────────────────────╯\n\n  Report: artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\scorecard-report.json\n\n",
+    "stderr": ""
+  },
+  "validateRun": {
+    "code": 0,
+    "stdout": "\n  ════════════════════════════════════════════════════════════\n  contex validate — Roundtrip Integrity Test\n  Input: dummy.json (15840 rows)\n  ════════════════════════════════════════════════════════════\n\n  Format         Status         Detail\n  ────────────────────────────────────────────────────────────\n  TENS Binary    ❌ FAIL         15840 rows decoded, 0/15840 exact match (nested objects may flatten)\n  TENS-Text      ⚠️ ENCODE      Encoder OK (95047 lines), decoder returned empty\n  JSON           ✅ PASS         Native JSON.parse roundtrip\n  CSV            ⚠️ ENCODE      15840 rows, 5 columns (nested objects flattened)\n  TOON           ⚠️ ENCODE      15840 rows, 5 columns (tab-separated)\n  Markdown       ⚠️ ENCODE      15840 rows (table format, no decoder)\n  Semantic Guard ✅ PASS         Semantic relation integrity preserved; rows 15840/15840, fields 100.0%, row-match 100.0%\n\n  ────────────────────────────────────────────────────────────\n  Results: 2 passed, 1 failed, 4 encode-only\n  ❌ 1 format(s) failed roundtrip validation.\n\n",
+    "stderr": ""
+  },
+  "analyzeSnapshot": {
+    "version": 1,
+    "runs": [
+      {
+        "timestamp": "2026-02-16T14:42:29.447Z",
+        "command": "analyze",
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\my_test_data.json",
+        "model": "gpt-4o-mini",
+        "metrics": {
+          "jsonTokens": 45433,
+          "contexTokens": 35696,
+          "bestStrategy": "CSV",
+          "bestTokens": 26740,
+          "autoStrategy": "csv",
+          "autoConfidencePct": 42,
+          "tokenReductionPct": 21.43,
+          "breakthroughReductionPct": 41.14
+        }
+      },
+      {
+        "timestamp": "2026-02-16T14:42:38.706Z",
+        "command": "analyze",
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_1000.json",
+        "model": "gpt-4o-mini",
+        "metrics": {
+          "jsonTokens": 79202,
+          "contexTokens": 28915,
+          "bestStrategy": "Contex",
+          "bestTokens": 28915,
+          "autoStrategy": "contex",
+          "autoConfidencePct": 100,
+          "tokenReductionPct": 63.49,
+          "breakthroughReductionPct": 63.49
+        }
+      },
+      {
+        "timestamp": "2026-02-16T14:42:52.566Z",
+        "command": "analyze",
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_2000.json",
+        "model": "gpt-4o-mini",
+        "metrics": {
+          "jsonTokens": 158433,
+          "contexTokens": 40915,
+          "bestStrategy": "Contex",
+          "bestTokens": 40915,
+          "autoStrategy": "contex",
+          "autoConfidencePct": 100,
+          "tokenReductionPct": 74.18,
+          "breakthroughReductionPct": 74.18
+        }
+      }
+    ]
+  },
+  "scorecardReport": {
+    "timestamp": "2026-02-16T14:42:53.807Z",
+    "source": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\artifacts\\scorecards\\2026-02-16\\week4-fixed-set\\gpt-4o-mini-week4-mlpa9nr6\\analyze-report.json",
+    "model": "gpt-4o-mini",
+    "targets": {
+      "floorPct": 35,
+      "medianPct": 60,
+      "minDatasets": 3
+    },
+    "observed": {
+      "datasetCount": 3,
+      "floorReductionPct": 21.43,
+      "medianReductionPct": 63.49
+    },
+    "gate": {
+      "pass": false,
+      "checks": {
+        "floorPass": false,
+        "medianPass": true,
+        "datasetPass": true
+      }
+    },
+    "datasets": [
+      {
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_1000.json",
+        "timestamp": "2026-02-16T14:42:38.706Z",
+        "tokenReductionPct": 63.49,
+        "bestStrategy": "Contex",
+        "bestTokens": 28915,
+        "contexTokens": 28915,
+        "jsonTokens": 79202
+      },
+      {
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_2000.json",
+        "timestamp": "2026-02-16T14:42:52.566Z",
+        "tokenReductionPct": 74.18,
+        "bestStrategy": "Contex",
+        "bestTokens": 40915,
+        "contexTokens": 40915,
+        "jsonTokens": 158433
+      },
+      {
+        "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\my_test_data.json",
+        "timestamp": "2026-02-16T14:42:29.447Z",
+        "tokenReductionPct": 21.43,
+        "bestStrategy": "CSV",
+        "bestTokens": 26740,
+        "contexTokens": 35696,
+        "jsonTokens": 45433
+      }
+    ]
+  }
+}

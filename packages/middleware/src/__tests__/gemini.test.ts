@@ -137,6 +137,9 @@ describe('@contex/middleware v3 — Gemini Integration', () => {
       data: { tickets: TEST_DATA },
     });
 
+    if (!wrapped.startChat) {
+      throw new Error('Expected wrapped.startChat to be defined');
+    }
     const chat = wrapped.startChat();
     await chat.sendMessage('Check: {{CONTEX:tickets}}');
 

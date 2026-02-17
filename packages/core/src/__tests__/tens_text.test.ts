@@ -172,7 +172,7 @@ describe('TensTextEncoder', () => {
 
   it('handles floating point numbers', () => {
     const data = [
-      { id: 1, val: 3.14159 },
+      { id: 1, val: Math.PI },
       { id: 2, val: -0.001 },
     ];
     const result = encoder.encode(data);
@@ -610,7 +610,7 @@ describe('TENS-Text Roundtrip', () => {
 
   it('roundtrips floating point numbers', () => {
     const original = [
-      { id: 1, val: 3.14159 },
+      { id: 1, val: Math.PI },
       { id: 2, val: -0.001 },
       { id: 3, val: 0 },
       { id: 4, val: 999999 },
@@ -695,8 +695,8 @@ describe('TENS-Text via formatOutput', () => {
 
     const tensText = analyses.find((a) => a.format === 'tens-text');
     expect(tensText).toBeDefined();
-    expect(tensText!.byteSize).toBeGreaterThan(0);
-    expect(tensText!.output).toContain('@version');
+    expect(tensText?.byteSize).toBeGreaterThan(0);
+    expect(tensText?.output).toContain('@version');
   });
 });
 

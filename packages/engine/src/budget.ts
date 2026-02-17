@@ -255,11 +255,10 @@ function binarySearchMaxRows(
       }
     }
     return candidate;
-  } else {
-    // Overshot — step down linearly (at most 3 steps)
-    for (let i = candidate - 1; i >= 1; i--) {
-      if (countTokensFor(i) <= maxTokens) return i;
-    }
-    return 1;
   }
+  // Overshot — step down linearly (at most 3 steps)
+  for (let i = candidate - 1; i >= 1; i--) {
+    if (countTokensFor(i) <= maxTokens) return i;
+  }
+  return 1;
 }

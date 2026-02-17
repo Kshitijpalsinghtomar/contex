@@ -1,83 +1,209 @@
 # @contex/server
 
-**High-performance REST API for contex.**
+REST API for Contex canonical IR and engine operations.
 
-Powered by [Hono](https://hono.dev), designed for Docker and Node.js environments.
+---
 
 ## Endpoints
 
 ### `POST /v1/encode`
-Encodes JSON data into TENS binary format.
 
-**Request:**
+Encodes data through the canonical IR path and stores it in `TokenMemory`.
+
+Request:
+
 ```json
 {
-  "data": [...],
-  "encoding": "cl100k_base"
+  "data": [{ "id": 1, "name": "Alice" }]
 }
 ```
 
-**Response:**
+Response:
+
 ```json
 {
-  "tens": "base64_encoded_string",
-  "stats": { ... }
+  "hash": "...",
+  "ir": "base64_ir_bytes",
+  "rowCount": 1,
+  "irByteSize": 123,
+  "isNew": true,
+  "irVersion": "1.0",
+  "canonicalizationVersion": "1.0"
 }
 ```
 
 ### `POST /v1/decode`
-Decodes TENS binary data back to JSON.
 
-**Request:**
+Loads canonicalized data by IR hash.
+
+Request:
+
 ```json
 {
-  "tens": "base64_encoded_string"
+  "hash": "..."
 }
 ```
 
-**Response:**
+Response:
+
 ```json
 {
-  "data": [...]
+  "hash": "...",
+  "data": [{ "id": 1, "name": "Alice" }],
+  "rowCount": 1,
+  "irVersion": "1.0",
+  "canonicalizationVersion": "1.0"
 }
 ```
 
 ### `POST /v1/optimize`
-RAG-optimized context packing. Filters data, fits it into a specific model's context window, and formats it optimally.
 
-**Request:**
-```json
-{
-  "data": [...],
-  "model": "gpt-4o",
-  "systemPromptTokens": 500,
-  "userPromptTokens": 200,
-  "responseReserve": 1000
-}
-```
+Engine context optimization endpoint.
 
-**Response:**
-```json
-{
-  "budget": { ... },
-  "context": "Formatted string or token stream",
-  "usedRows": 50
-}
-```
+### `GET /v1/collections`
+
+Lists in-memory engine collections.
+
+### `POST /v1/collections/:name`
+
+Inserts rows into a named collection.
+
+### `POST /v1/query`
+
+Runs PQL query through the engine.
+
+### `GET /v1/formats/:collection`
+
+Returns format analyses for a collection.
+
+### `POST /v1/providers/openai/chat`
+
+Calls OpenAI Chat Completions through `@contex/middleware` injection.
+
+### `POST /v1/providers/anthropic/messages`
+
+Calls Anthropic Messages API through `@contex/middleware` injection.
+
+### `POST /v1/providers/gemini/generate`
+
+Calls Gemini `generateContent` through `@contex/middleware` injection.
 
 ### `GET /health`
-Returns service status.
+
+Health and basic runtime metadata.
+
+---
 
 ## Development
 
 ```bash
 pnpm dev
-# Runs on port 3000
 ```
 
-## Docker
+## Provider Gateway Setup
+
+Set provider keys before using provider routes:
 
 ```bash
-docker build -t contex .
-docker run -p 3000:3000 contex
+OPENAI_API_KEY=... \
+ANTHROPIC_API_KEY=... \
+GOOGLE_API_KEY=... \
+pnpm dev
+```
+
+## Provider Gateway Examples
+
+### OpenAI
+
+Request:
+
+```json
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    { "role": "user", "content": "Summarize {{CONTEX:tickets}}" }
+  ],
+  "data": {
+    "tickets": [
+      { "id": 1, "status": "open", "priority": "high" },
+      { "id": 2, "status": "closed", "priority": "low" }
+    ]
+  }
+}
+```
+
+Success response shape:
+
+```json
+{
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "response": { "id": "...", "choices": [] }
+}
+```
+
+### Anthropic
+
+Request:
+
+```json
+{
+  "model": "claude-3-5-sonnet",
+  "max_tokens": 256,
+  "messages": [
+    { "role": "user", "content": "Summarize {{CONTEX:tickets}}" }
+  ],
+  "data": {
+    "tickets": [
+      { "id": 1, "status": "open" }
+    ]
+  }
+}
+```
+
+Success response shape:
+
+```json
+{
+  "provider": "anthropic",
+  "model": "claude-3-5-sonnet",
+  "response": { "id": "...", "content": [] }
+}
+```
+
+### Gemini
+
+Request:
+
+```json
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Summarize {{CONTEX:tickets}}",
+  "data": {
+    "tickets": [
+      { "id": 1, "status": "open" }
+    ]
+  }
+}
+```
+
+Success response shape:
+
+```json
+{
+  "provider": "gemini",
+  "model": "gemini-2.5-pro",
+  "text": "..."
+}
+```
+
+If a key is missing, provider routes return:
+
+```json
+{
+  "error": {
+    "code": "PROVIDER_CONFIG_ERROR",
+    "message": "<PROVIDER>_API_KEY is not configured"
+  }
+}
 ```

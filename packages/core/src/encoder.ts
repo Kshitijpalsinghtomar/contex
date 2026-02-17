@@ -95,11 +95,12 @@ class GrowableBuffer {
   /** Write a varint (LEB128 unsigned). */
   writeVarint(value: number) {
     this.ensure(5); // max 5 bytes for 32-bit varint
-    while (value > 127) {
-      this.buf[this.pos++] = (value & 127) | 128;
-      value >>>= 7;
+    let remaining = value;
+    while (remaining > 127) {
+      this.buf[this.pos++] = (remaining & 127) | 128;
+      remaining >>>= 7;
     }
-    this.buf[this.pos++] = value;
+    this.buf[this.pos++] = remaining;
   }
 
   /** Write an int32 (little-endian) using the shared scratch buffer. */
@@ -170,9 +171,10 @@ export class TensEncoder {
       for (const item of val) this.scan(item);
     } else if (val && typeof val === 'object') {
       const keys = Object.keys(val).sort();
+      const objectValue = val as Record<string, unknown>;
       for (const k of keys) {
         this.stringTable.add(k);
-        this.scan((val as any)[k]);
+        this.scan(objectValue[k]);
       }
     }
   }
@@ -222,11 +224,12 @@ export class TensEncoder {
     } else if (typeof val === 'object') {
       this.buffer.writeByte(OP.OBJECT_START);
       const keys = Object.keys(val).sort();
+      const objectValue = val as Record<string, unknown>;
       this.buffer.writeVarint(keys.length);
       for (const key of keys) {
         const keyId = this.stringTable.add(key);
         this.buffer.writeVarint(keyId);
-        this.encodeValue((val as any)[key]);
+        this.encodeValue(objectValue[key]);
       }
     }
   }

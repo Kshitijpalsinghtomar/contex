@@ -2,17 +2,43 @@
     "name": "@contex/middleware",
     "version": "0.2.0",
     "description": "Contex middleware for OpenAI/Anthropic/Gemini SDKs — v3 IR pipeline",
+    "license": "MIT",
+    "author": "Contex Team",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/contex/contex.git",
+        "directory": "packages/middleware"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "keywords": [
+        "contex",
+        "llm",
+        "openai",
+        "anthropic",
+        "gemini",
+        "middleware",
+        "ai",
+        "context-window"
+    ],
     "type": "module",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
         }
     },
     "scripts": {
         "build": "tsc",
+        "prepublishOnly": "pnpm build",
         "test": "vitest run"
     },
     "dependencies": {

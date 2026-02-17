@@ -32,7 +32,7 @@ describe('Contex Engine', () => {
 
     expect(result.data.length).toBeGreaterThanOrEqual(2);
     // Check the data contains our inserted records
-    const names = result.data.map((d: any) => d.name);
+    const names = result.data.map((d) => (d as { name?: unknown }).name);
     expect(names).toContain('Alice');
     expect(names).toContain('Bob');
     engine.dispose();

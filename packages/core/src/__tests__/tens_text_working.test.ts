@@ -178,7 +178,7 @@ data
       const data = [
         { id: 1, val: 42 },
         { id: 2, val: -7 },
-        { id: 3, val: 3.14159 },
+        { id: 3, val: Math.PI },
         { id: 4, val: -0.001 },
       ];
       const text = encoder.encode(data);
@@ -858,7 +858,7 @@ describe('§6.3.6 Special Values', () => {
   });
 
   it('encodes undefined as _ (null sentinel)', () => {
-    const data = [{ id: 1, name: undefined as any }];
+    const data = [{ id: 1, name: undefined }];
     const text = encoder.encode(data);
     expect(text).toContain('  name _');
   });

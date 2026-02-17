@@ -61,15 +61,18 @@ describe('quick() v3', () => {
     expect(typeof result.savings.tokensSaved).toBe('number');
   });
 
-  it('.asText() returns canonical JSON by default', () => {
+  it('.asText() returns Contex Compact format by default', () => {
     const result = quick(SAMPLE_DATA, 'gpt-4o');
     const text = result.asText();
 
     expect(text).toBeTruthy();
-    // Should be valid JSON
-    const parsed = JSON.parse(text);
-    expect(Array.isArray(parsed)).toBe(true);
-    expect(parsed.length).toBe(5);
+    // Should contain all field names and values
+    expect(text).toContain('Alice');
+    expect(text).toContain('name');
+    // Should NOT be JSON (no brackets or colons)
+    expect(text).not.toContain('{');
+    // Should be tab-separated
+    expect(text).toContain('\t');
   });
 
   it('.asText(format) returns formatted output', () => {

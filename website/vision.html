@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contex — Vision &amp; Future</title>
+  <meta name="description"
+    content="The future of Contex: ContexDB compiled context store, Token-Native Protocol for direct binary LLM communication, and the roadmap to eliminating JSON from AI pipelines forever.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="./style.css">
+  <script>
+    const theme = localStorage.getItem('contex-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  </script>
+
+  <style>
+    /* ─── Vision Page Hero ─── */
+    .vision-hero {
+      position: relative;
+      padding: 140px 32px 100px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .vision-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.06) 40%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: heroGlow 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroGlow {
+      0% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+      100% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+    }
+
+    .vision-hero .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--accent-purple) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-purple) 25%, transparent);
+      color: var(--accent-purple);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 28px;
+    }
+
+    .vision-hero h1 {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    .vision-hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .vision-hero .hero-sub {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 660px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .vision-hero .hero-pills {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .vision-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .vision-pill .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ─── Timeline ─── */
+    .timeline {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--accent-blue), var(--accent-purple), var(--accent-green), var(--accent-amber));
+      transform: translateX(-50%);
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 60px;
+      position: relative;
+    }
+
+    .timeline-item:nth-child(odd) {
+      flex-direction: row-reverse;
+      text-align: right;
+    }
+
+    .timeline-item:nth-child(odd) .timeline-content {
+      margin-left: 0;
+      margin-right: 48px;
+    }
+
+    .timeline-item:nth-child(even) .timeline-content {
+      margin-left: 48px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid var(--bg-body);
+      z-index: 2;
+    }
+
+    .timeline-content {
+      width: calc(50% - 48px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .timeline-content:hover {
+      border-color: var(--border-active);
+      box-shadow: var(--shadow-md);
+    }
+
+    .timeline-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .timeline-content h4 {
+      color: var(--text-primary);
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+    }
+
+    .timeline-content p {
+      color: var(--text-secondary);
+      font-size: 0.87rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      .timeline::before { left: 20px; }
+      .timeline-item,
+      .timeline-item:nth-child(odd) { flex-direction: column; text-align: left; }
+      .timeline-dot { left: 20px; }
+      .timeline-content,
+      .timeline-item:nth-child(odd) .timeline-content,
+      .timeline-item:nth-child(even) .timeline-content {
+        width: calc(100% - 52px);
+        margin-left: 52px;
+        margin-right: 0;
+      }
+    }
+
+    /* ─── Feature Showcase Cards ─── */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .showcase-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 36px 28px 28px;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    .showcase-card:hover {
+      border-color: var(--border-active);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+    }
+
+    .showcase-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .showcase-card.blue::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); }
+    .showcase-card.green::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); }
+    .showcase-card.purple::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-red)); }
+    .showcase-card.amber::before { background: linear-gradient(90deg, var(--accent-amber), var(--accent-red)); }
+
+    .showcase-card .sc-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .showcase-card.blue .sc-icon { background: color-mix(in srgb, var(--accent-blue) 12%, transparent); color: var(--accent-blue); }
+    .showcase-card.green .sc-icon { background: color-mix(in srgb, var(--accent-green) 12%, transparent); color: var(--accent-green); }
+    .showcase-card.purple .sc-icon { background: color-mix(in srgb, var(--accent-purple) 12%, transparent); color: var(--accent-purple); }
+    .showcase-card.amber .sc-icon { background: color-mix(in srgb, var(--accent-amber) 12%, transparent); color: var(--accent-amber); }
+
+    .showcase-card h4 {
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .showcase-card p {
+      color: var(--text-secondary);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+
+    .showcase-card .sc-tag {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .showcase-card.blue .sc-tag { background: color-mix(in srgb, var(--accent-blue) 10%, transparent); color: var(--accent-blue); }
+    .showcase-card.green .sc-tag { background: color-mix(in srgb, var(--accent-green) 10%, transparent); color: var(--accent-green); }
+    .showcase-card.purple .sc-tag { background: color-mix(in srgb, var(--accent-purple) 10%, transparent); color: var(--accent-purple); }
+    .showcase-card.amber .sc-tag { background: color-mix(in srgb, var(--accent-amber) 10%, transparent); color: var(--accent-amber); }
+
+    .sc-status-badge {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+      color: #fff;
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent-green) 30%, transparent);
+    }
+    .sc-status-badge.blue {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent-blue) 30%, transparent);
+    }
+    .sc-status-badge.amber {
+      background: linear-gradient(135deg, var(--accent-amber), #ea580c);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent-amber) 30%, transparent);
+    }
+    .sc-status-badge.purple {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent-purple) 30%, transparent);
+    }
+
+    /* ─── Deep-Dive Blocks ─── */
+    .deep-dive {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .dd-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 40px 36px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dd-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+    }
+
+    .dd-block.blue::before { background: var(--accent-blue); }
+    .dd-block.green::before { background: var(--accent-green); }
+    .dd-block.purple::before { background: var(--accent-purple); }
+    .dd-block.amber::before { background: var(--accent-amber); }
+
+    .dd-block .dd-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+
+    .dd-block.blue .dd-label { color: var(--accent-blue); }
+    .dd-block.green .dd-label { color: var(--accent-green); }
+    .dd-block.purple .dd-label { color: var(--accent-purple); }
+    .dd-block.amber .dd-label { color: var(--accent-amber); }
+
+    .dd-block h3 {
+      color: var(--text-primary);
+      font-size: 1.35rem;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    .dd-block p, .dd-block li {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .dd-block ul {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0;
+    }
+
+    .dd-block ul li {
+      padding: 6px 0 6px 24px;
+      position: relative;
+    }
+
+    .dd-block ul li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+    }
+
+    .dd-block .code-block {
+      margin-top: 20px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+
+    /* ─── Comparison Table Fancy ─── */
+    .vision-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .vision-table th {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .vision-table td {
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .vision-table tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    .vision-table .highlight-cell {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    .vision-table .dim-cell {
+      color: var(--text-muted);
+    }
+
+    /* ─── Stat Row ─── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .stat-block {
+      text-align: center;
+      padding: 32px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    .stat-block .stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-block .stat-label {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    /* ─── ASCII Diagram ─── */
+    .diagram-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      white-space: pre;
+      margin: 20px 0;
+    }
+
+    .diagram-block .hl-blue { color: var(--accent-blue); }
+    .diagram-block .hl-green { color: var(--accent-green); }
+    .diagram-block .hl-purple { color: var(--accent-purple); }
+    .diagram-block .hl-amber { color: var(--accent-amber); }
+
+    /* ─── Divider ─── */
+    .vision-divider {
+      max-width: 120px;
+      height: 2px;
+      margin: 80px auto;
+      background: linear-gradient(90deg, transparent, var(--accent-brand), transparent);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">C</div>
+      Contex
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="./docs.html">Docs</a></li>
+      <li><a href="./tens-text.html">TENS-Text</a></li>
+      <li><a href="./benchmarks.html">Benchmarks</a></li>
+      <li><a href="./playground.html">Playground</a></li>
+      <li><a href="./vision.html" class="active">Vision</a></li>
+      <li><a href="./dashboard.html">Dashboard</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn btn-ghost btn-sm" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-primary btn-sm" target="_blank">
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  HERO                                  -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="vision-hero">
+    <div class="hero-eyebrow">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Future Vision — Concept Stage
+    </div>
+    <h1>
+      The End of<br>
+      <span class="gradient-text">JSON in AI Pipelines</span>
+    </h1>
+    <p class="hero-sub">
+      Contex already saves 40–94% of context tokens. But we're not stopping there.
+      These are the concepts that will define the next era of LLM data infrastructure —
+      from a compiled context database to a binary protocol that eliminates text entirely.
+    </p>
+    <div class="hero-pills">
+      <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-blue);"></span> ContexDB</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-purple);"></span> Token-Native Protocol</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-green);"></span> Python SDK</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-amber);"></span> Semantic Fingerprinting</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-red);"></span> Edge Runtime</div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  THE TWO BIG IDEAS (overview)          -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Two Paradigm Shifts</h2>
+      <p class="section-desc">The two foundational concepts that everything else builds on.</p>
+    </div>
+
+    <div class="showcase-grid" style="max-width: 860px;">
+      <div class="showcase-card blue">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <h4>ContexDB — The Compiled Context Store</h4>
+        <p>Not a database. Not SQL. A <strong>content-addressed storage layer</strong> that persists compiled IR, token caches, and metadata. Compile once, materialize forever. Think of it as a build cache for LLM context — like <code>.next/</code> or <code>node_modules/.cache</code>, but for tokens.</p>
+        <span class="sc-tag">Storage Layer</span>
+      </div>
+      <div class="showcase-card purple">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h4>Token-Native Protocol (TNP)</h4>
+        <p>Today: send JSON text → provider tokenizes it → waste. Tomorrow: <strong>send pre-compiled token arrays directly</strong> to the LLM. Skip text serialization entirely. Skip tokenization entirely. The protocol layer that turns Contex from a formatter into a <strong>transport revolution</strong>.</p>
+        <span class="sc-tag">Protocol Layer</span>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CONTEX DB — DEEP DIVE                -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">ContexDB</h2>
+      <p class="section-desc">The Compiled Context Store</p>
+    </div>
+
+    <div class="deep-dive">
+
+      <!-- What it is -->
+      <div class="dd-block blue">
+        <div class="dd-label">The Concept</div>
+        <h3>What is ContexDB?</h3>
+        <p>ContexDB is a <strong>content-addressed compiled context store</strong> — the runtime storage layer that sits on top of the Contex token compiler.</p>
+        <p style="margin-top: 12px;">Think of it this way:</p>
+        <ul>
+          <li><strong>Contex</strong> is the compiler — it transforms data into an optimized IR</li>
+          <li><strong>ContexDB</strong> is the artifact cache — it stores compiled outputs and makes them instantly reusable</li>
+        </ul>
+        <p style="margin-top: 12px;">Like how <code>gcc</code> compiles C into object files, and <code>ccache</code> stores them so you never recompile unchanged source — ContexDB stores compiled LLM contexts so you never re-encode unchanged data.</p>
+      </div>
+
+      <!-- What it is NOT -->
+      <div class="dd-block blue">
+        <div class="dd-label">What ContexDB is NOT</div>
+        <h3>This is Not a Database</h3>
+        <p>Let us be blunt about what ContexDB is <em>not</em>:</p>
+
+        <table class="vision-table">
+          <thead>
+            <tr>
+              <th>Not This</th>
+              <th>Why Not</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>SQL / PostgreSQL / MySQL</td><td>No query language, no joins, no transactions</td></tr>
+            <tr><td>MongoDB / CouchDB</td><td>Not a document store — stores compiled artifacts, not raw documents</td></tr>
+            <tr><td>Redis / Memcached</td><td>Not a general cache — specialized for token IR and model-specific blobs</td></tr>
+            <tr><td>Vector database</td><td>No embeddings, no ANN search — stores compiled token representations</td></tr>
+            <tr><td>Data warehouse</td><td>Not OLAP, not columnar — it's a build artifact cache</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 16px;">ContexDB is to LLM contexts what a Docker image registry is to containers: a content-addressed store of pre-built artifacts, indexed by hash, ready for instant deployment.</p>
+      </div>
+
+      <!-- Architecture -->
+      <div class="dd-block blue">
+        <div class="dd-label">Architecture</div>
+        <h3>How It Works</h3>
+        <div class="diagram-block"><span class="hl-blue">Your Application</span>
+    │
+    │  db.compile(userData)
+    ▼
+<span class="hl-purple">┌──────────────────────────────────────────────┐</span>
+<span class="hl-purple">│             ContexDB                         │</span>
+<span class="hl-purple">│                                              │</span>
+<span class="hl-purple">│  ┌─────────────┐    ┌──────────────────────┐ │</span>
+<span class="hl-purple">│  │ Hash Index  │    │ Content Store        │ │</span>
+<span class="hl-purple">│  │             │    │                      │ │</span>
+<span class="hl-purple">│  │ abc123 ──────────► ir.bin  (Canon IR)   │ │</span>
+<span class="hl-purple">│  │ def456 ──────────► meta.json (Schema)   │ │</span>
+<span class="hl-purple">│  │             │    │ cache/               │ │</span>
+<span class="hl-purple">│  │             │    │   gpt-4o/tokens.bin  │ │</span>
+<span class="hl-purple">│  │             │    │   claude/tokens.bin  │ │</span>
+<span class="hl-purple">│  └─────────────┘    └──────────────────────┘ │</span>
+<span class="hl-purple">└──────────────────────────────────────────────┘</span>
+    │
+    │  db.materialize(ctxId, 'gpt-4o')
+    ▼
+<span class="hl-green">Pre-compiled token array → LLM</span></div>
+        <p>The storage layout is simple and filesystem-friendly:</p>
+
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.6; font-size: 0.82rem;">.contexdb/
+├── contexts/
+│   └── {sha256-hash}/          # Content-addressed by data hash
+│       ├── ir.bin              # Canonical IR (model-agnostic)
+│       ├── meta.json           # Schema, timestamps, row count
+│       └── cache/
+│           └── {model}/        # Per-model token cache
+│               └── tokens.bin  # Int32Array binary
+└── index.json                  # Hash → metadata index</div>
+      </div>
+
+      <!-- API -->
+      <div class="dd-block blue">
+        <div class="dd-label">Proposed API</div>
+        <h3>Core API Surface</h3>
+
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7; font-size: 0.82rem;">import { ContexDB } from '@contexdb/core';
+
+const db = new ContexDB('./.contexdb');
+
+// ── Compile & Store ──
+// Encodes data → IR, hashes it, persists to disk
+const ctxId = await db.compile(userData);
+// → "a1b2c3d4e5f6" (SHA-256 content hash)
+
+// ── Retrieve ──
+const ctx = await db.get(ctxId);
+// → { id, schema, rowCount, createdAt, irSize }
+
+// ── Materialize (with auto-cache) ──
+const tokens = await db.materialize(ctxId, 'gpt-4o');
+// First call: encode IR → tokens → cache to disk
+// Subsequent: read from cache (~5ms vs ~200ms)
+
+// ── List all compiled contexts ──
+const all = await db.list();
+// → [{ id, schema, rowCount, models: ['gpt-4o'] }]
+
+// ── Invalidation ──
+await db.delete(ctxId);
+await db.gc();  // Garbage collect orphaned caches</div>
+      </div>
+
+      <!-- Benefits -->
+      <div class="dd-block blue">
+        <div class="dd-label">Benefits</div>
+        <h3>Why This Matters</h3>
+        <ul>
+          <li><strong>Never re-encode unchanged data</strong> — If the SHA-256 hash matches, skip encoding entirely. For applications that send the same context thousands of times per day, this eliminates 99%+ of encoding work.</li>
+          <li><strong>Cold start elimination</strong> — Pre-compile your product catalog, knowledge base, or user profiles at deploy time. First request is as fast as the millionth.</li>
+          <li><strong>Multi-model efficiency</strong> — Compile once, materialize for GPT-4o AND Claude AND Gemini from the same IR. No redundant encoding per provider.</li>
+          <li><strong>Auditable and inspectable</strong> — Every compiled context has a deterministic hash. You can diff two contexts, verify integrity, and trace exactly what was sent to the LLM.</li>
+          <li><strong>Git-compatible artifacts</strong> — <code>.contexdb/</code> can be committed, cached in CI, or shared across environments. Same data = same hash = same bytes on every machine.</li>
+          <li><strong>Edge deployment</strong> — Ship pre-compiled contexts to edge nodes. No runtime encoding needed — just materialize and inject.</li>
+        </ul>
+      </div>
+
+      <!-- Use cases -->
+      <div class="dd-block blue">
+        <div class="dd-label">Use Cases</div>
+        <h3>Who Needs This?</h3>
+        <table class="vision-table">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Without ContexDB</th>
+              <th>With ContexDB</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>E-commerce product catalog (50K products)</td>
+              <td class="dim-cell">Re-encode on every request</td>
+              <td class="highlight-cell">Compile once at deploy, serve from cache</td>
+            </tr>
+            <tr>
+              <td>Customer support (ticket history per user)</td>
+              <td class="dim-cell">Encode user data for each message</td>
+              <td class="highlight-cell">Hash-check → cache hit → skip encoding</td>
+            </tr>
+            <tr>
+              <td>RAG pipeline (knowledge base chunks)</td>
+              <td class="dim-cell">Re-encode every retrieved document</td>
+              <td class="highlight-cell">Pre-compile all chunks, materialize on demand</td>
+            </tr>
+            <tr>
+              <td>Multi-model routing (GPT → Claude fallback)</td>
+              <td class="dim-cell">Encode separately per model</td>
+              <td class="highlight-cell">One IR → materialize for each model instantly</td>
+            </tr>
+            <tr>
+              <td>CI/CD (test prompts in pipeline)</td>
+              <td class="dim-cell">Rebuild context from scratch</td>
+              <td class="highlight-cell">Cache in CI artifacts, deterministic replay</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  TOKEN-NATIVE PROTOCOL — DEEP DIVE    -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Token-Native Protocol</h2>
+      <p class="section-desc">The End of Text-Based LLM Communication</p>
+    </div>
+
+    <div class="deep-dive">
+
+      <!-- The problem -->
+      <div class="dd-block purple">
+        <div class="dd-label">The Problem</div>
+        <h3>Why Are We Still Sending Text?</h3>
+        <p>Every LLM API call today follows this absurd pipeline:</p>
+
+        <div class="diagram-block"><span class="hl-amber">TODAY'S PIPELINE (wasteful)</span>
+
+Your App                    Provider API                  LLM
+────────                    ────────────                  ───
+<span class="hl-blue">1.</span> Build JSON string          
+<span class="hl-blue">2.</span> Serialize to UTF-8         
+<span class="hl-blue">3.</span> HTTP POST (text body) ──────►
+                            <span class="hl-blue">4.</span> Parse JSON
+                            <span class="hl-blue">5.</span> Extract content strings
+                            <span class="hl-blue">6.</span> Tokenize text → token IDs
+                            <span class="hl-blue">7.</span> Validate token count
+                            <span class="hl-blue">8.</span> Forward tokens ─────────────►
+                                                          <span class="hl-blue">9.</span> Process tokens
+
+<span class="hl-amber">Steps 1-6 are pure waste.</span> You already know what tokens you want.
+You <em>had</em> the data in structured form. You serialized it to text.
+The provider parses it back. Then tokenizes it. Every. Single. Request.</div>
+
+        <p style="margin-top: 16px;">This is like compiling C code to x86 assembly, printing it on paper, mailing it to a data center, and having them OCR it back into binary. It works — but it's insane.</p>
+      </div>
+
+      <!-- The solution -->
+      <div class="dd-block purple">
+        <div class="dd-label">The Solution</div>
+        <h3>Token-Native Protocol (TNP)</h3>
+        <p>What if you could skip the text entirely and send pre-compiled token arrays directly to the model?</p>
+
+        <div class="diagram-block"><span class="hl-green">FUTURE PIPELINE (with TNP)</span>
+
+Your App                              Provider API                  LLM
+────────                              ────────────                  ───
+<span class="hl-green">1.</span> Contex compiles to tokens
+<span class="hl-green">2.</span> Binary POST (token IDs) ──────►
+                            <span class="hl-green">3.</span> Validate token array
+                            <span class="hl-green">4.</span> Forward tokens ─────────────►
+                                                          <span class="hl-green">5.</span> Process tokens
+
+<span class="hl-green">6 steps eliminated.</span> No JSON. No text. No tokenization.
+Just raw token IDs, directly into the model.</div>
+
+        <p style="margin-top: 16px;">Contex already produces the canonical text that tokenizes deterministically. The next step is to skip text entirely and send the tokens directly. We call this the <strong>Token-Native Protocol</strong> — a binary transport layer for pre-compiled LLM inputs.</p>
+      </div>
+
+      <!-- How it would work -->
+      <div class="dd-block purple">
+        <div class="dd-label">Proposed API</div>
+        <h3>What It Would Look Like</h3>
+
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7; font-size: 0.82rem;">import { Tens } from '@contex/core';
+
+const tens = Tens.encode(userData);
+const tokenArray = tens.materialize('gpt-4o');
+// → Int32Array [15496, 2822, 198, 1527, ...]
+
+// ── Today (Contex Compact text injection) ──
+const res = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: tens.toString() }]
+});
+
+// ── Future (Token-Native Protocol) ──
+const res = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  token_inputs: [{
+    role: 'user',
+    tokens: tokenArray.tokens    // Raw Int32Array!
+  }]
+});
+// No text. No tokenization. No overhead.</div>
+      </div>
+
+      <!-- Benefits quantified -->
+      <div class="dd-block purple">
+        <div class="dd-label">Impact Analysis</div>
+        <h3>What TNP Eliminates</h3>
+
+        <table class="vision-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Today (JSON → Text → Tokens)</th>
+              <th>With TNP (Tokens Direct)</th>
+              <th>Improvement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Server-side tokenization</td>
+              <td class="dim-cell">1–5ms per request</td>
+              <td class="highlight-cell">0ms (skipped)</td>
+              <td class="highlight-cell">100% eliminated</td>
+            </tr>
+            <tr>
+              <td>Request payload size</td>
+              <td class="dim-cell">UTF-8 text (1 byte/char)</td>
+              <td class="highlight-cell">Int32 tokens (4 bytes/token)</td>
+              <td class="highlight-cell">60–80% smaller*</td>
+            </tr>
+            <tr>
+              <td>JSON parsing (provider)</td>
+              <td class="dim-cell">Required</td>
+              <td class="highlight-cell">Eliminated</td>
+              <td class="highlight-cell">100% eliminated</td>
+            </tr>
+            <tr>
+              <td>Serialization CPU (client)</td>
+              <td class="dim-cell">JSON.stringify()</td>
+              <td class="highlight-cell">Buffer copy</td>
+              <td class="highlight-cell">~10x faster</td>
+            </tr>
+            <tr>
+              <td>Cache hit determinism</td>
+              <td class="dim-cell">Depends on text canonical-ness</td>
+              <td class="highlight-cell">Guaranteed (same tokens)</td>
+              <td class="highlight-cell">100% hit rate</td>
+            </tr>
+            <tr>
+              <td>Token count validation</td>
+              <td class="dim-cell">Server must count after tokenizing</td>
+              <td class="highlight-cell">Client sends exact count</td>
+              <td class="highlight-cell">Pre-validated</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">* Tokens average 3–4 characters each. 1000 tokens ≈ 3500 chars (3500 bytes UTF-8) vs 1000 × 4 bytes = 4000 bytes Int32. But with varint encoding: 1000 × ~2 bytes = 2000 bytes. Add Contex compression (43% fewer tokens) and total payload drops dramatically.</p>
+      </div>
+
+      <!-- Why it doesn't exist yet -->
+      <div class="dd-block purple">
+        <div class="dd-label">Market Reality</div>
+        <h3>Why This Doesn't Exist Yet</h3>
+        <p>As of February 2026, no major LLM provider accepts raw token arrays in their Chat API. Here's why — and why that's about to change:</p>
+        <ul>
+          <li><strong>Security</strong> — Token IDs could be crafted to exploit tokenizer edge cases or inject prompt-level adversarial sequences. Providers need a validation layer before accepting raw tokens.</li>
+          <li><strong>Tokenizer coupling</strong> — Token IDs are specific to a tokenizer version (<code>o200k_base</code>, <code>cl100k_base</code>). If the provider updates their tokenizer, old token arrays become invalid. A versioning protocol is required.</li>
+          <li><strong>Fragmentation</strong> — Each provider has a different tokenizer. A universal token protocol needs either a standard tokenizer or a negotiation step.</li>
+          <li><strong>Small market</strong> — Most API users send short prompts. The pain of tokenization overhead is only felt at scale (millions of requests with large contexts).</li>
+        </ul>
+        <p style="margin-top: 16px;">Contex is uniquely positioned to solve this: we already produce canonical, deterministic, model-specific token arrays. We already version-track tokenizers. The protocol layer is a natural extension of what we already do.</p>
+      </div>
+
+      <!-- TNP Wire Format -->
+      <div class="dd-block purple">
+        <div class="dd-label">Wire Format</div>
+        <h3>Proposed TNP Binary Frame</h3>
+
+        <div class="diagram-block"><span class="hl-purple">TNP Frame Layout (draft)</span>
+
+Offset    Size       Field
+──────────────────────────────────────────────
+0         4B         Magic: "TNP\x01" (0x544E5001)
+4         1B         Version: 1
+5         1B         Flags (compressed, signed, ...)
+6         2B         Tokenizer ID (registered enum)
+8         4B         Token count (N) — uint32le
+12        N×VB       Token stream (varint-encoded)
+12+...    32B        SHA-256 content hash
+...       varB       Optional: signature, metadata
+
+<span class="hl-green">Key design choices:</span>
+  → Varint tokens: most token IDs &lt; 65536, so 2 bytes avg
+  → Content hash: server validates integrity before processing
+  → Tokenizer ID: explicit version prevents mismatch
+  → Flags: extensible for compression, signing, batching</div>
+      </div>
+
+      <!-- The Path -->
+      <div class="dd-block purple">
+        <div class="dd-label">Adoption Path</div>
+        <h3>How We Get There</h3>
+        <ul>
+          <li><strong>Phase 1 (Now)</strong> — Contex produces canonical deterministic text that tokenizes identically every time. Providers' prefix caches treat it as if we sent raw tokens. <em>This is what Contex does today.</em></li>
+          <li><strong>Phase 2 (2026 H2)</strong> — Open-source inference servers (vLLM, SGLang, TGI) add token injection endpoints. Contex ships a TNP adapter for self-hosted models.</li>
+          <li><strong>Phase 3 (2027)</strong> — Major providers evaluate token-native endpoints for high-volume enterprise customers. Contex publishes TNP specification as an open standard.</li>
+          <li><strong>Phase 4 (2027+)</strong> — TNP becomes an opt-in transport for OpenAI, Anthropic, Google APIs. Contex middleware auto-negotiates: text where necessary, tokens where possible.</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  PROJECTED IMPACT (stats)              -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Projected Impact</h2>
+      <p class="section-desc">What ContexDB + TNP means for production workloads at scale.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-block">
+        <div class="stat-value">90%+</div>
+        <div class="stat-label">Token Reduction (Compact + TNP)</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-value">&lt;5ms</div>
+        <div class="stat-label">Context Injection (cached)</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Server-Side Tokenizations</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">Prefix Cache Hit Rate</div>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  MORE FUTURE IDEAS                    -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Beyond the Horizon</h2>
+      <p class="section-desc">Additional concepts on the research roadmap — from practical to exploratory.</p>
+    </div>
+
+    <div class="showcase-grid">
+
+      <div class="showcase-card green">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        </div>
+        <h4>Python SDK</h4>
+        <p>A native Python implementation of the Contex encoder and middleware. <code>pip install contex</code> — first-class support for the language where most ML/AI work actually happens. Same deterministic output, same format hierarchy, same cache guarantees.</p>
+        <span class="sc-tag">Ecosystem</span>
+      </div>
+
+      <div class="showcase-card amber">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h4>Semantic Fingerprinting</h4>
+        <div class="sc-status-badge">Partially Built</div>
+        <p><strong>Already shipped:</strong> <code>SchemaFingerprint</code> tracks schema shapes across sessions via sorted field-name signatures. <code>StructuralDedupCache</code> provides cross-session schema &amp; dictionary dedup with <code>encodeIncremental()</code> delta encoding. <code>tokenizerFingerprint</code> produces deterministic hashes for cache keying — avoiding redundant tokenization entirely.</p>
+        <p><strong>Next layer:</strong> content-level semantic dedup — detect that "The cat sat on the mat" and "A feline rested on the rug" carry the <em>same semantic payload</em>. Merge near-duplicate contexts using lightweight embedding hashes before they reach the LLM. No vector DB required.</p>
+        <span class="sc-tag">In Progress</span>
+      </div>
+
+      <div class="showcase-card blue">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h4>Vercel AI SDK Integration</h4>
+        <div class="sc-status-badge blue">Pre-Alpha Shipped</div>
+        <p><strong>Already shipped:</strong> Core middleware in <code>@contex/core/vercel</code> with <code>contex()</code> function that maps Vercel <code>CoreMessage</code> objects. Basic integration tests passing.</p>
+        <p><strong>Next layer:</strong> Full <code>useContex()</code> React hook for streaming state management and automatic client-side context re-hydration.</p>
+        <span class="sc-tag">Ecosystem</span>
+      </div>
+
+      <div class="showcase-card purple">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h4>Edge Runtime &amp; CDN Distribution</h4>
+        <p>Pre-compile contexts at build time, deploy to edge nodes (Cloudflare Workers, Deno Deploy, Vercel Edge). Each edge node holds a ContexDB replica with pre-materialized tokens for every model. Sub-millisecond context injection worldwide — no round-trip to origin.</p>
+        <span class="sc-tag">Infrastructure</span>
+      </div>
+
+      <div class="showcase-card green">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <h4>Context Diffing &amp; Versioning</h4>
+        <div class="sc-status-badge">Foundation Built</div>
+        <p><strong>Already shipped:</strong> <code>encodeIncremental()</code> computes row-level deltas between batches — encoding only new rows and reporting <code>deltaRows</code>, <code>totalRows</code>, and <code>tokensSaved</code>. <code>SessionState</code> serialization enables cross-session persistence.</p>
+        <p><strong>Next layer:</strong> full structural diffs between versions of the same dataset — showing exactly which fields changed, column-level patches, and token-cost impact. Like <code>git diff</code> for LLM context.</p>
+        <span class="sc-tag">In Progress</span>
+      </div>
+
+      <div class="showcase-card amber">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h4>Adaptive Budget Engine</h4>
+        <div class="sc-status-badge amber">Core Logic Built</div>
+        <p><strong>Already shipped:</strong> <code>maxToken</code> awareness in <code>packages/engine/src/budget.ts</code>. Budget-aware formatting tests in <code>quick.test.ts</code>.</p>
+        <p><strong>Next layer:</strong> Dynamic prioritization policies. Tell the engine: <em>"Prioritize 'recent' items, drop 'meta' fields if budget tight, switch to 'min' format if over 4k tokens."</em> The engine solves the constraint satisfaction problem per request.</p>
+        <span class="sc-tag">Core</span>
+      </div>
+
+      <div class="showcase-card blue">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <h4>WASM Encoder</h4>
+        <div class="sc-status-badge blue">In Progress</div>
+        <p><strong>Already shipped:</strong> Rust crate initialized in <code>packages/tens-wasm</code> with Cargo configuration and basic lib structure.</p>
+        <p><strong>Next layer:</strong> Porting core TS encoding logic to Rust for near-native perforamance in environments where JS is CPU-constrained. Will enable browser-side encoding 100x faster than current JS implementation.</p>
+        <span class="sc-tag">Performance</span>
+      </div>
+
+      <div class="showcase-card purple">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+        </div>
+        <h4>Multi-Turn Context Streaming</h4>
+        <div class="sc-status-badge">Foundation Built</div>
+        <p><strong>Already shipped:</strong> <code>encodeIncremental()</code> in <code>StructuralDedupCache</code> allows appending only new data to an existing context session.</p>
+        <p><strong>Next layer:</strong> Full streaming protocol to pipe only delta-tokens to the LLM. Combined with ContexDB, turns become append-only log segments — no re-uploading the history.</p>
+        <span class="sc-tag">Core</span>
+      </div>
+
+      <div class="showcase-card green">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h4>Contex Observability Dashboard</h4>
+        <div class="sc-status-badge">Shipped</div>
+        <p><strong>Already shipped:</strong> Full interactive dashboard with KPI strip, bar charts, donut distribution, heatmap, live event feed, per-model tables, session dedup analytics, cost analysis, system health panel, and alert configuration. <a href="./dashboard.html" style="color: var(--accent-blue);">View Dashboard →</a></p>
+        <span class="sc-tag">Observability</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROADMAP TIMELINE                      -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Development Timeline</h2>
+      <p class="section-desc">Where we are. Where we're going.</p>
+    </div>
+
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent-green);"></div>
+        <div class="timeline-content">
+          <div class="timeline-label" style="color: var(--accent-green);">Completed — Q1 2026</div>
+          <h4>Contex Core v1</h4>
+          <p>TENS IR encoding, Contex Compact format (40–94% savings), middleware for OpenAI/Anthropic/Gemini, CLI, 600+ tests, benchmark v7. Production-ready.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent-blue);"></div>
+        <div class="timeline-content">
+          <div class="timeline-label" style="color: var(--accent-blue);">In Progress — Q1-Q2 2026</div>
+          <h4>Reality Sprint &amp; Hardening</h4>
+          <p>Edge-case robustness (47 tests), scorecard cadence, worst-case floor improvements, npm publishing readiness. Vercel AI SDK adapter.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent-purple);"></div>
+        <div class="timeline-content">
+          <div class="timeline-label" style="color: var(--accent-purple);">Planned — Q3 2026</div>
+          <h4>ContexDB &amp; Python SDK</h4>
+          <p>Content-addressed compiled context store. Python-native encoder. WASM encoder for browser/edge. Context diffing and versioning.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent-amber);"></div>
+        <div class="timeline-content">
+          <div class="timeline-label" style="color: var(--accent-amber);">Research — 2026 H2</div>
+          <h4>Token-Native Protocol (TNP)</h4>
+          <p>Binary token transport for self-hosted models (vLLM, SGLang). TNP specification draft. Integration with open-source inference servers.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent-red);"></div>
+        <div class="timeline-content">
+          <div class="timeline-label" style="color: var(--accent-red);">Vision — 2027+</div>
+          <h4>Universal Token Transport</h4>
+          <p>TNP support from major providers. Semantic fingerprinting. Adaptive budget engine. Edge-distributed compiled context networks. The fully compiled AI data stack.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <div class="vision-divider"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  THE FULL STACK VISION                 -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">The Complete Stack</h2>
+      <p class="section-desc">How all the pieces fit together — from your data to the model's attention layer.</p>
+    </div>
+
+    <div class="deep-dive">
+      <div class="dd-block green">
+        <div class="dd-label">Full Architecture</div>
+        <h3>The Contex Data Stack</h3>
+
+        <div class="diagram-block"><span class="hl-green">THE COMPILED AI DATA STACK</span>
+
+<span class="hl-blue">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl-blue">│  YOUR APPLICATION                                           │</span>
+<span class="hl-blue">│  ─────────────────                                          │</span>
+<span class="hl-blue">│  JSON, database rows, API responses, user profiles...       │</span>
+<span class="hl-blue">└─────────────────────────┬───────────────────────────────────┘</span>
+                          │
+                          ▼
+<span class="hl-purple">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl-purple">│  CONTEX COMPILER                                            │</span>
+<span class="hl-purple">│  ───────────────                                            │</span>
+<span class="hl-purple">│  • Canonical IR encoding (deterministic, schema-indexed)    │</span>
+<span class="hl-purple">│  • 11 optimizations (dict, flatten, compress, sparse...)    │</span>
+<span class="hl-purple">│  • Format selection (Contex Compact, TOON, CSV, MD)         │</span>
+<span class="hl-purple">│  • Content-hash for deduplication                           │</span>
+<span class="hl-purple">└─────────────┬────────────────────────┬──────────────────────┘</span>
+              │                        │
+              ▼                        ▼
+<span class="hl-blue">┌──────────────────────┐  ┌──────────────────────────────────┐</span>
+<span class="hl-blue">│  CONTEXDB            │  │  TOKEN MATERIALIZER              │</span>
+<span class="hl-blue">│  ─────────           │  │  ──────────────────              │</span>
+<span class="hl-blue">│  Compiled IR storage │  │  IR → model-specific tokens      │</span>
+<span class="hl-blue">│  Token cache per     │  │  Per-model cache (Int32Array)    │</span>
+<span class="hl-blue">│  model, hash index,  │  │  Lazy materialization            │</span>
+<span class="hl-blue">│  versioned artifacts │  │  Tokenizer version tracking      │</span>
+<span class="hl-blue">└──────────┬───────────┘  └────────────────┬─────────────────┘</span>
+           │                                │
+           ▼                                ▼
+<span class="hl-amber">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl-amber">│  TRANSPORT LAYER                                            │</span>
+<span class="hl-amber">│  ───────────────                                            │</span>
+<span class="hl-amber">│  TODAY:  Canonical text → HTTP POST → provider tokenizes    │</span>
+<span class="hl-amber">│  FUTURE: TNP binary → token injection → skip tokenization   │</span>
+<span class="hl-amber">└─────────────────────────┬───────────────────────────────────┘</span>
+                          │
+                          ▼
+<span class="hl-green">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="hl-green">│  LLM INFERENCE                                              │</span>
+<span class="hl-green">│  ─────────────                                              │</span>
+<span class="hl-green">│  Tokens → Attention → Output                                │</span>
+<span class="hl-green">│  Maximum prefix cache hits (deterministic input)            │</span>
+<span class="hl-green">│  Minimum tokens (compressed data)                           │</span>
+<span class="hl-green">│  Zero waste (no JSON syntax overhead)                       │</span>
+<span class="hl-green">└─────────────────────────────────────────────────────────────┘</span></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CTA                                   -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="cta-box" style="margin-top: 80px;">
+    <h2>The future is compiled</h2>
+    <p>Contex is production-ready today. These concepts are where we're going next.<br>Try what works now, shape what comes next.</p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <a href="./playground.html" class="btn btn-primary">Try the Playground</a>
+      <a href="./docs.html" class="btn btn-ghost">Read the Docs</a>
+      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost" target="_blank">Contribute on GitHub</a>
+    </div>
+  </section>
+
+
+  <footer class="footer">
+    <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM pipelines</p>
+  </footer>
+
+
+  <script>
+    // Theme Toggle
+    const toggleBtn = document.getElementById('theme-toggle');
+    const sunIcon = toggleBtn.querySelector('.sun-icon');
+    const moonIcon = toggleBtn.querySelector('.moon-icon');
+
+    function updateIcon() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      sunIcon.style.display = isDark ? 'none' : 'block';
+      moonIcon.style.display = isDark ? 'block' : 'none';
+      toggleBtn.style.color = isDark ? 'var(--text-muted)' : 'var(--accent-amber)';
+    }
+    updateIcon();
+
+    toggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('contex-theme', next);
+      updateIcon();
+    });
+
+    // Scroll Reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }});
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.section, .cta-box, .vision-divider').forEach(el => { el.classList.add('reveal'); observer.observe(el); });
+  </script>
+
+</body>
+
+</html>

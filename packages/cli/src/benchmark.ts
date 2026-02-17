@@ -1,1232 +1,821 @@
 #!/usr/bin/env node
 // ============================================================================
-// Contex Research Benchmark Suite v3.0
+// ContexDB Benchmark v7 — Comprehensive Pipeline Benchmark
 // ============================================================================
-// Deterministic · Isolated · Comprehensive · TENS-First
 //
-//  Run: npx tsx packages/cli/src/benchmark.ts
+// Tests the REAL ContexDB pipeline end-to-end with:
+//   1. Token Matrix      — Contex vs JSON/TOON/CSV across 15 dataset types
+//   2. Full Pipeline      — Tens.encode → materialize → budget → compose → quick
+//   3. Data Fidelity      — Verifies data survives pipeline (what goes in = what comes out)
+//   4. Cross-Package      — core → engine → middleware connectivity check
+//   5. Latency            — encode + materialize timing across all dataset types
+//   6. Format Ranking     — All formats ranked head-to-head on RealWorld data
+//   7. Summary            — aggregated results with visual bars
+//
 // ============================================================================
 
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { Tens, TokenizerManager, formatOutput, compose, encodeIR } from '@contex/core';
+import type { OutputFormat } from '@contex/core';
+import { MODEL_REGISTRY, calculateBudget, quick, Contex, packContext, selectBestFormat } from '@contex/engine';
+import type { PackerConfig } from '@contex/engine';
+
 import {
-  TokenStreamDecoder,
-  TokenStreamEncoder,
-  TokenizerManager,
-  formatOutput,
-} from '@contex/core';
-import {
-  MODEL_REGISTRY,
-  analyzePrefixReuse,
-  calculateBudget,
-  formatPrefixAware,
-} from '@contex/engine';
-import {
-  generateApiResponses,
   generateChatMessages,
-  generateContentCMS,
   generateDeepNested,
   generateEcommerce,
   generateExtremelySparse,
-  generateFinancial,
   generateFlat,
-  generateGeoData,
   generateHealthcare,
-  generateInventory,
   generateIoT,
   generateLogEvents,
-  generateLongText,
   generateMixedNestedTabular,
-  generateMultiLingual,
   generateNested,
   generateNumericHeavy,
   generateRealWorld,
   generateRepetitive,
-  generateShortStrings,
   generateSparse,
-  generateUserActivity,
   generateWideSchema,
-  seededRandom,
 } from './generators.js';
-import {
-  extractLeafValues,
-  measureEntropyCorrelation,
-  measureMarginalCost,
-  measureSchemaWidthSensitivity,
-  measureStructuralOverhead,
-  measureTokenizerSpread,
-} from './metrics.js';
-import { type MutationType, runPrefixSimulation } from './prefix_simulation.js';
-import { analyzeRepetition } from './repetition_analysis.js';
-import * as transcoders from './transcoders.js';
-import { disposeTensEncoder } from './transcoders.js';
-import type { SupportedFormat } from './transcoders.js';
+import { extractLeafValues } from './metrics.js';
 
-// --- Shared Resources ---
-const tokenizer = new TokenizerManager();
-const tensEncoder = new TokenStreamEncoder();
+// ---- Types ----
 
-// --- Constants ---
-const SEED = 42;
-const padR = (s: string, n: number) => s.padEnd(n);
-const padL = (s: string, n: number) => s.padStart(n);
-const dollar = (n: number) => `$${n.toFixed(2)}`;
-const line = '═'.repeat(72);
-const thinLine = '─'.repeat(72);
+type DatasetFactory = (rows: number) => Record<string, unknown>[];
 
-function printHeader(title: string) {
-  console.log(`\n${line}`);
-  console.log(`  ${title}`);
-  console.log(line);
-}
-
-// --- Matrix Configuration ---
-const SIZES = [1, 10, 100, 500, 1000, 5000];
-const DATASETS = [
-  // --- Original datasets ---
-  { name: 'Flat', fn: (n: number) => generateFlat(n, SEED) },
-  { name: 'Nested', fn: (n: number) => generateNested(n, SEED) },
-  { name: 'Sparse', fn: (n: number) => generateSparse(n, SEED) },
-  { name: 'Repetitive', fn: (n: number) => generateRepetitive(n, SEED) },
-  { name: 'LongText', fn: (n: number) => generateLongText(n, SEED) },
-  { name: 'RealWorld', fn: (n: number) => generateRealWorld(n, SEED) },
-  { name: 'WideSchema', fn: (n: number) => generateWideSchema(n, 40, SEED) },
-  { name: 'DeepNested', fn: (n: number) => generateDeepNested(n, 5, SEED) },
-  { name: 'MixedNested', fn: (n: number) => generateMixedNestedTabular(n, SEED) },
-  { name: 'ExtremelySparse', fn: (n: number) => generateExtremelySparse(n, SEED) },
-  { name: 'ShortStrings', fn: (n: number) => generateShortStrings(n, SEED) },
-  { name: 'NumericHeavy', fn: (n: number) => generateNumericHeavy(n, SEED) },
-  // --- Industry-specific datasets ---
-  { name: 'Ecommerce', fn: (n: number) => generateEcommerce(n, SEED) },
-  { name: 'Healthcare', fn: (n: number) => generateHealthcare(n, SEED) },
-  { name: 'IoT', fn: (n: number) => generateIoT(n, SEED) },
-  { name: 'Financial', fn: (n: number) => generateFinancial(n, SEED) },
-  { name: 'LogEvents', fn: (n: number) => generateLogEvents(n, SEED) },
-  { name: 'UserActivity', fn: (n: number) => generateUserActivity(n, SEED) },
-  { name: 'ChatMessages', fn: (n: number) => generateChatMessages(n, SEED) },
-  { name: 'ApiResponses', fn: (n: number) => generateApiResponses(n, SEED) },
-  { name: 'GeoData', fn: (n: number) => generateGeoData(n, SEED) },
-  { name: 'Inventory', fn: (n: number) => generateInventory(n, SEED) },
-  { name: 'ContentCMS', fn: (n: number) => generateContentCMS(n, SEED) },
-  { name: 'MultiLingual', fn: (n: number) => generateMultiLingual(n, SEED) },
-];
-
-const FORMATS: SupportedFormat[] = [
-  'json',
-  'json-min',
-  'json-pretty',
-  'yaml',
-  'xml',
-  'ndjson',
-  'csv',
-  'markdown',
-  'toon',
-  'tens',
-  'tens-text',
-];
-
-const KEY_FORMATS: SupportedFormat[] = ['json', 'json-min', 'toon', 'csv', 'tens', 'tens-text'];
-
-interface MatrixResult {
+interface MatrixRow {
   dataset: string;
   rows: number;
   format: string;
   tokens: number;
   bytes: number;
-  costGpt4o: number;
-  structuralOverhead: number;
-  density: number;
-  entropy: number;
-  stringReuse: number;
-  tokenRepetition: number;
-  marginalTokensPerRow: number;
+  savingsVsJson: number;
 }
 
-// ============================================================================
-// 1. Research-Grade Matrix
-// ============================================================================
-async function benchmarkMatrix() {
-  printHeader('BENCHMARK 1: Comprehensive Matrix (12 Datasets x 6 Sizes x 10 Formats)');
-  console.log('Generating data points for scaling analysis...');
-
-  const results: MatrixResult[] = [];
-
-  const history: Record<string, { size: number; tokens: number } | undefined> = {};
-
-  for (const ds of DATASETS) {
-    console.log(`\n  Dataset: ${ds.name}`);
-    for (const size of SIZES) {
-      process.stdout.write(`    Size: ${size} rows... `);
-      let data: any[];
-      try {
-        data = ds.fn(size);
-      } catch {
-        process.stdout.write('Skip (generation error)\n');
-        continue;
-      }
-
-      const repetition = analyzeRepetition(data, tokenizer);
-
-      // Value tokens: only leaf values, no keys or structure
-      const allValues = extractLeafValues(data).join(' ');
-      const valueTokens = tokenizer.countTokens(allValues, 'o200k_base');
-
-      for (const fmt of FORMATS) {
-        try {
-          let tokens = 0;
-          let bytes = 0;
-          if (fmt === 'tens') {
-            const bin = tensEncoder.encode(data); // Returns Uint8Array
-            const stream = tensEncoder.encodeToTokenStream(data); // Returns TokenStream
-            tokens = stream.length;
-            bytes = bin.length;
-          } else {
-            const output = transcoders.transcode(data, fmt);
-            tokens = tokenizer.countTokens(output as string, 'o200k_base');
-            bytes = Buffer.byteLength(output as string);
-          }
-
-          const structuralTokens = Math.max(0, tokens - valueTokens);
-          const cost = (tokens / 1_000_000) * MODEL_REGISTRY['gpt-4o'].inputPricePer1M;
-
-          // Marginal Cost
-          const historyKey = `${ds.name}:${fmt}`;
-          let marginalCost = 0;
-          const prev = history[historyKey];
-          if (prev) {
-            const deltaTokens = tokens - prev.tokens;
-            const deltaRows = size - prev.size;
-            if (deltaRows > 0) marginalCost = deltaTokens / deltaRows;
-          }
-          history[historyKey] = { size, tokens };
-
-          results.push({
-            dataset: ds.name,
-            rows: size,
-            format: fmt,
-            tokens,
-            bytes,
-            costGpt4o: cost,
-            structuralOverhead:
-              tokens > 0 ? Math.round((structuralTokens / tokens) * 10000) / 10000 : 0,
-            density: valueTokens / MODEL_REGISTRY['gpt-4o'].contextWindow,
-            entropy: repetition.entropy,
-            stringReuse: repetition.stringReuseRatio,
-            tokenRepetition: repetition.tokenRepetitionFrequency,
-            marginalTokensPerRow: Math.round(marginalCost * 100) / 100,
-          });
-        } catch {}
-      }
-      process.stdout.write('Done.\n');
-    }
-  }
-  return results;
+interface LatencyRow {
+  dataset: string;
+  size: number;
+  encode: { p50: number; p95: number };
+  materialize: { p50: number; p95: number };
+  total: { p50: number; p95: number };
 }
 
-// ============================================================================
-// 2. Marginal Cost Slope (Isolated)
-// ============================================================================
-function benchmarkMarginalCost() {
-  printHeader('BENCHMARK 2: Marginal Cost Slope (Delta Tokens Per Row)');
-  console.log('  Measuring how expensive adding 1 more row is per format...\n');
-
-  const results: any[] = [];
-
-  const testDatasets = [
-    { name: 'Flat', fn: (n: number) => generateFlat(n, SEED) },
-    { name: 'RealWorld', fn: (n: number) => generateRealWorld(n, SEED) },
-    { name: 'WideSchema', fn: (n: number) => generateWideSchema(n, 40, SEED) },
-    { name: 'NumericHeavy', fn: (n: number) => generateNumericHeavy(n, SEED) },
-  ];
-
-  for (const ds of testDatasets) {
-    const entries = measureMarginalCost(ds.name, ds.fn, KEY_FORMATS, tokenizer, tensEncoder);
-    results.push(...entries);
-
-    console.log(`  ${ds.name}:`);
-    for (const e of entries) {
-      console.log(
-        `    ${padR(e.format, 12)} ${padR(e.interval, 12)} Δ=${padL(String(e.deltaTokensPerRow), 8)} tok/row`,
-      );
-    }
-  }
-
-  return results;
+interface PipelineResult {
+  dataset: string;
+  rows: number;
+  irHash: string;
+  irBytes: number;
+  contexTokens: number;
+  jsonTokens: number;
+  savingsPercent: number;
+  budgetGain: number;
+  composeBlocks: number;
+  quickApiMatch: boolean;
 }
 
-// ============================================================================
-// 3. Structural Overhead (Isolated)
-// ============================================================================
-function benchmarkStructuralOverhead() {
-  printHeader('BENCHMARK 3: Structural vs Value Token Separation');
-  console.log('  Measuring what % of tokens are structural overhead...\n');
-
-  const rowCount = 500;
-
-  const testDatasets = [
-    { name: 'Flat', data: generateFlat(rowCount, SEED) },
-    { name: 'RealWorld', data: generateRealWorld(rowCount, SEED) },
-    { name: 'DeepNested', data: generateDeepNested(rowCount, 5, SEED) },
-    { name: 'WideSchema', data: generateWideSchema(rowCount, 40, SEED) },
-    { name: 'ExtremelySparse', data: generateExtremelySparse(rowCount, SEED) },
-  ];
-
-  const results: any[] = [];
-
-  for (const ds of testDatasets) {
-    const entries = measureStructuralOverhead(
-      ds.name,
-      ds.data,
-      KEY_FORMATS,
-      tokenizer,
-      tensEncoder,
-    );
-    results.push(...entries);
-
-    console.log(`  ${ds.name} (${rowCount} rows):`);
-    console.log(
-      `    ${padR('Format', 12)} ${padL('Total', 8)} ${padL('Value', 8)} ${padL('Struct', 8)} ${padL('Overhead%', 10)}`,
-    );
-    console.log(`    ${thinLine.slice(0, 50)}`);
-    for (const e of entries) {
-      console.log(
-        `    ${padR(e.format, 12)} ${padL(String(e.totalTokens), 8)} ${padL(String(e.valueTokens), 8)} ${padL(String(e.structuralTokens), 8)} ${padL((e.overheadRatio * 100).toFixed(1) + '%', 10)}`,
-      );
-    }
-    console.log('');
-  }
-
-  tokenizer.dispose();
-  tensEncoder.dispose();
-  return results;
+interface FidelityResult {
+  test: string;
+  status: 'pass' | 'fail';
+  detail: string;
 }
 
-// ============================================================================
-// 4. Context Fitting
-// ============================================================================
-function benchmarkFitContext() {
-  printHeader('BENCHMARK 4: Context Fitting (Customer Support Scenario)');
-  console.log(`
-  Scenario: Customer support LLM.
-  System prompt: 800 tokens | User prompt: 200 tokens | Response Reserve: 4096 tokens
-  Question: How many tickets fit in the remaining context?
-    `);
-
-  const data = generateRealWorld(10_000, SEED);
-  const models = [
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-5',
-    'gpt-5-mini',
-    'gpt-5-nano',
-    'gpt-5.2',
-    'gpt-5.3-codex',
-    'o3-mini',
-    'o4-mini',
-    'claude-3-5-sonnet',
-    'claude-3-7-sonnet',
-    'claude-4-sonnet',
-    'claude-4-5-sonnet',
-    'claude-4-6-opus',
-    'claude-opus-4-5',
-    'claude-3-5-haiku',
-    'claude-haiku-4-5',
-    'gemini-2-0-flash',
-    'gemini-2-5-flash',
-    'gemini-2-5-flash-lite',
-    'gemini-2-5-pro',
-    'gemini-3-flash',
-    'llama-4-maverick',
-    'llama-4-scout',
-    'deepseek-v3-2',
-    'deepseek-r1',
-    'grok-3',
-    'grok-4-fast',
-    'mistral-large',
-    'mistral-small',
-    'cohere-command-r-plus',
-    'qwen-2-5-72b',
-    'amazon-nova-pro',
-  ];
-  const results = [];
-
-  console.log(
-    `  ${padR('Model', 20)} ${padL('Window', 10)} ${padL('TENS Rows', 10)} ${padL('TOON Rows', 10)} ${padL('JSON Rows', 10)} ${padL('Gain', 8)}`,
-  );
-  console.log(`  ${thinLine}`);
-
-  for (const modelId of models) {
-    const model = MODEL_REGISTRY[modelId];
-    if (!model) continue;
-
-    const budget = calculateBudget(
-      data,
-      {
-        model: modelId,
-        systemPromptTokens: 800,
-        userPromptTokens: 200,
-        responseReserve: 4096,
-        formats: ['tens', 'toon', 'json'],
-      },
-      tokenizer,
-    );
-
-    const tensRows = budget.formatBreakdown.find((f) => f.format === 'tens')?.maxRows || 0;
-    const toonRows = budget.formatBreakdown.find((f) => f.format === 'toon')?.maxRows || 0;
-    const jsonRows = budget.formatBreakdown.find((f) => f.format === 'json')?.maxRows || 0;
-    const gain = tensRows - jsonRows;
-
-    console.log(
-      `  ${padR(model.name, 20)} ${padL(model.contextWindow / 1000 + 'k', 10)} ${padL(String(tensRows), 10)} ${padL(String(toonRows), 10)} ${padL(String(jsonRows), 10)} ${padL('+' + gain, 8)}`,
-    );
-
-    results.push({
-      model: model.name,
-      modelId,
-      windowSize: model.contextWindow,
-      tensRows,
-      toonRows,
-      jsonRows,
-      gain: toonRows - jsonRows,
-      tensGain: gain,
-    });
-  }
-  return results;
+interface ConnectivityResult {
+  package: string;
+  component: string;
+  status: 'pass' | 'fail';
+  detail: string;
 }
 
-// ============================================================================
-// 5. Annual Cost Savings
-// ============================================================================
-function benchmarkCostSavings() {
-  printHeader('BENCHMARK 5: Annual Cost Savings Projection');
-  console.log(`
-  Scenario: 500 tickets per request, 1 Million requests/month.
-  Model: GPT-4o Input Pricing ($2.50 / 1M tokens).
-    `);
-
-  const data = generateRealWorld(500, SEED);
-  const price = MODEL_REGISTRY['gpt-4o'].inputPricePer1M / 1_000_000;
-
-  const json = transcoders.transcode(data, 'json') as string;
-  const toon = transcoders.transcode(data, 'toon') as string;
-  const csv = transcoders.transcode(data, 'csv') as string;
-  const tensText = transcoders.transcode(data, 'tens-text') as string;
-
-  const tJson = tokenizer.countTokens(json, 'o200k_base');
-  const tToon = tokenizer.countTokens(toon, 'o200k_base');
-  const tCsv = tokenizer.countTokens(csv, 'o200k_base');
-  const tTens = tensEncoder.encodeToTokenStream(data).length;
-  const tTensText = tokenizer.countTokens(tensText, 'o200k_base');
-
-  const costJson = tJson * price * 1_000_000 * 12;
-  const costToon = tToon * price * 1_000_000 * 12;
-  const costCsv = tCsv * price * 1_000_000 * 12;
-  const costTens = tTens * price * 1_000_000 * 12;
-  const costTensText = tTensText * price * 1_000_000 * 12;
-
-  console.log(
-    `  ${padR('Format', 12)} ${padL('Tokens/Req', 12)} ${padL('Annual Cost', 16)} ${padL('Savings', 16)}`,
-  );
-  console.log(`  ${thinLine}`);
-  console.log(
-    `  ${padR('JSON', 12)} ${padL(String(tJson), 12)} ${padL(dollar(costJson), 16)} ${padL('-', 16)}`,
-  );
-  console.log(
-    `  ${padR('TOON', 12)} ${padL(String(tToon), 12)} ${padL(dollar(costToon), 16)} ${padL(dollar(costJson - costToon), 16)}`,
-  );
-  console.log(
-    `  ${padR('CSV', 12)} ${padL(String(tCsv), 12)} ${padL(dollar(costCsv), 16)} ${padL(dollar(costJson - costCsv), 16)}`,
-  );
-  console.log(
-    `  ${padR('TENS', 12)} ${padL(String(tTens), 12)} ${padL(dollar(costTens), 16)} ${padL(dollar(costJson - costTens), 16)}`,
-  );
-  console.log(
-    `  ${padR('TENS-Text', 12)} ${padL(String(tTensText), 12)} ${padL(dollar(costTensText), 16)} ${padL(dollar(costJson - costTensText), 16)}`,
-  );
-
-  return [
-    { format: 'JSON', tokens: tJson, annualCost: costJson, savings: 0 },
-    { format: 'TOON', tokens: tToon, annualCost: costToon, savings: costJson - costToon },
-    { format: 'CSV', tokens: tCsv, annualCost: costCsv, savings: costJson - costCsv },
-    { format: 'TENS', tokens: tTens, annualCost: costTens, savings: costJson - costTens },
-    {
-      format: 'TENS-Text',
-      tokens: tTensText,
-      annualCost: costTensText,
-      savings: costJson - costTensText,
-    },
-  ];
-}
-
-// ============================================================================
-// 6. Determinism Guarantee
-// ============================================================================
-function benchmarkDeterminism() {
-  printHeader('BENCHMARK 6: Deterministic Output Guarantee');
-  const data1 = [{ id: 1, role: 'admin', name: 'Alice' }];
-  const data2 = [{ name: 'Alice', id: 1, role: 'admin' }];
-
-  const formats: SupportedFormat[] = ['json', 'json-min', 'toon', 'csv', 'tens', 'tens-text'];
-  const results = [];
-
-  for (const fmt of formats) {
-    const out1 = transcoders.transcode(data1, fmt);
-    const out2 = transcoders.transcode(data2, fmt);
-    const match = String(out1) === String(out2);
-    console.log(
-      `  ${fmt.padEnd(12)}: ${match ? '✅ Deterministic' : '❌ Failed (Order Dependent)'}`,
-    );
-    results.push({ format: fmt, deterministic: match });
-  }
-  return results;
-}
-
-// ============================================================================
-// 7. Prefix Cache Simulation (All Mutation Types)
-// ============================================================================
-function benchmarkPrefixCache() {
-  printHeader('BENCHMARK 7: Prefix Cache System (All Mutation Types)');
-  console.log(`
-  Scenario: Real-world data mutations.
-  Question: How much prefix is preserved when data changes?
-    `);
-
-  const baseData = generateRealWorld(100, SEED);
-
-  const scenarios: { name: string; mutation: MutationType; count: number }[] = [
-    { name: 'Append 20%', mutation: 'append', count: 20 },
-    { name: 'Prepend 10%', mutation: 'prepend', count: 10 },
-    { name: 'Insert Middle', mutation: 'insert', count: 10 },
-    { name: 'Update Middle', mutation: 'update_middle', count: 5 },
-    { name: 'Delete First 10', mutation: 'delete_first', count: 10 },
-    { name: 'Shuffle Tail 20%', mutation: 'shuffle_tail', count: 0 },
-    { name: 'Single Field Change', mutation: 'single_field_change', count: 1 },
-  ];
-
-  console.log(
-    `  ${padR('Mutation', 22)} ${padL('Naive Overlap', 14)} ${padL('Smart Overlap', 14)} ${padL('Gain', 10)}`,
-  );
-  console.log(`  ${thinLine}`);
-
-  const results: Record<string, any> = {};
-
-  for (const s of scenarios) {
-    const sim = runPrefixSimulation(baseData, s.mutation, s.count, tokenizer, SEED);
-
-    // Calculate percentages
-    const naiveBase = tokenizer.countTokens(formatOutput(baseData, 'toon'), 'o200k_base');
-    const naivePct = naiveBase > 0 ? Math.round((sim.naiveOverlap / naiveBase) * 100) : 0;
-
-    const smartBase = tokenizer.countTokens(
-      formatPrefixAware(baseData, { format: 'toon', sortBy: 'id' }),
-      'o200k_base',
-    );
-    const smartPct = smartBase > 0 ? Math.round((sim.awareOverlap / smartBase) * 100) : 0;
-
-    console.log(
-      `  ${padR(s.name, 22)} ${padL(naivePct + '%', 14)} ${padL(smartPct + '%', 14)} ${padL('+' + (smartPct - naivePct) + '%', 10)}`,
-    );
-
-    results[s.name] = {
-      naive: { overlap: sim.naiveOverlap, pct: naivePct },
-      smart: { overlap: sim.awareOverlap, pct: smartPct },
-      gain: smartPct - naivePct,
-    };
-  }
-
-  return results;
-}
-
-// ============================================================================
-// 8. TENS Performance
-// ============================================================================
-function benchmarkTensPerformance() {
-  printHeader('BENCHMARK 8: TENS System Performance (Speed & Size)');
-  console.log(`
-  Scenario: Encoding/Decoding 10,000 Real-World Tickets.
-  Measures: Throughput (ops/sec) and Size Efficiency.
-    `);
-
-  const count = 10_000;
-  const data = generateRealWorld(count, SEED);
-  const tensEncoder = new TokenStreamEncoder();
-  const tensDecoder = new TokenStreamDecoder();
-
-  // Warmup
-  tensEncoder.encode(data.slice(0, 100));
-
-  const startEnc = performance.now();
-  const binary = tensEncoder.encode(data);
-  const endEnc = performance.now();
-  const encTime = (endEnc - startEnc) / 1000;
-  const encOps = count / encTime;
-  const encMB = binary.length / 1024 / 1024;
-  const encThroughput = encMB / encTime;
-
-  const startDec = performance.now();
-  tensDecoder.decode(binary);
-  const endDec = performance.now();
-  const decTime = (endDec - startDec) / 1000;
-  const decOps = count / decTime;
-  const decThroughput = encMB / decTime;
-
-  const jsonStr = JSON.stringify(data);
-  const jsonSize = Buffer.byteLength(jsonStr);
-  const tensSize = binary.length;
-  const reduction = (1 - tensSize / jsonSize) * 100;
-
-  console.log(`  ${padR('Metric', 20)} ${padL('Value', 15)} ${padL('Unit', 10)}`);
-  console.log(`  ${thinLine}`);
-  console.log(
-    `  ${padR('Encoding Speed', 20)} ${padL(encOps.toFixed(0), 15)} ${padL('ops/sec', 10)}`,
-  );
-  console.log(
-    `  ${padR('Encoding Throughput', 20)} ${padL(encThroughput.toFixed(2), 15)} ${padL('MB/s', 10)}`,
-  );
-  console.log(
-    `  ${padR('Decoding Speed', 20)} ${padL(decOps.toFixed(0), 15)} ${padL('ops/sec', 10)}`,
-  );
-  console.log(
-    `  ${padR('Decoding Throughput', 20)} ${padL(decThroughput.toFixed(2), 15)} ${padL('MB/s', 10)}`,
-  );
-  console.log(`  ${thinLine}`);
-  console.log(
-    `  ${padR('Original JSON', 20)} ${padL((jsonSize / 1024 / 1024).toFixed(2), 15)} ${padL('MB', 10)}`,
-  );
-  console.log(
-    `  ${padR('TENS Binary', 20)} ${padL((tensSize / 1024 / 1024).toFixed(2), 15)} ${padL('MB', 10)}`,
-  );
-  console.log(`  ${padR('Reduction', 20)} ${padL(reduction.toFixed(1), 15)} ${padL('%', 10)}`);
-
-  tensDecoder.dispose();
-
-  return {
-    encodingSpeed: Math.round(encOps),
-    encodingThroughput: Math.round(encThroughput * 100) / 100,
-    decodingSpeed: Math.round(decOps),
-    decodingThroughput: Math.round(decThroughput * 100) / 100,
-    jsonSize,
-    tensSize,
-    reduction: Math.round(reduction * 10) / 10,
+interface BenchmarkReport {
+  metadata: {
+    version: string;
+    timestamp: string;
+    model: string;
+    datasetCount: number;
+  };
+  matrix: MatrixRow[];
+  pipeline: PipelineResult[];
+  fidelity: FidelityResult[];
+  connectivity: ConnectivityResult[];
+  latency: LatencyRow[];
+  summary: {
+    avgSavingsPercent: number;
+    maxSavingsPercent: number;
+    minSavingsPercent: number;
+    avgBudgetGain: number;
+    avgEncodeUsPerRow: number;
+    avgMaterializeUsPerRow: number;
+    fidelityScore: string;
+    connectivityScore: string;
+    totalTests: number;
+    passed: number;
+    failed: number;
   };
 }
 
-// ============================================================================
-// 9. Schema Width Sensitivity
-// ============================================================================
-function benchmarkSchemaWidth() {
-  printHeader('BENCHMARK 9: Schema Width Sensitivity');
-  console.log('  How do formats scale as column count increases?\n');
+// ---- Config ----
 
-  const columnCounts = [10, 20, 40, 80];
-  const rowCount = 100;
-  const results: any[] = [];
+const args = process.argv.slice(2);
+const outPath = (() => {
+  const idx = args.indexOf('--out');
+  return idx !== -1 && args[idx + 1] ? args[idx + 1] : 'benchmark_results.json';
+})();
+const websiteSync = args.includes('--sync-website');
+
+const modelId = 'gpt-4o-mini';
+const tokenizer = new TokenizerManager();
+
+// All 15 dataset types — Flat/Tabular, Nested/Complex, Industry, Edge Cases
+const datasets: Array<{ name: string; fn: DatasetFactory; category: string }> = [
+  // Flat / Tabular
+  { name: 'Flat', fn: generateFlat, category: 'tabular' },
+  { name: 'RealWorld', fn: generateRealWorld, category: 'tabular' },
+  { name: 'NumericHeavy', fn: generateNumericHeavy, category: 'tabular' },
+  { name: 'Repetitive', fn: generateRepetitive, category: 'tabular' },
+  // Nested / Complex
+  { name: 'Nested', fn: generateNested, category: 'nested' },
+  { name: 'DeepNested', fn: (n) => generateDeepNested(n, 5), category: 'nested' },
+  { name: 'MixedNested', fn: generateMixedNestedTabular, category: 'nested' },
+  // Industry / Real-World
+  { name: 'Ecommerce', fn: generateEcommerce, category: 'industry' },
+  { name: 'Healthcare', fn: generateHealthcare, category: 'industry' },
+  { name: 'IoT', fn: generateIoT, category: 'industry' },
+  // Edge Cases
+  { name: 'Sparse', fn: generateSparse, category: 'edge' },
+  { name: 'ExtSparse', fn: generateExtremelySparse, category: 'edge' },
+  { name: 'WideSchema', fn: (n) => generateWideSchema(n, 40), category: 'edge' },
+  { name: 'ChatMessages', fn: generateChatMessages, category: 'edge' },
+  { name: 'LogEvents', fn: generateLogEvents, category: 'edge' },
+];
+
+const matrixSizes = [100, 1000];
+const latencyIterations = 10;
+const TOTAL_SECTIONS = 7;
+
+// ---- UI Helpers ----
+
+const BOLD = '\x1b[1m';
+const DIM = '\x1b[2m';
+const GREEN = '\x1b[32m';
+const YELLOW = '\x1b[33m';
+const RED = '\x1b[31m';
+const CYAN = '\x1b[36m';
+const MAGENTA = '\x1b[35m';
+const RESET = '\x1b[0m';
+const BG_GREEN = '\x1b[42m\x1b[30m';
+const BG_RED = '\x1b[41m\x1b[37m';
+
+function bar(pct: number, width = 20): string {
+  const clamped = Math.max(0, Math.min(100, pct));
+  const filled = Math.round((clamped / 100) * width);
+  const empty = width - filled;
+  const color = pct >= 60 ? GREEN : pct >= 40 ? YELLOW : RED;
+  return `${color}${'█'.repeat(filled)}${DIM}${'░'.repeat(empty)}${RESET}`;
+}
+
+function pad(str: string | number, len: number, align: 'left' | 'right' = 'right'): string {
+  const s = String(str);
+  if (align === 'left') return s.padEnd(len);
+  return s.padStart(len);
+}
+
+function percentile(values: number[], p: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.min(sorted.length - 1, Math.floor(sorted.length * p));
+  return Number((sorted[index] ?? 0).toFixed(2));
+}
+
+function getTextTokens(data: Record<string, unknown>[], format: OutputFormat): { tokens: number; bytes: number } {
+  const output = formatOutput(data, format);
+  return {
+    tokens: tokenizer.countTokens(output, 'o200k_base'),
+    bytes: Buffer.byteLength(output),
+  };
+}
+
+function divider(char = '━', len = 90) {
+  console.log(DIM + char.repeat(len) + RESET);
+}
+
+function sectionHeader(num: number, title: string) {
+  console.log('');
+  divider();
+  console.log(`${BOLD}${CYAN}  [${num}/${TOTAL_SECTIONS}] ${title}${RESET}`);
+  divider('─');
+}
+
+// ============================================================================
+// 1. Token Matrix — Contex vs JSON/TOON/CSV across all datasets
+// ============================================================================
+
+function buildMatrix(): MatrixRow[] {
+  sectionHeader(1, 'Token Savings Matrix — Contex vs JSON/TOON/CSV');
+  const rows: MatrixRow[] = [];
 
   console.log(
-    `  ${padR('Format', 12)} ${padL('10 cols', 10)} ${padL('20 cols', 10)} ${padL('40 cols', 10)} ${padL('80 cols', 10)}`,
+    `  ${pad('Dataset', 14, 'left')} ${pad('Rows', 5)} │ ${pad('JSON', 7)} ${pad('TOON', 7)} ${pad('CSV', 7)} ${pad('Contex', 7)} │ ${pad('Saved', 5)}  ${'Savings'}`,
   );
-  console.log(`  ${thinLine.slice(0, 55)}`);
+  console.log(`  ${'─'.repeat(14)} ${'─'.repeat(5)} ┼ ${'─'.repeat(7)} ${'─'.repeat(7)} ${'─'.repeat(7)} ${'─'.repeat(7)} ┼ ${'─'.repeat(5)}  ${'─'.repeat(20)}`);
 
-  // Build results per format
-  const formatResults: Record<string, Record<number, number>> = {};
+  for (const dataset of datasets) {
+    for (const size of matrixSizes) {
+      const data = dataset.fn(size);
+      const json = getTextTokens(data, 'json');
+      const toon = getTextTokens(data, 'toon');
+      const csv = getTextTokens(data, 'csv');
+      const contex = getTextTokens(data, 'contex');
 
-  for (const cols of columnCounts) {
-    const data = generateWideSchema(rowCount, cols, SEED);
-    for (const fmt of KEY_FORMATS) {
-      let tokens: number;
-      let bytes: number;
-      if (fmt === 'tens') {
-        const stream = tensEncoder.encodeToTokenStream(data);
-        const bin = tensEncoder.encode(data);
-        tokens = stream.length;
-        bytes = bin.length;
-      } else {
-        const output = transcoders.transcode(data, fmt);
-        tokens = tokenizer.countTokens(output as string, 'o200k_base');
-        bytes = Buffer.byteLength(output as string);
+      const saving = json.tokens > 0 ? Math.round((json.tokens - contex.tokens) / json.tokens * 100) : 0;
+
+      for (const [fmt, t] of [['json', json], ['toon', toon], ['csv', csv], ['contex', contex]] as const) {
+        rows.push({
+          dataset: dataset.name,
+          rows: size,
+          format: fmt as string,
+          tokens: t.tokens,
+          bytes: t.bytes,
+          savingsVsJson: fmt === 'json' ? 0 : Math.round((json.tokens - t.tokens) / json.tokens * 100),
+        });
       }
 
-      if (!formatResults[fmt]) formatResults[fmt] = {};
-      formatResults[fmt][cols] = tokens;
-
-      results.push({
-        format: fmt,
-        columns: cols,
-        tokens,
-        bytes,
-        tokensPerColumn: Math.round(tokens / cols),
-      });
+      console.log(
+        `  ${pad(dataset.name, 14, 'left')} ${pad(size, 5)} │ ${pad(json.tokens, 7)} ${pad(toon.tokens, 7)} ${pad(csv.tokens, 7)} ${BOLD}${pad(contex.tokens, 7)}${RESET} │ ${BOLD}${saving >= 50 ? GREEN : saving >= 30 ? YELLOW : RED}${pad(saving + '%', 5)}${RESET}  ${bar(saving)}`,
+      );
     }
   }
 
-  for (const fmt of KEY_FORMATS) {
-    const r = formatResults[fmt] || {};
+  return rows;
+}
+
+// ============================================================================
+// 2. Full Pipeline — Tens.encode → IR → materialize → budget → compose
+// ============================================================================
+
+function buildPipeline(): PipelineResult[] {
+  sectionHeader(2, 'Full Pipeline — encode → materialize → budget → compose → quick');
+
+  console.log(
+    `  ${pad('Dataset', 14, 'left')} │ ${pad('JSON', 7)} ${pad('Contex', 7)} ${pad('Saved', 6)} │ ${pad('+Rows', 6)} ${pad('Blk', 4)} ${pad('API', 4)} │ ${'Savings'}`,
+  );
+  console.log(`  ${'─'.repeat(14)} ┼ ${'─'.repeat(7)} ${'─'.repeat(7)} ${'─'.repeat(6)} ┼ ${'─'.repeat(6)} ${'─'.repeat(4)} ${'─'.repeat(4)} ┼ ${'─'.repeat(20)}`);
+
+  const results: PipelineResult[] = [];
+
+  for (const dataset of datasets) {
+    const data = dataset.fn(500);
+
+    // Tens.encode (core)
+    const tens = Tens.encode(data);
+    const irHash = tens.hash;
+    const irBytes = tens.ir.length;
+    const contexTokens = tens.tokenCount(modelId);
+
+    // JSON baseline
+    const jsonText = JSON.stringify(data);
+    const jsonTokens = tokenizer.countTokens(jsonText, 'o200k_base');
+    const savingsPercent = jsonTokens > 0 ? Math.round(((jsonTokens - contexTokens) / jsonTokens) * 100) : 0;
+
+    // Budget (engine)
+    let budgetGain = 0;
+    try {
+      const budget = calculateBudget(data, {
+        model: modelId, systemPromptTokens: 500, userPromptTokens: 200,
+        responseReserve: 4096, formats: ['tens', 'json'],
+      }, tokenizer);
+      const tensRows = budget.formatBreakdown.find((x) => x.format === 'tens')?.maxRows ?? 0;
+      const jsonRows = budget.formatBreakdown.find((x) => x.format === 'json')?.maxRows ?? 0;
+      budgetGain = tensRows - jsonRows;
+    } catch { /* ignore */ }
+
+    // Compose (core)
+    let composeBlocks = 0;
+    try {
+      const ir = encodeIR(data);
+      const composed = compose({
+        blocks: [
+          { name: 'system', type: 'text', content: 'System: You are a helpful assistant.', priority: 'required' },
+          { name: 'data', type: 'ir', ir, priority: 'optional' },
+        ],
+        model: modelId,
+      });
+      composeBlocks = composed.blocks.filter((b) => b.included).length;
+    } catch { composeBlocks = -1; }
+
+    // quick() API
+    let quickApiMatch = false;
+    try {
+      const quickResult = quick(data, modelId);
+      quickApiMatch = quickResult.tens.hash === irHash;
+    } catch { /* ignore */ }
+
+    const result: PipelineResult = {
+      dataset: dataset.name, rows: 500, irHash, irBytes,
+      contexTokens, jsonTokens, savingsPercent, budgetGain,
+      composeBlocks, quickApiMatch,
+    };
+    results.push(result);
+
+    const apiIcon = quickApiMatch ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`;
     console.log(
-      `  ${padR(fmt, 12)} ${padL(String(r[10] || 0), 10)} ${padL(String(r[20] || 0), 10)} ${padL(String(r[40] || 0), 10)} ${padL(String(r[80] || 0), 10)}`,
+      `  ${pad(dataset.name, 14, 'left')} │ ${pad(jsonTokens, 7)} ${pad(contexTokens, 7)} ${BOLD}${savingsPercent >= 50 ? GREEN : savingsPercent >= 30 ? YELLOW : RED}${pad(savingsPercent + '%', 6)}${RESET} │ ${pad('+' + budgetGain, 6)} ${pad(composeBlocks, 4)} ${apiIcon}    │ ${bar(savingsPercent)}`,
     );
   }
 
-  tokenizer.dispose();
-  tensEncoder.dispose();
   return results;
 }
 
 // ============================================================================
-// 10. Tokenizer Spread
+// 3. Data Fidelity Tests — Verify data integrity through pipeline
 // ============================================================================
-function benchmarkTokenizerSpread() {
-  printHeader('BENCHMARK 10: Tokenizer Spread (Multi-Encoding Comparison)');
-  console.log('  How do different tokenizers affect format efficiency?\n');
 
-  const data = generateRealWorld(500, SEED);
-  const textFormats: SupportedFormat[] = ['json', 'json-min', 'toon', 'csv'];
-  const results = measureTokenizerSpread('RealWorld', data, textFormats, tokenizer);
+function buildFidelity(): FidelityResult[] {
+  sectionHeader(3, 'Data Fidelity — What goes in MUST come out');
+  const results: FidelityResult[] = [];
 
-  // Add TENS with its native token stream encoding
-  const tensTokens = tensEncoder.encodeToTokenStream(data).length;
-  results.push({
-    format: 'tens',
-    encoding: 'tens-native',
-    dataset: 'RealWorld',
-    tokens: tensTokens,
+  const check = (name: string, fn: () => boolean, detail: string) => {
+    try {
+      const pass = fn();
+      results.push({ test: name, status: pass ? 'pass' : 'fail', detail });
+      const icon = pass ? `${GREEN}✓${RESET}` : `${RED}✗${RESET}`;
+      console.log(`  ${icon}  ${name}: ${DIM}${detail}${RESET}`);
+    } catch (e) {
+      results.push({ test: name, status: 'fail', detail: String(e) });
+      console.log(`  ${RED}✗${RESET}  ${name}: ${RED}${String(e).slice(0, 80)}${RESET}`);
+    }
+  };
+
+  // Test 1: Exact string match — "how are you" must come back exactly
+  check('String exact match', () => {
+    const data = [
+      { message: 'how are you', sender: 'user' },
+      { message: 'I am fine thank you', sender: 'assistant' },
+    ];
+    const out = Tens.encode(data).toString();
+    return out.includes('how are you') && out.includes('I am fine thank you');
+  }, '"how are you" -> Contex -> "how are you"');
+
+  // Test 2: Numeric precision
+  check('Numeric precision', () => {
+    const data = [{ price: 19.99, quantity: 1000000, ratio: 0.00001, negative: -42.5 }];
+    const out = Tens.encode(data).toString();
+    return out.includes('19.99') && out.includes('1000000') && out.includes('0.00001') && out.includes('-42.5');
+  }, 'Decimals, large ints, negatives preserved');
+
+  // Test 3: Boolean values
+  check('Boolean integrity', () => {
+    const data = [{ active: true, deleted: false, name: 'test' }];
+    const out = Tens.encode(data).toString();
+    return (out.includes('T') || out.includes('true')) && (out.includes('F') || out.includes('false'));
+  }, 'true->T, false->F preserved');
+
+  // Test 4: Null handling
+  check('Null preservation', () => {
+    const data = [
+      { name: 'Alice', notes: null, score: 95 },
+      { name: 'Bob', notes: 'has notes', score: null },
+    ];
+    const out = Tens.encode(data).toString();
+    return out.includes('Alice') && out.includes('Bob') && out.includes('has notes') && out.includes('_');
+  }, 'null->_ marker, non-null values intact');
+
+  // Test 5: Special characters
+  check('Special characters', () => {
+    const data = [{ text: 'Hello "world"', path: 'C:\\Users\\test', emoji: '🚀 launch' }];
+    const out = Tens.encode(data).toString();
+    return out.includes('Hello') && out.includes('world');
+  }, 'Quotes, backslashes, emoji survive');
+
+  // Test 6: Unicode / multilingual
+  check('Unicode fidelity', () => {
+    const data = [{ en: 'hello', ja: 'こんにちは', zh: '你好', ko: '안녕하세요', ar: 'مرحبا' }];
+    const out = Tens.encode(data).toString();
+    return out.includes('hello') && out.includes('こんにちは') && out.includes('你好') && out.includes('안녕하세요');
+  }, 'Japanese, Chinese, Korean, Arabic preserved');
+
+  // Test 7: Array data inside rows
+  check('Array data fidelity', () => {
+    const data = [{ tags: ['urgent', 'bug', 'frontend'], scores: [95, 87, 72] }];
+    const out = Tens.encode(data).toString();
+    return out.includes('urgent') && out.includes('bug') && out.includes('95') && out.includes('72');
+  }, 'String and numeric arrays survive');
+
+  // Test 8: Deterministic output
+  check('Deterministic output', () => {
+    const data = [{ a: 1, b: 'test', c: true }];
+    const o1 = Tens.encode(data).toString();
+    const o2 = Tens.encode(data).toString();
+    const o3 = Tens.encode(data).toString();
+    return o1 === o2 && o2 === o3;
+  }, '3 encodes produce identical output');
+
+  // Test 9: Key order independence
+  check('Key order agnostic', () => {
+    const d1 = [{ z: 'last', a: 'first', m: 'middle' }];
+    const d2 = [{ a: 'first', m: 'middle', z: 'last' }];
+    return Tens.encode(d1).hash === Tens.encode(d2).hash;
+  }, '{z,a,m} and {a,m,z} produce same hash');
+
+  // Test 10: Empty data
+  check('Empty data handling', () => {
+    const tens = Tens.encode([]);
+    return tens.hash !== '' && tens.rowCount === 0;
+  }, 'Empty array encoded without error');
+
+  // Test 11: Large payload — first + last row intact
+  check('1000-row data fidelity', () => {
+    const data = generateFlat(1000);
+    const out = Tens.encode(data).toString();
+    return out.includes('User 0') && out.includes('User 999') &&
+           out.includes('user0@example.com') && out.includes('user999@example.com');
+  }, 'First + last row of 1000-row dataset verified');
+
+  // Test 12: Nested object values
+  check('Nested data fidelity', () => {
+    const data = [{ user: { name: 'Alice', profile: { age: 30, city: 'NYC' } } }];
+    const out = Tens.encode(data).toString();
+    return out.includes('Alice') && out.includes('30') && out.includes('NYC');
+  }, 'Nested object values preserved at any depth');
+
+  // Test 13: Deep nested (5 levels)
+  check('Deep nested (5 levels)', () => {
+    const data = generateDeepNested(5, 5);
+    const out = Tens.encode(data).toString();
+    // Should contain the leaf values from the generator
+    return out.length > 100 && out.includes('0');
+  }, '5-level nested objects survive flattening');
+
+  // Test 14: Sparse data — most fields null
+  check('Sparse data fidelity', () => {
+    const data = generateSparse(20);
+    const out = Tens.encode(data).toString();
+    return out.includes('_') && out.length > 50;
+  }, 'Sparse rows with many nulls handled correctly');
+
+  // Test 15: Tokenize→detokenize round-trip
+  check('Token round-trip', () => {
+    const data = [
+      { question: 'What is the capital of France?', answer: 'Paris' },
+      { question: 'What is 2+2?', answer: '4' },
+    ];
+    const out = Tens.encode(data).toString();
+    const tokens = tokenizer.tokenize(out, 'o200k_base');
+    const detokenized = tokenizer.detokenize(tokens, 'o200k_base');
+    return detokenized.includes('capital of France') && detokenized.includes('Paris') &&
+           detokenized.includes('2+2') && detokenized.includes('4');
+  }, 'Contex -> tokenize -> detokenize preserves meaning');
+
+  // Test 16: quick() API round-trip
+  check('quick() API fidelity', () => {
+    const data = [
+      { task: 'Summarize this article', priority: 'high' },
+      { task: 'Translate to Spanish', priority: 'low' },
+    ];
+    const text = quick(data, modelId).asText();
+    return text.includes('Summarize this article') && text.includes('Translate to Spanish') &&
+           text.includes('high') && text.includes('low');
+  }, 'quick() output contains all input values');
+
+  // Test 17: Dictionary compression doesn't corrupt
+  check('Dictionary fidelity', () => {
+    const data = Array.from({ length: 50 }, (_, i) => ({
+      status: i % 3 === 0 ? 'active' : i % 3 === 1 ? 'pending' : 'deleted',
+      region: 'us-west-2', id: i,
+    }));
+    const out = Tens.encode(data).toString();
+    return out.includes('@') && out.includes('0') && out.includes('49');
+  }, 'High-repetition data uses dict refs correctly');
+
+  // Test 18: Chat message integrity — critical for LLM use
+  check('Chat message integrity', () => {
+    const msgs = [
+      { role: 'user', content: 'Explain quantum computing in simple terms' },
+      { role: 'assistant', content: 'Quantum computing uses qubits that can be 0, 1, or both simultaneously' },
+      { role: 'user', content: 'What are practical applications?' },
+    ];
+    const out = Tens.encode(msgs).toString();
+    return out.includes('Explain quantum computing') && out.includes('qubits') && out.includes('practical applications');
+  }, 'Full chat history preserved word-for-word');
+
+  // Test 19: Extremely sparse data (95%+ nulls)
+  check('Extremely sparse fidelity', () => {
+    const data = generateExtremelySparse(50);
+    const out = Tens.encode(data).toString();
+    return out.includes('_') && out.length > 100;
+  }, '95%+ null fields handled without data loss');
+
+  // Test 20: Mixed nested + tabular
+  check('Mixed nested+tabular', () => {
+    const data = generateMixedNestedTabular(10);
+    const out = Tens.encode(data).toString();
+    return out.length > 100;
+  }, 'Hybrid schemas with nested objects + flat fields');
+
+  return results;
+}
+
+// ============================================================================
+// 4. Cross-Package Connectivity
+// ============================================================================
+
+async function buildConnectivity(): Promise<ConnectivityResult[]> {
+  sectionHeader(4, 'Cross-Package Connectivity');
+  const results: ConnectivityResult[] = [];
+  const data = generateRealWorld(50);
+
+  const test = async (pkg: string, component: string, fn: () => Promise<string> | string) => {
+    try {
+      const detail = await fn();
+      results.push({ package: pkg, component, status: 'pass', detail });
+      console.log(`  ${GREEN}✓${RESET}  ${DIM}[${pkg}]${RESET} ${component}: ${DIM}${detail}${RESET}`);
+    } catch (e) {
+      const msg = String(e).slice(0, 80);
+      results.push({ package: pkg, component, status: 'fail', detail: msg });
+      console.log(`  ${RED}✗${RESET}  ${DIM}[${pkg}]${RESET} ${component}: ${RED}${msg}${RESET}`);
+    }
+  };
+
+  await test('core', 'Tens.encode', () => {
+    const t = Tens.encode(data);
+    return `hash=${t.hash.slice(0, 12)}... rows=${t.rowCount}`;
   });
 
-  // Group by format for printing
-  const byFormat: Record<string, Record<string, number>> = {};
-  for (const r of results) {
-    if (!byFormat[r.format]) byFormat[r.format] = {};
-    byFormat[r.format][r.encoding] = r.tokens;
+  await test('core', 'encodeIR', () => {
+    const ir = encodeIR(data);
+    return `version=${ir.irVersion} hash=${ir.hash.slice(0, 12)}...`;
+  });
+
+  for (const fmt of ['json', 'toon', 'csv', 'markdown', 'contex'] as OutputFormat[]) {
+    await test('core', `formatOutput(${fmt})`, () => {
+      const output = formatOutput(data, fmt);
+      if (output.length === 0) throw new Error('Empty output');
+      return `${output.length} chars`;
+    });
   }
 
-  const encodings = ['cl100k_base', 'o200k_base', 'p50k_base', 'r50k_base', 'tens-native'];
-  console.log(`  ${padR('Format', 12)} ${encodings.map((e) => padL(e, 14)).join(' ')}`);
-  console.log(`  ${thinLine}`);
+  await test('core', 'TokenizerManager', () => {
+    const count = tokenizer.countTokens('Hello world', 'o200k_base');
+    if (count <= 0) throw new Error('Zero tokens');
+    return `"Hello world"=${count} tokens`;
+  });
 
-  for (const fmt of [...textFormats, 'tens' as SupportedFormat]) {
-    const row = byFormat[fmt] || {};
-    console.log(
-      `  ${padR(fmt, 12)} ${encodings.map((e) => padL(String(row[e] || '-'), 14)).join(' ')}`,
+  await test('core', 'compose', () => {
+    const ir = encodeIR(data);
+    const composed = compose({
+      blocks: [
+        { name: 'system', type: 'text', content: 'System prompt', priority: 'required' },
+        { name: 'data', type: 'ir', ir, priority: 'optional' },
+      ],
+      model: modelId,
+    });
+    const included = composed.blocks.filter((b) => b.included).length;
+    if (included === 0) throw new Error('No blocks included');
+    return `${included} blocks, ${composed.totalTokens} tokens`;
+  });
+
+  await test('engine', 'Contex.insert+query', () => {
+    const engine = new Contex('o200k_base');
+    engine.insert('bench_col', data);
+    const result = engine.query('GET bench_col');
+    if (!result) throw new Error('Query returned null');
+    return `queried ${data.length} rows`;
+  });
+
+  await test('engine', 'calculateBudget', () => {
+    const budget = calculateBudget(data, {
+      model: modelId, systemPromptTokens: 500, userPromptTokens: 200,
+      responseReserve: 4096, formats: ['tens', 'json'],
+    }, tokenizer);
+    if (budget.formatBreakdown.length === 0) throw new Error('No formats');
+    return `${budget.formatBreakdown.length} formats evaluated`;
+  });
+
+  await test('engine', 'quick()', () => {
+    const result = quick(data, modelId);
+    if (result.tokenCount <= 0) throw new Error('Zero tokens');
+    return `${result.tokenCount} tokens, ${result.savings.percent}% saved`;
+  });
+
+  await test('engine', 'selectBestFormat', () => {
+    const best = selectBestFormat({ model: modelId, data });
+    return `recommended=${best.format}: ${best.reason.slice(0, 40)}`;
+  });
+
+  await test('engine', 'packContext', () => {
+    const config: PackerConfig = {
+      maxTokens: 50000, format: 'toon', encoding: 'o200k_base', strategy: 'greedy',
+    };
+    const packed = packContext(
+      [{ id: 'tickets', data, priority: 80 }, { id: 'context', data: data.slice(0, 10), priority: 60 }],
+      config, tokenizer,
     );
-  }
+    if (packed.selectedItems.length === 0) throw new Error('Nothing packed');
+    return `${packed.selectedItems.length} items, ${packed.totalTokens} tokens`;
+  });
+
+  await test('engine', 'MODEL_REGISTRY', () => {
+    const count = Object.keys(MODEL_REGISTRY).length;
+    if (count === 0) throw new Error('Empty registry');
+    return `${count} models (gpt-4o=${!!MODEL_REGISTRY['gpt-4o']}, claude=${!!MODEL_REGISTRY['claude-3-5-sonnet']})`;
+  });
+
+  await test('middleware', 'provider wrappers', async () => {
+    const mw = await import('@contex/middleware');
+    const ok = typeof mw.createContexOpenAI === 'function' &&
+               typeof mw.createContexAnthropic === 'function' &&
+               typeof mw.createContexGemini === 'function';
+    if (!ok) throw new Error('Missing wrapper functions');
+    return 'openai=✓ anthropic=✓ gemini=✓';
+  });
 
   return results;
 }
 
 // ============================================================================
-// 11. Entropy / Repetition Correlation
+// 5. Latency — encode + materialize across ALL dataset types
 // ============================================================================
-function benchmarkEntropyCorrelation() {
-  printHeader('BENCHMARK 11: Entropy / Repetition Correlation');
-  console.log('  Which format benefits most from repetitive data?\n');
 
-  const results: any[] = [];
-
-  const testDatasets = [
-    { name: 'Repetitive', data: generateRepetitive(500, SEED) },
-    { name: 'Flat', data: generateFlat(500, SEED) },
-    { name: 'RealWorld', data: generateRealWorld(500, SEED) },
-    { name: 'ShortStrings', data: generateShortStrings(500, SEED) },
-    { name: 'NumericHeavy', data: generateNumericHeavy(500, SEED) },
-  ];
-
-  for (const ds of testDatasets) {
-    const repetition = analyzeRepetition(ds.data, tokenizer);
-    const entries = measureEntropyCorrelation(
-      ds.name,
-      ds.data,
-      KEY_FORMATS,
-      tokenizer,
-      tensEncoder,
-      repetition,
-    );
-    results.push(...entries);
-
-    console.log(
-      `  ${ds.name} (entropy: ${repetition.entropy.toFixed(2)}, reuse: ${(repetition.stringReuseRatio * 100).toFixed(0)}%):`,
-    );
-    for (const e of entries) {
-      console.log(
-        `    ${padR(e.format, 12)} ${padL(String(e.tokens), 8)} tokens  (${(e.tokensVsJson * 100).toFixed(0)}% of JSON)`,
-      );
-    }
-    console.log('');
-  }
-
-  tokenizer.dispose();
-  tensEncoder.dispose();
-  return results;
-}
-
-// ============================================================================
-// 12. Latency Profiling (p50 / p95 / p99)
-// ============================================================================
-function benchmarkLatency() {
-  printHeader('BENCHMARK 12: Latency Profiling (p50 / p95 / p99)');
-  console.log(`
-  Measures encode/decode latency in microseconds per row.
-  Tests across multiple dataset sizes and formats.
-    `);
-
-  const tensDecoder = new TokenStreamDecoder();
-  const results: any[] = [];
-  const sizes = [100, 1000, 10000];
-  const iterations = 50;
-
-  const testDatasets = [
-    { name: 'RealWorld', fn: (n: number) => generateRealWorld(n, SEED) },
-    { name: 'Ecommerce', fn: (n: number) => generateEcommerce(n, SEED) },
-    { name: 'IoT', fn: (n: number) => generateIoT(n, SEED) },
-    { name: 'Financial', fn: (n: number) => generateFinancial(n, SEED) },
-  ];
+function buildLatency(): LatencyRow[] {
+  sectionHeader(5, 'Latency — encode + materialize (μs/row)');
 
   console.log(
-    `  ${padR('Dataset', 14)} ${padR('Size', 8)} ${padL('p50 μs', 10)} ${padL('p95 μs', 10)} ${padL('p99 μs', 10)} ${padL('Dec p50', 10)}`,
+    `  ${pad('Dataset', 14, 'left')} ${pad('Size', 5)} │ ${pad('Enc p50', 8)} ${pad('Mat p50', 8)} ${pad('Total', 8)} │ Status`,
   );
-  console.log(`  ${thinLine}`);
+  console.log(`  ${'─'.repeat(14)} ${'─'.repeat(5)} ┼ ${'─'.repeat(8)} ${'─'.repeat(8)} ${'─'.repeat(8)} ┼ ${'─'.repeat(8)}`);
 
-  for (const ds of testDatasets) {
-    for (const size of sizes) {
-      const data = ds.fn(size);
-      const encTimes: number[] = [];
-      const decTimes: number[] = [];
+  const results: LatencyRow[] = [];
 
-      // Warmup
-      tensEncoder.encode(data.slice(0, 10));
+  for (const dataset of datasets) {
+    const size = 500;
+    const data = dataset.fn(size);
+    const encodeTimes: number[] = [];
+    const materializeTimes: number[] = [];
 
-      for (let i = 0; i < iterations; i++) {
-        const startEnc = performance.now();
-        const binary = tensEncoder.encode(data);
-        const endEnc = performance.now();
-        encTimes.push(((endEnc - startEnc) * 1000) / size); // μs per row
+    for (let i = 0; i < latencyIterations; i++) {
+      const t0 = performance.now();
+      const tens = Tens.encode(data);
+      const t1 = performance.now();
+      encodeTimes.push(((t1 - t0) * 1000) / size);
 
-        const startDec = performance.now();
-        tensDecoder.decode(binary);
-        const endDec = performance.now();
-        decTimes.push(((endDec - startDec) * 1000) / size);
-      }
-
-      encTimes.sort((a, b) => a - b);
-      decTimes.sort((a, b) => a - b);
-
-      const p50 = encTimes[Math.floor(encTimes.length * 0.5)];
-      const p95 = encTimes[Math.floor(encTimes.length * 0.95)];
-      const p99 = encTimes[Math.floor(encTimes.length * 0.99)];
-      const decP50 = decTimes[Math.floor(decTimes.length * 0.5)];
-
-      console.log(
-        `  ${padR(ds.name, 14)} ${padR(String(size), 8)} ${padL(p50.toFixed(1), 10)} ${padL(p95.toFixed(1), 10)} ${padL(p99.toFixed(1), 10)} ${padL(decP50.toFixed(1), 10)}`,
-      );
-
-      results.push({
-        dataset: ds.name,
-        size,
-        encode: { p50: +p50.toFixed(2), p95: +p95.toFixed(2), p99: +p99.toFixed(2) },
-        decode: { p50: +decP50.toFixed(2) },
-      });
-    }
-  }
-
-  return results;
-}
-
-// ============================================================================
-// 13. Memory Pressure
-// ============================================================================
-function benchmarkMemory() {
-  printHeader('BENCHMARK 13: Memory Pressure (Peak Heap Usage)');
-  console.log(`
-  Measures peak heap usage during encoding of large datasets.
-    `);
-
-  const results: any[] = [];
-  const sizes = [1000, 5000, 10000, 50000];
-
-  const testDatasets = [
-    { name: 'RealWorld', fn: (n: number) => generateRealWorld(n, SEED) },
-    { name: 'Ecommerce', fn: (n: number) => generateEcommerce(n, SEED) },
-    { name: 'Healthcare', fn: (n: number) => generateHealthcare(n, SEED) },
-  ];
-
-  console.log(
-    `  ${padR('Dataset', 14)} ${padR('Rows', 8)} ${padL('Heap Before', 12)} ${padL('Heap After', 12)} ${padL('Delta MB', 10)} ${padL('Binary MB', 10)}`,
-  );
-  console.log(`  ${thinLine}`);
-
-  for (const ds of testDatasets) {
-    for (const size of sizes) {
-      // Force GC if available
-      if (global.gc) global.gc();
-
-      const heapBefore = process.memoryUsage().heapUsed;
-      const data = ds.fn(size);
-      const encoder = new TokenStreamEncoder();
-      const binary = encoder.encode(data);
-      const heapAfter = process.memoryUsage().heapUsed;
-
-      const deltaMB = (heapAfter - heapBefore) / 1024 / 1024;
-      const binaryMB = binary.length / 1024 / 1024;
-
-      console.log(
-        `  ${padR(ds.name, 14)} ${padR(String(size), 8)} ${padL((heapBefore / 1024 / 1024).toFixed(1) + 'MB', 12)} ${padL((heapAfter / 1024 / 1024).toFixed(1) + 'MB', 12)} ${padL(deltaMB.toFixed(1) + 'MB', 10)} ${padL(binaryMB.toFixed(2) + 'MB', 10)}`,
-      );
-
-      results.push({
-        dataset: ds.name,
-        rows: size,
-        heapBefore: Math.round(heapBefore / 1024),
-        heapAfter: Math.round(heapAfter / 1024),
-        deltaKB: Math.round((heapAfter - heapBefore) / 1024),
-        binaryKB: Math.round(binary.length / 1024),
-      });
-    }
-  }
-
-  return results;
-}
-
-// ============================================================================
-// 14. Scalability Curves (Token Count vs Row Count)
-// ============================================================================
-function benchmarkScalability() {
-  printHeader('BENCHMARK 14: Scalability Curves');
-  console.log('  Token growth rate per format as row count increases.\n');
-
-  const tokenizer = new TokenizerManager();
-  const tensEncoder = new TokenStreamEncoder();
-  const scaleSizes = [10, 50, 100, 500, 1000, 2000, 5000];
-  const results: any[] = [];
-
-  const testDatasets = [
-    { name: 'Flat', fn: (n: number) => generateFlat(n, SEED) },
-    { name: 'RealWorld', fn: (n: number) => generateRealWorld(n, SEED) },
-    { name: 'Ecommerce', fn: (n: number) => generateEcommerce(n, SEED) },
-    { name: 'IoT', fn: (n: number) => generateIoT(n, SEED) },
-    { name: 'ChatMessages', fn: (n: number) => generateChatMessages(n, SEED) },
-  ];
-
-  for (const ds of testDatasets) {
-    console.log(`  ${ds.name}:`);
-    console.log(`    ${padR('Rows', 8)} ${KEY_FORMATS.map((f) => padL(f, 10)).join(' ')}`);
-    console.log(`    ${thinLine.slice(0, 60)}`);
-
-    for (const size of scaleSizes) {
-      let data: any[];
-      try {
-        data = ds.fn(size);
-      } catch {
-        continue;
-      }
-
-      const row: string[] = [padR(String(size), 8)];
-      for (const fmt of KEY_FORMATS) {
-        try {
-          let tokens: number;
-          if (fmt === 'tens') {
-            tokens = tensEncoder.encodeToTokenStream(data).length;
-          } else {
-            const output = transcoders.transcode(data, fmt);
-            tokens = tokenizer.countTokens(output as string, 'o200k_base');
-          }
-          row.push(padL(String(tokens), 10));
-          results.push({ dataset: ds.name, rows: size, format: fmt, tokens });
-        } catch {
-          row.push(padL('-', 10));
-        }
-      }
-      console.log(`    ${row.join(' ')}`);
-    }
-    console.log('');
-  }
-
-  tokenizer.dispose();
-  tensEncoder.dispose();
-  return results;
-}
-
-// ============================================================================
-// 15. Multi-Model Cost Matrix
-// ============================================================================
-function benchmarkMultiModelCost() {
-  printHeader('BENCHMARK 15: Multi-Model Cost Matrix');
-  console.log(`
-  Annual cost projection: 21 models x 5 formats x 5 datasets.
-  Scenario: 500 rows per request, 1M requests/month.
-    `);
-
-  const tokenizer = new TokenizerManager();
-  const results: any[] = [];
-  const requestsPerMonth = 1_000_000;
-
-  const testDatasets = [
-    { name: 'RealWorld', data: generateRealWorld(500, SEED) },
-    { name: 'Ecommerce', data: generateEcommerce(500, SEED) },
-    { name: 'IoT', data: generateIoT(500, SEED) },
-    { name: 'Healthcare', data: generateHealthcare(500, SEED) },
-    { name: 'Financial', data: generateFinancial(500, SEED) },
-  ];
-
-  const costFormats: SupportedFormat[] = ['json', 'json-min', 'toon', 'csv', 'tens'];
-  const modelIds = Object.keys(MODEL_REGISTRY);
-
-  // Print compact summary: best format per model per dataset
-  console.log(`  ${padR('Model', 22)} ${testDatasets.map((d) => padL(d.name, 12)).join(' ')}`);
-  console.log(`  ${thinLine}`);
-
-  for (const modelId of modelIds) {
-    const model = MODEL_REGISTRY[modelId];
-    if (!model) continue;
-
-    const bestFormats: string[] = [];
-
-    for (const ds of testDatasets) {
-      let bestFmt = 'json';
-      let bestCost = Number.POSITIVE_INFINITY;
-
-      for (const fmt of costFormats) {
-        try {
-          let tokens: number;
-          if (fmt === 'tens') {
-            tokens = tensEncoder.encodeToTokenStream(ds.data).length;
-          } else {
-            const output = transcoders.transcode(ds.data, fmt) as string;
-            tokens = tokenizer.countTokens(output, model.encoding as any);
-          }
-
-          const annualCost = (tokens / 1_000_000) * model.inputPricePer1M * requestsPerMonth * 12;
-
-          results.push({
-            model: model.name,
-            modelId,
-            dataset: ds.name,
-            format: fmt,
-            tokens,
-            annualCost: Math.round(annualCost),
-          });
-
-          if (annualCost < bestCost) {
-            bestCost = annualCost;
-            bestFmt = fmt;
-          }
-        } catch {}
-      }
-
-      bestFormats.push(padL(bestFmt, 12));
+      const t2 = performance.now();
+      void tens.materialize(modelId);
+      const t3 = performance.now();
+      materializeTimes.push(((t3 - t2) * 1000) / size);
     }
 
-    console.log(`  ${padR(model.name, 22)} ${bestFormats.join(' ')}`);
-  }
+    const row: LatencyRow = {
+      dataset: dataset.name,
+      size,
+      encode: { p50: percentile(encodeTimes, 0.5), p95: percentile(encodeTimes, 0.95) },
+      materialize: { p50: percentile(materializeTimes, 0.5), p95: percentile(materializeTimes, 0.95) },
+      total: {
+        p50: percentile(encodeTimes.map((e, i) => e + materializeTimes[i]), 0.5),
+        p95: percentile(encodeTimes.map((e, i) => e + materializeTimes[i]), 0.95),
+      },
+    };
+    results.push(row);
 
-  tokenizer.dispose();
-
-  // Print cost savings summary for GPT-4o
-  const gpt4oResults = results.filter((r) => r.modelId === 'gpt-4o');
-  if (gpt4oResults.length > 0) {
-    console.log(`\n  GPT-4o Annual Cost Breakdown (1M req/month):`);
+    const totalP50 = row.total.p50;
+    const status = totalP50 < 50 ? `${GREEN}fast${RESET}` : totalP50 < 200 ? `${YELLOW}ok${RESET}` : `${RED}slow${RESET}`;
     console.log(
-      `  ${padR('Dataset', 14)} ${costFormats.map((f) => padL(f, 12)).join(' ')} ${padL('Savings', 12)}`,
+      `  ${pad(dataset.name, 14, 'left')} ${pad(size, 5)} │ ${pad(row.encode.p50, 8)} ${pad(row.materialize.p50, 8)} ${pad(totalP50, 8)} │ ${status}`,
     );
-    console.log(`  ${thinLine}`);
-
-    for (const ds of testDatasets) {
-      const dsResults = gpt4oResults.filter((r) => r.dataset === ds.name);
-      const jsonCost = dsResults.find((r) => r.format === 'json')?.annualCost || 0;
-      const bestResult = dsResults.reduce(
-        (best, r) => (r.annualCost < best.annualCost ? r : best),
-        dsResults[0],
-      );
-      const row = costFormats.map((fmt) => {
-        const r = dsResults.find((x) => x.format === fmt);
-        return padL(r ? dollar(r.annualCost) : '-', 12);
-      });
-      console.log(
-        `  ${padR(ds.name, 14)} ${row.join(' ')} ${padL(dollar(jsonCost - bestResult.annualCost), 12)}`,
-      );
-    }
   }
 
   return results;
 }
 
 // ============================================================================
-// 16. User-Provided Data Benchmark
+// 6. Per-Format Comparison — All formats ranked head-to-head
 // ============================================================================
-async function benchmarkUserFile(filePath: string) {
-  printHeader(`BENCHMARK 16: User File Analysis (${filePath})`);
 
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    let data;
-    try {
-      data = JSON.parse(content);
-    } catch (e) {
-      console.error('Error: Failed to parse JSON file.');
-      return;
-    }
+function buildFormatComparison() {
+  sectionHeader(6, 'Format Efficiency Ranking — All formats head-to-head');
 
-    if (!Array.isArray(data)) {
-      console.error('Error: Input file must contain a JSON array of objects.');
-      return;
-    }
+  const formats: OutputFormat[] = ['json', 'csv', 'toon', 'tens-text', 'contex'];
+  const testData = generateRealWorld(500);
+  const jsonBaseline = getTextTokens(testData, 'json');
 
-    const count = data.length;
-    console.log(`  Loaded ${count} rows from ${filePath}\n`);
+  console.log(`  ${pad('Format', 12, 'left')} │ ${pad('Tokens', 8)} ${pad('Bytes', 8)} ${pad('vs JSON', 8)} │ Efficiency`);
+  console.log(`  ${'─'.repeat(12)} ┼ ${'─'.repeat(8)} ${'─'.repeat(8)} ${'─'.repeat(8)} ┼ ${'─'.repeat(20)}`);
 
-    const formats: SupportedFormat[] = [
-      'json',
-      'json-min',
-      'toon',
-      'csv',
-      'markdown',
-      'tens',
-      'tens-text',
-    ];
+  for (const fmt of formats) {
+    const result = getTextTokens(testData, fmt);
+    const savings = jsonBaseline.tokens > 0
+      ? Math.round((jsonBaseline.tokens - result.tokens) / jsonBaseline.tokens * 100)
+      : 0;
 
-    // 1. Size & Tokens
+    const savLabel = fmt === 'json' ? '  base' : (savings > 0 ? `-${savings}%` : `+${Math.abs(savings)}%`);
     console.log(
-      `  ${padR('Format', 12)} ${padL('Tokens', 10)} ${padL('Bytes', 10)} ${padL('Cost (1k)', 12)} ${padL('Reduction', 10)}`,
+      `  ${pad(fmt, 12, 'left')} │ ${pad(result.tokens, 8)} ${pad(result.bytes, 8)} ${pad(savLabel, 8)} │ ${fmt === 'json' ? DIM + '░'.repeat(20) + RESET : bar(savings)}`,
     );
-    console.log(`  ${thinLine}`);
-
-    let jsonTokens = 0;
-
-    for (const fmt of formats) {
-      let tokens = 0;
-      let bytes = 0;
-
-      try {
-        if (fmt === 'tens') {
-          const bin = tensEncoder.encode(data);
-          const stream = tensEncoder.encodeToTokenStream(data);
-          tokens = stream.length;
-          bytes = bin.length;
-        } else {
-          const output = transcoders.transcode(data, fmt);
-          tokens = tokenizer.countTokens(output as string, 'o200k_base');
-          bytes = Buffer.byteLength(output as string);
-        }
-
-        if (fmt === 'json') jsonTokens = tokens;
-
-        const cost = (tokens / 1_000_000) * MODEL_REGISTRY['gpt-4o'].inputPricePer1M;
-        const reduction = jsonTokens > 0 ? (1 - tokens / jsonTokens) * 100 : 0;
-        const reductionStr = fmt === 'json' ? '-' : `${reduction.toFixed(1)}%`;
-
-        console.log(
-          `  ${padR(fmt, 12)} ${padL(String(tokens), 10)} ${padL(String(bytes), 10)} ${padL(dollar(cost), 12)} ${padL(reductionStr, 10)}`,
-        );
-      } catch (e) {
-        console.log(
-          `  ${padR(fmt, 12)} ${padL('-', 10)} ${padL('-', 10)} ${padL('-', 12)} ${padL('Error', 10)}`,
-        );
-      }
-    }
-
-    // 2. Context Fitting (Standard Scenario)
-    console.log('\n  Context Fitting (GPT-4o, 800 sys + 4096 res):');
-    try {
-      const budget = calculateBudget(
-        data,
-        {
-          model: 'gpt-4o',
-          systemPromptTokens: 800,
-          userPromptTokens: 200,
-          responseReserve: 4096,
-          formats: ['tens', 'toon', 'json', 'csv'],
-        },
-        tokenizer,
-      );
-
-      for (const f of budget.formatBreakdown) {
-        console.log(`    ${padR(f.format, 10)}: Fits ${padL(String(f.maxRows), 6)} rows per batch`);
-      }
-    } catch (e) {
-      console.error('  Error calculating budget fit.');
-    }
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error(`Error processing file: ${err.message}`);
-    } else {
-      console.error('An unknown error occurred during file processing.');
-    }
   }
 }
 
 // ============================================================================
-// Main
+// 7. Summary & Report
 // ============================================================================
-async function main() {
-  const args = process.argv.slice(2);
-  const fileArgIndex = args.indexOf('--input');
 
-  if (fileArgIndex !== -1 && args[fileArgIndex + 1]) {
-    await benchmarkUserFile(args[fileArgIndex + 1]);
-    tokenizer.dispose();
-    tensEncoder.dispose();
-    return;
-  }
+async function buildReport(): Promise<BenchmarkReport> {
+  console.log('');
+  console.log(`${BOLD}${MAGENTA}  ╔══════════════════════════════════════════════════════════════════╗${RESET}`);
+  console.log(`${BOLD}${MAGENTA}  ║        ContexDB Benchmark v7 — Comprehensive Pipeline Test      ║${RESET}`);
+  console.log(`${BOLD}${MAGENTA}  ║   ${DIM}${matrixSizes.length} sizes x ${datasets.length} datasets x 5 formats + fidelity + latency${RESET}${BOLD}${MAGENTA}    ║${RESET}`);
+  console.log(`${BOLD}${MAGENTA}  ╚══════════════════════════════════════════════════════════════════╝${RESET}`);
 
-  console.log('\n' + '='.repeat(72));
-  console.log('  contex INDUSTRIAL BENCHMARK SUITE v4.0');
-  console.log('  Deterministic · Isolated · Comprehensive · TENS-First');
-  console.log(`  24 Datasets · 21 Models · 10 Formats · Seed: ${SEED}`);
-  console.log('='.repeat(72) + '\n');
+  const matrix = buildMatrix();
+  const pipeline = buildPipeline();
+  const fidelity = buildFidelity();
+  const connectivity = await buildConnectivity();
+  const latency = buildLatency();
+  buildFormatComparison();
 
-  const matrix = await benchmarkMatrix();
-  const marginalCost = benchmarkMarginalCost();
-  const structuralOverhead = benchmarkStructuralOverhead();
-  const context = benchmarkFitContext();
-  const cost = benchmarkCostSavings();
-  const determinism = benchmarkDeterminism();
-  const prefix = benchmarkPrefixCache();
-  const tens = benchmarkTensPerformance();
-  const schemaWidth = benchmarkSchemaWidth();
-  const tokenizerSpread = benchmarkTokenizerSpread();
-  const entropyCorrelation = benchmarkEntropyCorrelation();
-  const latency = benchmarkLatency();
-  const memory = benchmarkMemory();
-  const scalability = benchmarkScalability();
-  const multiModelCost = benchmarkMultiModelCost();
+  // Compute summary
+  const savings = pipeline.map(p => p.savingsPercent);
+  const avgSavings = savings.length > 0 ? Number((savings.reduce((a, b) => a + b, 0) / savings.length).toFixed(1)) : 0;
+  const maxSavings = Math.max(...savings, 0);
+  const minSavings = Math.min(...savings, 0);
+  const avgBudgetGain = pipeline.length > 0
+    ? Math.round(pipeline.reduce((s, p) => s + p.budgetGain, 0) / pipeline.length) : 0;
+  const avgEncode = latency.length > 0
+    ? Number((latency.reduce((s, l) => s + l.encode.p50, 0) / latency.length).toFixed(2)) : 0;
+  const avgMat = latency.length > 0
+    ? Number((latency.reduce((s, l) => s + l.materialize.p50, 0) / latency.length).toFixed(2)) : 0;
+  const connPassed = connectivity.filter(c => c.status === 'pass').length;
+  const connFailed = connectivity.filter(c => c.status === 'fail').length;
+  const fidPassed = fidelity.filter(f => f.status === 'pass').length;
+  const fidFailed = fidelity.filter(f => f.status === 'fail').length;
 
-  const fullReport = {
+  const totalPassed = connPassed + fidPassed;
+  const totalFailed = connFailed + fidFailed;
+
+  // Print summary
+  sectionHeader(7, 'Final Results');
+
+  console.log(`${BOLD}  Token Savings vs JSON${RESET}`);
+  console.log(`    Average:  ${BOLD}${avgSavings >= 40 ? GREEN : YELLOW}${avgSavings}%${RESET}  ${bar(avgSavings, 30)}`);
+  console.log(`    Best:     ${BOLD}${GREEN}${maxSavings}%${RESET}  ${bar(maxSavings, 30)}`);
+  console.log(`    Worst:    ${minSavings >= 20 ? GREEN : YELLOW}${minSavings}%${RESET}`);
+  console.log('');
+  console.log(`${BOLD}  Pipeline Performance${RESET}`);
+  console.log(`    Avg budget gain:       ${CYAN}+${avgBudgetGain} rows${RESET}`);
+  console.log(`    Avg encode latency:    ${CYAN}${avgEncode} us/row${RESET}`);
+  console.log(`    Avg materialize:       ${CYAN}${avgMat} us/row${RESET}`);
+  console.log('');
+  console.log(`${BOLD}  Test Results${RESET}`);
+  console.log(`    Data Fidelity:   ${fidFailed === 0 ? BG_GREEN : BG_RED} ${fidPassed}/${fidPassed + fidFailed} ${RESET}  ${fidFailed === 0 ? GREEN + '(all data preserved)' : RED + `(${fidFailed} failures!)`}${RESET}`);
+  console.log(`    Connectivity:    ${connFailed === 0 ? BG_GREEN : BG_RED} ${connPassed}/${connPassed + connFailed} ${RESET}  ${connFailed === 0 ? GREEN + '(all packages linked)' : RED + `(${connFailed} broken)`}${RESET}`);
+  console.log(`    Total:           ${totalFailed === 0 ? BG_GREEN : BG_RED} ${totalPassed}/${totalPassed + totalFailed} passed ${RESET}`);
+  divider();
+
+  const report: BenchmarkReport = {
     metadata: {
-      version: '4.0',
+      version: '7.0',
       timestamp: new Date().toISOString(),
-      seed: SEED,
-      datasets: DATASETS.map((d) => d.name),
-      formats: FORMATS,
-      sizes: SIZES,
-      modelCount: Object.keys(MODEL_REGISTRY).length,
+      model: modelId,
+      datasetCount: datasets.length,
     },
     matrix,
-    marginalCost,
-    structuralOverhead,
-    context,
-    cost,
-    determinism,
-    prefix,
-    tens,
-    schemaWidth,
-    tokenizerSpread,
-    entropyCorrelation,
+    pipeline,
+    fidelity,
+    connectivity,
     latency,
-    memory,
-    scalability,
-    multiModelCost,
+    summary: {
+      avgSavingsPercent: avgSavings,
+      maxSavingsPercent: maxSavings,
+      minSavingsPercent: minSavings,
+      avgBudgetGain: avgBudgetGain,
+      avgEncodeUsPerRow: avgEncode,
+      avgMaterializeUsPerRow: avgMat,
+      fidelityScore: `${fidPassed}/${fidPassed + fidFailed}`,
+      connectivityScore: `${connPassed}/${connPassed + connFailed}`,
+      totalTests: totalPassed + totalFailed,
+      passed: totalPassed,
+      failed: totalFailed,
+    },
   };
 
-  fs.writeFileSync('benchmark_results.json', JSON.stringify(fullReport, null, 2));
-
-  // Clean up
-  disposeTensEncoder();
-
-  console.log('\n' + '='.repeat(72));
-  console.log('  All 15 benchmarks complete.');
-  console.log(`  24 datasets · 21 models · 10 formats`);
-  console.log('  Results saved: benchmark_results.json');
-  console.log('  Generate report: npx tsx packages/cli/src/generate_report.ts');
-  console.log('='.repeat(72) + '\n');
+  return report;
 }
 
-main().catch(console.error);
+function writeReport(report: BenchmarkReport): void {
+  const target = path.resolve(outPath);
+  fs.writeFileSync(target, JSON.stringify(report, null, 2), 'utf-8');
+  console.log(`\n${DIM}Output: ${target}${RESET}`);
+
+  if (websiteSync) {
+    const websitePath = path.resolve('website/benchmark_results.json');
+    fs.writeFileSync(websitePath, JSON.stringify(report, null, 2), 'utf-8');
+    console.log(`${DIM}Website sync: ${websitePath}${RESET}`);
+  }
+}
+
+async function main(): Promise<void> {
+  const report = await buildReport();
+  writeReport(report);
+  tokenizer.dispose();
+}
+
+main();

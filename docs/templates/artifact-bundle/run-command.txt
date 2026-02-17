@@ -1,0 +1,3 @@
+# Exact command used for this run (copy-paste runnable)
+# Example:
+# contex analyze datasets/realworld.json --model gpt-4o-mini --strategy auto --reality-gate --strict-gate --out artifacts/scorecards/YYYY-MM-DD/realworld/RUN_ID/raw-output.json

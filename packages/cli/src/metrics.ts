@@ -8,7 +8,7 @@ import * as transcoders from './transcoders.js';
 import type { SupportedFormat } from './transcoders.js';
 
 // --- Helper: Extract all leaf values from data ---
-export function extractLeafValues(obj: any): string[] {
+export function extractLeafValues(obj: unknown): string[] {
   if (obj === null || obj === undefined) return [];
   if (typeof obj !== 'object') return [String(obj)];
   if (Array.isArray(obj)) return obj.flatMap(extractLeafValues);
@@ -31,7 +31,7 @@ export interface MarginalCostEntry {
 
 export function measureMarginalCost(
   datasetName: string,
-  generateFn: (count: number) => any[],
+  generateFn: (count: number) => unknown[],
   formats: SupportedFormat[],
   tokenizer: TokenizerManager,
   tensEncoder: TokenStreamEncoder,
@@ -54,15 +54,17 @@ export function measureMarginalCost(
 
   function getTokens(size: number, fmt: SupportedFormat): number {
     const key = `${size}:${fmt}`;
-    if (tokenCache.has(key)) return tokenCache.get(key)!;
+    const cached = tokenCache.get(key);
+    if (cached !== undefined) return cached;
 
     const data = generateFn(size);
+    const rows = data as Record<string, unknown>[];
     let tokens: number;
     if (fmt === 'tens') {
-      const stream = tensEncoder.encodeToTokenStream(data);
+      const stream = tensEncoder.encodeToTokenStream(rows);
       tokens = stream.length;
     } else {
-      const output = transcoders.transcode(data, fmt);
+      const output = transcoders.transcode(rows, fmt);
       tokens = tokenizer.countTokens(output as string, 'o200k_base');
     }
     tokenCache.set(key, tokens);
@@ -107,7 +109,7 @@ export interface StructuralOverheadEntry {
 
 export function measureStructuralOverhead(
   datasetName: string,
-  data: any[],
+  data: unknown[],
   formats: SupportedFormat[],
   tokenizer: TokenizerManager,
   tensEncoder: TokenStreamEncoder,
@@ -118,12 +120,13 @@ export function measureStructuralOverhead(
   const results: StructuralOverheadEntry[] = [];
 
   for (const fmt of formats) {
+    const rows = data as Record<string, unknown>[];
     let totalTokens: number;
     if (fmt === 'tens') {
-      const stream = tensEncoder.encodeToTokenStream(data);
+      const stream = tensEncoder.encodeToTokenStream(rows);
       totalTokens = stream.length;
     } else {
-      const output = transcoders.transcode(data, fmt);
+      const output = transcoders.transcode(rows, fmt);
       totalTokens = tokenizer.countTokens(output as string, 'o200k_base');
     }
 
@@ -207,7 +210,7 @@ export interface TokenizerSpreadEntry {
 
 export function measureTokenizerSpread(
   datasetName: string,
-  data: any[],
+  data: unknown[],
   formats: SupportedFormat[],
   tokenizer: TokenizerManager,
 ): TokenizerSpreadEntry[] {
@@ -216,7 +219,7 @@ export function measureTokenizerSpread(
 
   for (const fmt of formats) {
     if (fmt === 'tens') continue; // TENS uses its own encoding, skip multi-tokenizer
-    const output = transcoders.transcode(data, fmt) as string;
+    const output = transcoders.transcode(data as Record<string, unknown>[], fmt) as string;
 
     for (const enc of encodings) {
       try {
@@ -250,7 +253,7 @@ export interface EntropyCorrelationEntry {
 
 export function measureEntropyCorrelation(
   datasetName: string,
-  data: any[],
+  data: unknown[],
   formats: SupportedFormat[],
   tokenizer: TokenizerManager,
   tensEncoder: TokenStreamEncoder,
@@ -259,16 +262,17 @@ export function measureEntropyCorrelation(
   const results: EntropyCorrelationEntry[] = [];
 
   // Get JSON baseline
-  const jsonOutput = transcoders.transcode(data, 'json') as string;
+  const rows = data as Record<string, unknown>[];
+  const jsonOutput = transcoders.transcode(rows, 'json') as string;
   const jsonTokens = tokenizer.countTokens(jsonOutput, 'o200k_base');
 
   for (const fmt of formats) {
     let tokens: number;
     if (fmt === 'tens') {
-      const stream = tensEncoder.encodeToTokenStream(data);
+      const stream = tensEncoder.encodeToTokenStream(rows);
       tokens = stream.length;
     } else {
-      const output = transcoders.transcode(data, fmt) as string;
+      const output = transcoders.transcode(rows, fmt) as string;
       tokens = tokenizer.countTokens(output, 'o200k_base');
     }
 

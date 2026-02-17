@@ -87,7 +87,7 @@ class TokenizerInstance {
 
   constructor(encoding: TokenizerEncoding, maxCacheSize: number) {
     this.encoding = encoding;
-    this.encoder = getEncoding(encoding as any);
+    this.encoder = getEncoding(encoding as Parameters<typeof getEncoding>[0]);
     this.cache = new LRUCache(maxCacheSize);
   }
 
@@ -177,8 +177,8 @@ export class TokenizerManager {
   }
 
   /** Get cache statistics for all active tokenizer instances. */
-  get stats(): Record<string, any> {
-    const result: Record<string, any> = {};
+  get stats(): Record<string, ReturnType<TokenizerInstance['getStats']>> {
+    const result: Record<string, ReturnType<TokenizerInstance['getStats']>> = {};
     for (const [enc, instance] of this.instances) {
       result[enc] = instance.getStats();
     }

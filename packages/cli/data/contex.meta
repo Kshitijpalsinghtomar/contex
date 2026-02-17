@@ -1,0 +1,42 @@
+{
+  "test_collection": {
+    "batches": [
+      {
+        "startPageId": 0,
+        "pageCount": 4,
+        "byteLength": 12802
+      },
+      {
+        "startPageId": 4,
+        "pageCount": 4,
+        "byteLength": 12802
+      },
+      {
+        "startPageId": 8,
+        "pageCount": 4,
+        "byteLength": 12802
+      },
+      {
+        "startPageId": 12,
+        "pageCount": 4,
+        "byteLength": 12802
+      },
+      {
+        "startPageId": 16,
+        "pageCount": 4,
+        "byteLength": 12802
+      }
+    ],
+    "count": 250
+  },
+  "bench_col": {
+    "batches": [
+      {
+        "startPageId": 20,
+        "pageCount": 4,
+        "byteLength": 12802
+      }
+    ],
+    "count": 50
+  }
+}

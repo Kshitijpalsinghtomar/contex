@@ -5,10 +5,9 @@ import {
   DICT_REF_BASE,
   MASK_CHUNK_BASE,
   MASK_CHUNK_BITS,
-  TENS_MAGIC,
   TENS_VERSION,
 } from './types.js';
-import type { TensSchema, TokenId, TokenStream, TokenizerEncoding } from './types.js';
+import type { TensSchema, TokenStream, TokenizerEncoding } from './types.js';
 
 /**
  * TENS v2 Token Stream Decoder.
@@ -148,9 +147,6 @@ export class TokenStreamDecoder {
 
       if (token === CTRL.ROW_BREAK) {
         ptr++;
-        // ROW_BREAK is just a separator/delimiter.
-        // We consume it and let the loop handle the next token (Mask or Data).
-        continue;
       } else if (token === CTRL.PRESENCE_MASK) {
         ptr++;
         if (!defaultSchema) throw new Error('PRESENCE_MASK but no default schema');
@@ -191,35 +187,37 @@ export class TokenStreamDecoder {
     tokens: TokenStream,
     ptr: number,
     schema: TensSchema,
-  ): { row: any; newPtr: number } {
-    const row: any = {};
+  ): { row: Record<string, unknown>; newPtr: number } {
+    const row: Record<string, unknown> = {};
+    let cursor = ptr;
 
     for (let i = 0; i < schema.fields.length; i++) {
       const field = schema.fields[i];
-      const res = this.readValue(tokens, ptr);
+      const res = this.readValue(tokens, cursor);
 
       row[field] = res.value;
-      ptr = res.newPtr;
+      cursor = res.newPtr;
 
       if (i < schema.fields.length - 1) {
-        if (tokens[ptr] === CTRL.SEPARATOR) ptr++;
+        if (tokens[cursor] === CTRL.SEPARATOR) cursor++;
       }
     }
-    return { row, newPtr: ptr };
+    return { row, newPtr: cursor };
   }
 
   private readMaskedRow(
     tokens: TokenStream,
     ptr: number,
     schema: TensSchema,
-  ): { row: any; newPtr: number } {
+  ): { row: Record<string, unknown>; newPtr: number } {
+    let cursor = ptr;
     const fieldCount = schema.fields.length;
     const chunkCount = Math.ceil(fieldCount / MASK_CHUNK_BITS);
     const presentFields: boolean[] = [];
 
     // Read chunks
     for (let c = 0; c < chunkCount; c++) {
-      const chunkToken = tokens[ptr++];
+      const chunkToken = tokens[cursor++];
       const bits = chunkToken - MASK_CHUNK_BASE;
       for (let b = 0; b < MASK_CHUNK_BITS; b++) {
         if (presentFields.length < fieldCount) {
@@ -228,88 +226,91 @@ export class TokenStreamDecoder {
       }
     }
 
-    const row: any = {};
+    const row: Record<string, unknown> = {};
     const presentCount = presentFields.filter((p) => p).length;
     let readCount = 0;
 
     for (let i = 0; i < fieldCount; i++) {
       const field = schema.fields[i];
       if (presentFields[i]) {
-        const res = this.readValue(tokens, ptr);
+        const res = this.readValue(tokens, cursor);
         row[field] = res.value;
-        ptr = res.newPtr;
+        cursor = res.newPtr;
         readCount++;
 
         // Consume separator if not last *present* value
         if (readCount < presentCount) {
-          if (tokens[ptr] === CTRL.SEPARATOR) ptr++;
+          if (tokens[cursor] === CTRL.SEPARATOR) cursor++;
         }
       } else {
         row[field] = null;
       }
     }
-    return { row, newPtr: ptr };
+    return { row, newPtr: cursor };
   }
 
   private readDelimitedRow(
     tokens: TokenStream,
     ptr: number,
     schema: TensSchema,
-  ): { row: any; newPtr: number } {
-    const row: any = {};
+  ): { row: Record<string, unknown>; newPtr: number } {
+    const row: Record<string, unknown> = {};
+    let cursor = ptr;
     for (let i = 0; i < schema.fields.length; i++) {
       const field = schema.fields[i];
-      const res = this.readValue(tokens, ptr);
+      const res = this.readValue(tokens, cursor);
       row[field] = res.value;
-      ptr = res.newPtr;
+      cursor = res.newPtr;
 
-      if (tokens[ptr] === CTRL.SEPARATOR) {
-        ptr++;
+      if (tokens[cursor] === CTRL.SEPARATOR) {
+        cursor++;
       }
     }
-    if (tokens[ptr] === CTRL.OBJ_END) ptr++;
-    return { row, newPtr: ptr };
+    if (tokens[cursor] === CTRL.OBJ_END) cursor++;
+    return { row, newPtr: cursor };
   }
 
-  private readValue(tokens: TokenStream, ptr: number): { value: any; newPtr: number } {
-    const token = tokens[ptr];
+  private readValue(tokens: TokenStream, ptr: number): { value: unknown; newPtr: number } {
+    let cursor = ptr;
+    const token = tokens[cursor];
 
-    if (token === CTRL.NULL_VAL) return { value: null, newPtr: ptr + 1 };
-    if (token === CTRL.BOOL_TRUE) return { value: true, newPtr: ptr + 1 };
-    if (token === CTRL.BOOL_FALSE) return { value: false, newPtr: ptr + 1 };
+    if (token === CTRL.NULL_VAL) return { value: null, newPtr: cursor + 1 };
+    if (token === CTRL.BOOL_TRUE) return { value: true, newPtr: cursor + 1 };
+    if (token === CTRL.BOOL_FALSE) return { value: false, newPtr: cursor + 1 };
 
     if (token === CTRL.FIXED_ARRAY) {
-      ptr++;
-      const lenToken = tokens[ptr++];
+      cursor++;
+      const lenToken = tokens[cursor++];
       const len = lenToken - ARRAY_LEN_BASE;
-      const arr = [];
+      const arr: unknown[] = [];
       for (let i = 0; i < len; i++) {
-        const res = this.readValue(tokens, ptr);
+        const res = this.readValue(tokens, cursor);
         arr.push(res.value);
-        ptr = res.newPtr;
+        cursor = res.newPtr;
         // Arrays also use separators
         if (i < len - 1) {
-          if (tokens[ptr] === CTRL.SEPARATOR) ptr++;
+          if (tokens[cursor] === CTRL.SEPARATOR) cursor++;
         }
       }
-      return { value: arr, newPtr: ptr };
+      return { value: arr, newPtr: cursor };
     }
 
     if (token >= DICT_REF_BASE && token < DICT_REF_BASE + 100000) {
       const id = token - DICT_REF_BASE;
       const val = this.dictionary.get(id);
-      return { value: val, newPtr: ptr + 1 };
+      return { value: val, newPtr: cursor + 1 };
     }
 
     // Literal (string/number)
-    return this.readLiteral(tokens, ptr);
+    return this.readLiteral(tokens, cursor);
   }
 
   // Reads a sequence of tokens until SEPARATOR or CTRL, returns detokenized string
   private readLiteral(tokens: TokenStream, ptr: number): { value: unknown; newPtr: number } {
+    let cursor = ptr;
     const literalTokens: TokenStream = [];
-    while (ptr < tokens.length && !this.isCtrl(tokens[ptr])) {
-      literalTokens.push(tokens[ptr++]);
+    while (cursor < tokens.length && !this.isCtrl(tokens[cursor])) {
+      literalTokens.push(tokens[cursor++]);
     }
     const str = this.tokenizer.detokenize(literalTokens, this.encoding);
 
@@ -325,10 +326,10 @@ export class TokenStreamDecoder {
     // This is a known limitation of current TENS v2 (like CSV).
     // We can try to guess:
     const num = Number(str);
-    if (!isNaN(num) && str.trim() !== '') {
-      return { value: num, newPtr: ptr };
+    if (!Number.isNaN(num) && str.trim() !== '') {
+      return { value: num, newPtr: cursor };
     }
-    return { value: str, newPtr: ptr };
+    return { value: str, newPtr: cursor };
   }
 
   private isValueToken(token: number): boolean {

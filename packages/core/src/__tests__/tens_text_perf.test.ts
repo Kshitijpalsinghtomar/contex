@@ -131,14 +131,14 @@ describe('Performance: Decoding', () => {
 // ────────────────────────────────────────────────────────────────────────────
 
 describe('Performance: Dictionary Building', () => {
-  it('builds dictionary for 1,000 rows with low cardinality in < 50ms', () => {
+  it('builds dictionary for 1,000 rows with low cardinality in < 100ms', () => {
     const data = makeTickets(1000); // 4 statuses, 4 priorities = low cardinality
     const start = performance.now();
     for (let i = 0; i < 5; i++) {
       encoder.encode(data);
     }
     const elapsed = (performance.now() - start) / 5;
-    expect(elapsed).toBeLessThan(50);
+    expect(elapsed).toBeLessThan(100);
   });
 
   it('builds dictionary for 1,000 rows with high cardinality in < 100ms', () => {

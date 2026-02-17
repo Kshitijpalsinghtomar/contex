@@ -1,0 +1,66 @@
+{
+  "name": "@contex/adapters",
+  "version": "0.1.0",
+  "description": "Contex adapters for LangChain and LlamaIndex",
+  "license": "MIT",
+  "author": "Contex Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/contex/contex.git",
+    "directory": "packages/adapters"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "contex",
+    "langchain",
+    "llamaindex",
+    "llm",
+    "adapter",
+    "ai"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./langchain": {
+      "types": "./dist/langchain.d.ts",
+      "import": "./dist/langchain.js",
+      "default": "./dist/langchain.js"
+    },
+    "./llamaindex": {
+      "types": "./dist/llamaindex.d.ts",
+      "import": "./dist/llamaindex.js",
+      "default": "./dist/llamaindex.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@contex/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "langchain": ">=0.1.0",
+    "llamaindex": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^1.6.0"
+  }
+}

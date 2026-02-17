@@ -65,7 +65,7 @@ describe('TENS Binary — Deterministic Roundtrip', () => {
   it('objects with numeric values', () => {
     const data = [
       { x: 0, y: 1.5, z: -100 },
-      { x: 42, y: 3.14159, z: 0 },
+      { x: 42, y: Math.PI, z: 0 },
       { x: Number.MAX_SAFE_INTEGER, y: 0.1 + 0.2, z: -0.5 },
     ];
     assertBinaryRoundtrip(data);
@@ -231,7 +231,9 @@ describe('TENS-Text — Deterministic Roundtrip', () => {
 // ============================================================================
 
 describe('Real-World Data Roundtrip', () => {
-  const testDataPath = path.resolve(__dirname, '../../../../my_test_data.json');
+  // Use process.cwd() for reliable path resolution from packages/core directory
+  // Go up two levels to reach project root from packages/core
+  const testDataPath = path.resolve(process.cwd(), '../../my_test_data.json');
   const hasTestData = fs.existsSync(testDataPath);
 
   it.skipIf(!hasTestData)(

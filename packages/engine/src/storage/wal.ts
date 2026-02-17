@@ -65,10 +65,8 @@ function crc32(data: Uint8Array): number {
  */
 export class WAL {
   private fd: number;
-  private path: string;
 
   constructor(filePath: string) {
-    this.path = filePath;
     this.fd = fs.openSync(filePath, 'a+');
   }
 

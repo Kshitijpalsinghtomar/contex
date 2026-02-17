@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TENS-Text Format Reference — Contex</title>
+    <meta name="description"
+        content="Complete guide to the TENS-Text format — a human-readable, lossless serialization for structured data in LLM pipelines.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <script>
+        const theme = localStorage.getItem('contex-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
+</head>
+
+<body>
+
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="logo-icon">C</div>
+            Contex
+        </a>
+        <ul class="nav-links">
+            <li><a href="./">Home</a></li>
+            <li><a href="./docs.html">Docs</a></li>
+            <li><a href="./tens-text.html" class="active">TENS-Text</a></li>
+            <li><a href="./benchmarks.html">Benchmarks</a></li>
+            <li><a href="./playground.html">Playground</a></li>
+            <li><a href="./vision.html">Vision</a></li>
+            <li><a href="./dashboard.html">Dashboard</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="btn btn-ghost btn-sm" id="theme-toggle" aria-label="Toggle theme">
+                <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                    <path
+                        d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                    </path>
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </nav>
+
+    <div class="docs-layout">
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Table of Contents">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            Table of Contents
+        </button>
+
+        <aside class="sidebar" id="docs-sidebar">
+            <div class="sidebar-section">
+                <h4>Overview</h4>
+                <a href="#what-is-tens-text" class="active">What is TENS-Text?</a>
+                <a href="#where-it-fits">Where It Fits</a>
+                <a href="#quick-example">Quick Example</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Syntax Reference</h4>
+                <a href="#file-structure">File Structure</a>
+                <a href="#directives">Directives</a>
+                <a href="#records">Records & Fields</a>
+                <a href="#values">Value Types</a>
+                <a href="#arrays">Arrays</a>
+                <a href="#dictionary">Dictionary Compression</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Type System</h4>
+                <a href="#type-annotations">Type Annotations</a>
+                <a href="#type-directed-parsing">Type-Directed Parsing</a>
+                <a href="#optional-fields">Optional Fields</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Special Values</h4>
+                <a href="#null-values">Null &amp; Missing</a>
+                <a href="#booleans">Booleans</a>
+                <a href="#string-quoting">String Quoting Rules</a>
+                <a href="#escape-sequences">Escape Sequences</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>API Usage</h4>
+                <a href="#encoding">Encoding</a>
+                <a href="#decoding">Decoding</a>
+                <a href="#format-output">formatOutput()</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Design</h4>
+                <a href="#design-principles">Design Principles</a>
+                <a href="#vs-yaml-toml">vs YAML / TOML</a>
+                <a href="#error-handling">Error Handling</a>
+            </div>
+        </aside>
+
+        <main class="docs-content">
+            <h1>TENS-Text Format Reference</h1>
+            <p>TENS-Text is a <strong>human-readable, lossless</strong> text serialization of TENS data. It uses an
+                indentation-based, field-per-line syntax with <code>@</code>-directives for structural metadata. It
+                maps 1:1 to the same logical data as TENS binary but uses plaintext instead of token IDs.</p>
+
+            <!-- What is TENS-Text? -->
+            <h2 id="what-is-tens-text">What is TENS-Text?</h2>
+
+            <p>TENS-Text (<code>.tens</code> files) is a data format purpose-built for LLM context pipelines. Think of
+                it as <strong>"YAML for LLMs"</strong> — but deterministic, schema-aware, and designed for
+                machine-to-machine data flow rather than human configuration.</p>
+
+            <div class="callout info">
+                <strong>Key guarantee:</strong> <code>encode(decode(text)) === text</code> — lossless roundtrip with
+                canonical output. Same data always produces identical bytes.
+            </div>
+
+            <h3>What TENS-Text Is</h3>
+            <ul>
+                <li>A <strong>human-readable inspection format</strong> for TENS data</li>
+                <li>A <strong>schema-indexed</strong> text format with typed fields</li>
+                <li>A <strong>dictionary-encoded</strong> format that deduplicates repeated strings</li>
+                <li><strong>Deterministic</strong> — canonical output enables content-addressable caching</li>
+                <li><strong>Self-contained</strong> — no imports, no external references</li>
+            </ul>
+
+            <h3>What TENS-Text Is Not</h3>
+            <ul>
+                <li>Not a replacement for JSON in APIs (use JSON for that)</li>
+                <li>Not a config file format (use YAML/TOML for human editing)</li>
+                <li>Not the LLM output format (use <strong>Contex Compact</strong> for that — 43% avg savings)</li>
+            </ul>
+
+            <!-- Where It Fits -->
+            <h2 id="where-it-fits">Where It Fits in the Pipeline</h2>
+
+            <pre>
+                 ┌──────────┐      ┌──────────┐     ┌──────────────────┐
+                 │   Input  │─────►│   TENS   │────►│    LLM Output    │
+                 │ JSON/CSV │      │ Canon IR │     │  Contex Compact  │
+                 └──────────┘      └─────┬────┘     └──────────────────┘
+                                         │
+                                ┌────────┼────────┐
+                                ▼        ▼        ▼
+                             Binary   TENS-Text   Hash
+                             (cache)  (inspect)   (dedup)
+                            
+            </pre>
+
+            <p>TENS-Text is the <strong>human-readable view</strong> of the TENS intermediate representation. Use it
+                for:</p>
+            <ul>
+                <li><strong>Debugging:</strong> Inspect what Contex encoded</li>
+                <li><strong>Testing:</strong> Write fixtures in readable text format</li>
+                <li><strong>Documentation:</strong> Show data examples in specs</li>
+                <li><strong>Verification:</strong> Confirm lossless roundtrip accuracy</li>
+            </ul>
+
+            <!-- Quick Example -->
+            <h2 id="quick-example">Quick Example</h2>
+
+            <p>Here's a complete TENS-Text file with all features demonstrated:</p>
+
+            <pre>@version 1
+@encoding o200k_base
+@schema ticket id:num title:str status:str priority:num? assignee:str? tag:str[]
+
+@dict open closed
+
+ticket
+  id 1
+  title "Bug in auth"
+  status @0
+  priority 1
+  assignee Alice
+  tag security
+  tag backend
+ticket
+  id 2
+  title "UI polish"
+  status @0
+  priority _
+  assignee _
+ticket
+  id 3
+  title "Deploy script"
+  status @1
+  priority 2
+  assignee Bob
+  tag devops
+  tag ci</pre>
+
+            <p><strong>Reading this file:</strong></p>
+            <ul>
+                <li>Line 1: Format version is 1</li>
+                <li>Line 2: Uses <code>o200k_base</code> tokenizer encoding</li>
+                <li>Line 3: Schema named <code>ticket</code> with 6 fields — <code>priority</code> is optional
+                    (<code>num?</code>), <code>assignee</code> is optional (<code>str?</code>), <code>tag</code> is
+                    an array (<code>str[]</code>)</li>
+                <li>Line 5: Dictionary with 2 entries — index 0 = "open", index 1 = "closed"</li>
+                <li>Lines 7–14: First record — <code>@0</code> resolves to "open", two <code>tag</code> lines form
+                    array <code>["security", "backend"]</code></li>
+                <li>Lines 15–19: Second record — <code>_</code> means null for priority and assignee</li>
+                <li>Lines 20–25: Third record — <code>@1</code> resolves to "closed"</li>
+            </ul>
+
+            <p>This decodes to:</p>
+            <pre>[
+  { id: 1, title: "Bug in auth", status: "open", priority: 1,
+    assignee: "Alice", tag: ["security", "backend"] },
+  { id: 2, title: "UI polish", status: "open", priority: null,
+    assignee: null, tag: [] },
+  { id: 3, title: "Deploy script", status: "closed", priority: 2,
+    assignee: "Bob", tag: ["devops", "ci"] }
+]</pre>
+
+            <!-- File Structure -->
+            <h2 id="file-structure">File Structure</h2>
+
+            <p>Every TENS-Text file follows this structure:</p>
+
+            <pre>@version N              ← format version (currently 1)
+@encoding NAME          ← tokenizer encoding name
+@schema NAME fields...  ← schema definition (one or more)
+@dict values...         ← dictionary of repeated strings
+
+RECORD_NAME             ← record marker (schema name)
+  field value           ← field-value pairs (indented 2 spaces)
+  field value
+RECORD_NAME             ← next record
+  field value
+  ...</pre>
+
+            <h3>Formal Grammar (EBNF)</h3>
+
+            <pre>file        = { directive } { record } ;
+directive   = version | encoding | schema | dict ;
+version     = "@version" WS NUMBER NL ;
+encoding    = "@encoding" WS IDENT NL ;
+schema      = "@schema" WS IDENT WS field_def { WS field_def } NL ;
+field_def   = IDENT ":" type ;
+type        = base_type [ "[]" ] [ "?" ] ;
+base_type   = "str" | "num" | "bool" ;
+dict        = "@dict" WS value { WS value } NL ;
+record      = IDENT NL { field_line } ;
+field_line  = "  " IDENT WS value NL ;</pre>
+
+            <!-- Directives -->
+            <h2 id="directives">Directives</h2>
+
+            <p>Directives are lines that start with <code>@</code> and appear at the top of the file before any
+                records.</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Directive</th>
+                        <th>Purpose</th>
+                        <th>Example</th>
+                        <th>Required?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>@version N</code></td>
+                        <td>Format version (currently 1)</td>
+                        <td><code>@version 1</code></td>
+                        <td>Optional (defaults to 1)</td>
+                    </tr>
+                    <tr>
+                        <td><code>@encoding NAME</code></td>
+                        <td>Tokenizer encoding name</td>
+                        <td><code>@encoding o200k_base</code></td>
+                        <td>Optional (defaults to o200k_base)</td>
+                    </tr>
+                    <tr>
+                        <td><code>@schema NAME fields</code></td>
+                        <td>Define a typed schema</td>
+                        <td><code>@schema user id:num name:str</code></td>
+                        <td>Optional (auto-inferred)</td>
+                    </tr>
+                    <tr>
+                        <td><code>@dict values</code></td>
+                        <td>Dictionary of repeated strings</td>
+                        <td><code>@dict admin user editor</code></td>
+                        <td>Optional</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>All directives are optional.</strong> The decoder auto-infers schemas from values if no
+                <code>@schema</code> is provided, defaults version to 1 and encoding to <code>o200k_base</code>.
+            </div>
+
+            <!-- Records & Fields -->
+            <h2 id="records">Records &amp; Fields</h2>
+
+            <p>Records are the data sections. Each record starts with a <strong>record marker</strong> (the schema
+                name, un-indented) followed by <strong>field lines</strong> (indented exactly 2 spaces):</p>
+
+            <pre>user                    ← record marker (matches @schema user ...)
+  id 1                  ← field "id" with value 1
+  name Alice            ← field "name" with value "Alice"
+  role admin            ← field "role" with value "admin"
+user                    ← next record
+  id 2
+  name Bob
+  role user</pre>
+
+            <h3>Rules</h3>
+            <ul>
+                <li><strong>Indent:</strong> Exactly 2 spaces (<code>"  "</code>), semantic — signals a field value
+                    line</li>
+                <li><strong>Blank lines:</strong> Ignored; may appear between records for readability</li>
+                <li><strong>Trailing whitespace:</strong> Stripped during parsing</li>
+                <li><strong>Comments:</strong> Not supported (intentional — preserves determinism)</li>
+                <li><strong>Record scope:</strong> Each record is an independent flat namespace</li>
+                <li><strong>No nesting:</strong> Records cannot contain sub-records</li>
+            </ul>
+
+            <!-- Values -->
+            <h2 id="values">Value Types</h2>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Syntax</th>
+                        <th>Examples</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Number</td>
+                        <td>Bare digits, optional sign &amp; decimal</td>
+                        <td><code>42</code>, <code>-3.14</code>, <code>0.001</code></td>
+                    </tr>
+                    <tr>
+                        <td>Boolean</td>
+                        <td><code>true</code> or <code>false</code></td>
+                        <td><code>true</code>, <code>false</code></td>
+                    </tr>
+                    <tr>
+                        <td>Null</td>
+                        <td><code>_</code> (underscore)</td>
+                        <td><code>_</code></td>
+                    </tr>
+                    <tr>
+                        <td>Dictionary ref</td>
+                        <td><code>@N</code> (index N)</td>
+                        <td><code>@0</code>, <code>@12</code></td>
+                    </tr>
+                    <tr>
+                        <td>Bare string</td>
+                        <td>Identifier (no special chars)</td>
+                        <td><code>Alice</code>, <code>admin</code></td>
+                    </tr>
+                    <tr>
+                        <td>Quoted string</td>
+                        <td>Double-quoted with escapes</td>
+                        <td><code>"hello world"</code>, <code>"line\nbreak"</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Special Number Values</h3>
+            <pre>field "NaN"        ← Not-a-Number (quoted)
+field "Infinity"   ← Positive infinity (quoted)
+field "-Infinity"  ← Negative infinity (quoted)
+field -0           ← Negative zero</pre>
+
+            <!-- Arrays -->
+            <h2 id="arrays">Arrays (Field Repetition)</h2>
+
+            <p>Arrays are <strong>implicit</strong> — repeating the same field name within a record collects values
+                into an ordered array:</p>
+
+            <pre>ticket
+  id 1
+  tag security       ← tag[0]
+  tag backend         ← tag[1]
+  tag urgent          ← tag[2]</pre>
+
+            <p>Decodes to: <code>{ id: 1, tag: ["security", "backend", "urgent"] }</code></p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Repetition Count</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0 repetitions</td>
+                        <td>Empty array <code>[]</code></td>
+                    </tr>
+                    <tr>
+                        <td>1 repetition</td>
+                        <td>Single-element array <code>["x"]</code></td>
+                    </tr>
+                    <tr>
+                        <td>N repetitions</td>
+                        <td>N-element array <code>["a", "b", ...]</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>No brackets needed!</strong> The schema <code>[]</code> suffix signals the decoder to always
+                produce an array, even for 0 or 1 occurrences. This saves bracket tokens in the output.
+            </div>
+
+            <!-- Dictionary -->
+            <h2 id="dictionary">Dictionary Compression</h2>
+
+            <p>Strings appearing 2+ times across all rows are stored in a <code>@dict</code> directive and referenced
+                by index:</p>
+
+            <pre>@dict admin user editor
+
+data
+  role @0    ← resolves to "admin"
+data
+  role @1    ← resolves to "user"
+data
+  role @0    ← resolves to "admin" (reused)</pre>
+
+            <p><strong>How it works:</strong></p>
+            <ol>
+                <li>The encoder scans all rows for string values appearing 2+ times</li>
+                <li>These strings are collected into the <code>@dict</code> header</li>
+                <li>Each subsequent use is replaced with <code>@N</code> (2 characters)</li>
+            </ol>
+
+            <p><strong>Effective for:</strong></p>
+            <ul>
+                <li>Enum-like fields (<code>status</code>: "active", "pending", "deleted")</li>
+                <li>Category fields with limited cardinality</li>
+                <li>Repeated metadata values across many rows</li>
+            </ul>
+
+            <!-- Type Annotations -->
+            <h2 id="type-annotations">Type Annotations</h2>
+
+            <p>The <code>@schema</code> directive defines types for each field:</p>
+
+            <pre>@schema ticket id:num title:str status:str priority:num? tag:str[]</pre>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Short</th>
+                        <th>Full JS Type</th>
+                        <th>Array Form</th>
+                        <th>Optional</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>num</code></td>
+                        <td><code>number</code></td>
+                        <td><code>num[]</code></td>
+                        <td><code>num?</code></td>
+                        <td><code>score:num</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>str</code></td>
+                        <td><code>string</code></td>
+                        <td><code>str[]</code></td>
+                        <td><code>str?</code></td>
+                        <td><code>name:str</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>bool</code></td>
+                        <td><code>boolean</code></td>
+                        <td><code>bool[]</code></td>
+                        <td><code>bool?</code></td>
+                        <td><code>active:bool</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <ul>
+                <li>Append <code>[]</code> for array fields: <code>tag:str[]</code></li>
+                <li>Append <code>?</code> for optional (nullable) fields: <code>email:str?</code></li>
+                <li>Combine both: <code>tag:str[]?</code> (optional array field)</li>
+            </ul>
+
+            <div class="callout info">
+                <strong>Why only 3 types?</strong> TENS-Text targets LLM data pipelines where data is overwhelmingly
+                strings, numbers, and booleans. No <code>date</code>, <code>bigint</code>, or nested object types —
+                those are serialized as quoted strings. This keeps the parser trivially simple and the format
+                deterministic.
+            </div>
+
+            <!-- Type-Directed Parsing -->
+            <h2 id="type-directed-parsing">Type-Directed Parsing</h2>
+
+            <p>The decoder uses the schema's type annotation to parse bare values correctly:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Schema Type</th>
+                        <th>Bare Value <code>42</code></th>
+                        <th>Bare Value <code>true</code></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>num</code></td>
+                        <td><code>42</code> (number)</td>
+                        <td>Error (not a number)</td>
+                    </tr>
+                    <tr>
+                        <td><code>str</code></td>
+                        <td><code>"42"</code> (string)</td>
+                        <td><code>"true"</code> (string)</td>
+                    </tr>
+                    <tr>
+                        <td><code>bool</code></td>
+                        <td>Error (not a boolean)</td>
+                        <td><code>true</code> (boolean)</td>
+                    </tr>
+                    <tr>
+                        <td>No schema</td>
+                        <td><code>42</code> (number, auto-detected)</td>
+                        <td><code>true</code> (boolean, auto-detected)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>Why type-directed?</strong> Without it, a ZIP code field containing <code>"90210"</code> would
+                silently become the number <code>90210</code>, losing its string semantics. The schema prevents this
+                class of bugs.
+            </div>
+
+            <!-- Optional Fields -->
+            <h2 id="optional-fields">Optional Fields</h2>
+
+            <p>Fields marked with <code>?</code> in the schema can be absent from a record. Missing optional fields
+                resolve to <code>null</code>:</p>
+
+            <pre>@schema user id:num name:str email:str?
+
+user
+  id 1
+  name Alice
+  email alice@example.com
+user
+  id 2
+  name Bob
+  ← no email line → decoded as email: null</pre>
+
+            <!-- Null Values -->
+            <h2 id="null-values">Null &amp; Missing Values</h2>
+
+            <p>The underscore <code>_</code> is the null sentinel:</p>
+
+            <pre>ticket
+  id 1
+  priority _       ← null
+  assignee _       ← null</pre>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Decoded Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>field _</code></td>
+                        <td><code>null</code></td>
+                    </tr>
+                    <tr>
+                        <td>Missing optional field</td>
+                        <td><code>null</code></td>
+                    </tr>
+                    <tr>
+                        <td>Missing required field</td>
+                        <td><code>undefined</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Booleans -->
+            <h2 id="booleans">Booleans</h2>
+
+            <p>Booleans use bare keywords:</p>
+
+            <pre>user
+  name Alice
+  active true
+  verified false</pre>
+
+            <div class="callout info">
+                <strong>Keyword collision:</strong> If you need the literal string <code>"true"</code> or
+                <code>"false"</code>, quote it: <code>field "true"</code>
+            </div>
+
+            <!-- String Quoting -->
+            <h2 id="string-quoting">String Quoting Rules</h2>
+
+            <p>Simple strings (identifiers) can be written bare. Strings must be double-quoted when they:</p>
+
+            <ul>
+                <li>Contain whitespace, <code>"</code>, <code>\</code>, <code>|</code>, <code>&gt;</code>,
+                    <code>,</code>, <code>=</code>, <code>{</code>, <code>}</code>, <code>[</code>, <code>]</code>,
+                    <code>@</code>, or <code>#</code></li>
+                <li>Match a keyword (<code>true</code>, <code>false</code>, <code>_</code>)</li>
+                <li>Look like a number (<code>42</code>, <code>-3.14</code>)</li>
+                <li>Look like a dictionary reference (<code>@0</code>)</li>
+                <li>Are an empty string</li>
+            </ul>
+
+            <pre>  name Alice                ← bare (simple identifier)
+  title "Bug in auth"       ← quoted (contains space)
+  zip "90210"               ← quoted (looks like a number)
+  flag "true"               ← quoted (keyword collision)
+  ref "@not-a-dict"         ← quoted (looks like @ref)
+  empty ""                  ← quoted (empty string)</pre>
+
+            <!-- Escape Sequences -->
+            <h2 id="escape-sequences">Escape Sequences</h2>
+
+            <p>Inside double-quoted strings:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Sequence</th>
+                        <th>Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>\"</code></td>
+                        <td>Literal double quote</td>
+                    </tr>
+                    <tr>
+                        <td><code>\\</code></td>
+                        <td>Literal backslash</td>
+                    </tr>
+                    <tr>
+                        <td><code>\n</code></td>
+                        <td>Newline (U+000A)</td>
+                    </tr>
+                    <tr>
+                        <td><code>\r</code></td>
+                        <td>Carriage return (U+000D)</td>
+                    </tr>
+                    <tr>
+                        <td><code>\t</code></td>
+                        <td>Tab (U+0009)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Encoding -->
+            <h2 id="encoding">Encoding (TypeScript)</h2>
+
+            <pre>import { TensTextEncoder } from '@contex/core';
+
+const data = [
+  { id: 1, name: 'Alice', role: 'admin' },
+  { id: 2, name: 'Bob', role: 'user' },
+  { id: 3, name: 'Charlie', role: 'admin' }
+];
+
+const encoder = new TensTextEncoder('o200k_base');
+const text = encoder.encode(data, 'user');
+console.log(text);
+
+// Output:
+// @version 1
+// @encoding o200k_base
+// @schema user id:num name:str role:str
+// @dict admin
+//
+// user
+//   id 1
+//   name Alice
+//   role @0
+// user
+//   id 2
+//   name Bob
+//   role user
+// user
+//   id 3
+//   name Charlie
+//   role @0</pre>
+
+            <!-- Decoding -->
+            <h2 id="decoding">Decoding (TypeScript)</h2>
+
+            <pre>import { TensTextDecoder } from '@contex/core';
+
+const decoder = new TensTextDecoder();
+const { data, document } = decoder.decode(text);
+
+// data: original JavaScript objects (lossless roundtrip)
+// [
+//   { id: 1, name: 'Alice', role: 'admin' },
+//   { id: 2, name: 'Bob', role: 'user' },
+//   { id: 3, name: 'Charlie', role: 'admin' }
+// ]
+
+// document metadata:
+// document.version    → 1
+// document.encoding   → 'o200k_base'
+// document.schemas    → [{ name: 'user', fields: [...] }]
+// document.dictionary → ['admin']
+// document.rows       → [{ rowNum: 0, fields: Map }, ...]</pre>
+
+            <!-- formatOutput -->
+            <h2 id="format-output">Using formatOutput()</h2>
+
+            <p>You can also generate TENS-Text via the <code>formatOutput()</code> function:</p>
+
+            <pre>import { formatOutput } from '@contex/core';
+
+// Generate TENS-Text format
+const tensText = formatOutput(data, 'tens-text');
+
+// Compare with other formats
+const contex  = formatOutput(data, 'contex');   // Best for LLMs (43% avg savings)
+const csv     = formatOutput(data, 'csv');       // Flat tabular
+const toon    = formatOutput(data, 'toon');      // Tab-separated</pre>
+
+            <div class="callout info">
+                <strong>For LLM prompts:</strong> Use <code>'contex'</code> format (Contex Compact) for the best token
+                efficiency. Use <code>'tens-text'</code> for debugging, testing, and human inspection.
+            </div>
+
+            <!-- Design Principles -->
+            <h2 id="design-principles">Design Principles</h2>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Principle</th>
+                        <th>Implementation</th>
+                        <th>Why</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>No brackets, no commas</td>
+                        <td>Indentation-based, space-delimited</td>
+                        <td>Simpler than YAML, fewer tokens than JSON</td>
+                    </tr>
+                    <tr>
+                        <td>Schema defined once</td>
+                        <td><code>@schema</code> directive at file top</td>
+                        <td>Eliminates key repetition across rows</td>
+                    </tr>
+                    <tr>
+                        <td>Arrays via repetition</td>
+                        <td>Same field name repeated</td>
+                        <td>No <code>[]</code> syntax — avoids bracket tokens</td>
+                    </tr>
+                    <tr>
+                        <td>Dictionary visible</td>
+                        <td><code>@dict</code> in plaintext</td>
+                        <td>Compression is inspectable, debuggable</td>
+                    </tr>
+                    <tr>
+                        <td>Lossless roundtrip</td>
+                        <td><code>encode(decode(text)) === text</code></td>
+                        <td>Canonical output enables content-addressable caching</td>
+                    </tr>
+                    <tr>
+                        <td>Deterministic</td>
+                        <td>Sorted fields, stable dict order</td>
+                        <td>Same input → identical bytes → prefix cache compatible</td>
+                    </tr>
+                    <tr>
+                        <td>Type-directed parsing</td>
+                        <td>Schema types prevent coercion</td>
+                        <td><code>str</code>-typed "42" stays string</td>
+                    </tr>
+                    <tr>
+                        <td>No comments</td>
+                        <td>Intentionally omitted</td>
+                        <td>Preserves canonical invariant</td>
+                    </tr>
+                    <tr>
+                        <td>Self-contained</td>
+                        <td>No imports, no external refs</td>
+                        <td>Single file = single hash = simple caching</td>
+                    </tr>
+                    <tr>
+                        <td>Short type names</td>
+                        <td><code>str/num/bool</code> not <code>string/number/boolean</code></td>
+                        <td>Saves keystrokes in schema definitions</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- vs YAML / TOML -->
+            <h2 id="vs-yaml-toml">vs YAML / TOML / JSON</h2>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>TENS-Text</th>
+                        <th>YAML</th>
+                        <th>TOML</th>
+                        <th>JSON</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Canonical output</td>
+                        <td>Yes</td>
+                        <td>No</td>
+                        <td>No</td>
+                        <td>No*</td>
+                    </tr>
+                    <tr>
+                        <td>Schema support</td>
+                        <td>Built-in</td>
+                        <td>External</td>
+                        <td>External</td>
+                        <td>External</td>
+                    </tr>
+                    <tr>
+                        <td>Dictionary compression</td>
+                        <td>Built-in</td>
+                        <td>No</td>
+                        <td>No</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Type annotations</td>
+                        <td>Built-in</td>
+                        <td>No</td>
+                        <td>Partial</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Comments</td>
+                        <td>No (intentional)</td>
+                        <td>Yes</td>
+                        <td>Yes</td>
+                        <td>No</td>
+                    </tr>
+                    <tr>
+                        <td>Nesting</td>
+                        <td>Flat (by design)</td>
+                        <td>Deep</td>
+                        <td>Sections</td>
+                        <td>Deep</td>
+                    </tr>
+                    <tr>
+                        <td>Use case</td>
+                        <td>LLM data pipelines</td>
+                        <td>Config files</td>
+                        <td>Config files</td>
+                        <td>APIs / data</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>* JSON output can be made deterministic with sorted keys, but this is not a standard guarantee.</p>
+
+            <!-- Error Handling -->
+            <h2 id="error-handling">Error Handling</h2>
+
+            <p>The decoder follows a <strong>lenient, fail-safe</strong> strategy:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Behavior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Missing <code>@version</code></td>
+                        <td>Defaults to version 1</td>
+                    </tr>
+                    <tr>
+                        <td>Missing <code>@encoding</code></td>
+                        <td>Defaults to <code>o200k_base</code></td>
+                    </tr>
+                    <tr>
+                        <td>Missing <code>@schema</code></td>
+                        <td>Infers types from values (auto-detect mode)</td>
+                    </tr>
+                    <tr>
+                        <td>Out-of-range <code>@N</code> ref</td>
+                        <td>Resolves to <code>null</code></td>
+                    </tr>
+                    <tr>
+                        <td>Extra blank lines</td>
+                        <td>Skipped silently</td>
+                    </tr>
+                    <tr>
+                        <td>Unknown directive</td>
+                        <td>Skipped (forward compatibility)</td>
+                    </tr>
+                    <tr>
+                        <td>Malformed field line</td>
+                        <td>Skipped</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout info">
+                <strong>Why lenient?</strong> In LLM pipelines, partial data is better than a crash. The encoder
+                guarantees well-formed output; the decoder is tolerant of hand-edited or corrupted input.
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>MIT &copy; <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> &middot; Built for
+            production LLM pipelines</p>
+    </footer>
+
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const sunIcon = toggleBtn.querySelector('.sun-icon');
+        const moonIcon = toggleBtn.querySelector('.moon-icon');
+
+        function updateIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            sunIcon.style.display = isDark ? 'none' : 'block';
+            moonIcon.style.display = isDark ? 'block' : 'none';
+            toggleBtn.style.color = isDark ? 'var(--text-muted)' : 'var(--accent-amber)';
+        }
+        updateIcon();
+
+        toggleBtn.addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('contex-theme', next);
+            updateIcon();
+        });
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.getElementById('docs-sidebar');
+
+        if (mobileMenuBtn && sidebar) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                mobileMenuBtn.classList.toggle('active');
+            });
+
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 900) {
+                        sidebar.classList.remove('open');
+                        mobileMenuBtn.classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // Scroll Spy
+        const sections = document.querySelectorAll('h2[id], h3[id]');
+        const navLinks = document.querySelectorAll('.sidebar-section a');
+        const sectionVisibility = new Map();
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                sectionVisibility.set(entry.target.id, entry.isIntersecting);
+            });
+
+            let activeId = null;
+            for (const section of sections) {
+                if (sectionVisibility.get(section.id)) {
+                    activeId = section.id;
+                    break;
+                }
+            }
+
+            if (!activeId) {
+                let minDistance = Infinity;
+                for (const section of sections) {
+                    const rect = section.getBoundingClientRect();
+                    const distance = Math.abs(rect.top);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        activeId = section.id;
+                    }
+                }
+            }
+
+            if (activeId) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${activeId}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        }, {
+            rootMargin: '0px 0px -80% 0px',
+            threshold: 0
+        });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+
+</html>

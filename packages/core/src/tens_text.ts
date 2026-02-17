@@ -93,7 +93,7 @@ export interface TensTextSchema {
 export interface TensTextRow {
   rowNum: number;
   /** Map of field name → raw value(s). Repeated fields form arrays. */
-  fields: Map<string, any>;
+  fields: Map<string, unknown>;
 }
 
 /** A complete parsed TENS-Text document. */
@@ -156,7 +156,7 @@ export class TensTextEncoder {
    * @param schemaName - Optional name for the schema (default: 'data')
    * @returns TENS-Text formatted string
    */
-  encode(data: any[], schemaName = 'data'): string {
+  encode(data: Record<string, unknown>[], schemaName = 'data'): string {
     if (data.length === 0) {
       return `@version ${TENS_TEXT_VERSION}\n@encoding ${this.encoding}\n@schema ${schemaName}\n`;
     }
@@ -294,7 +294,7 @@ export class TensTextEncoder {
       }
     }
 
-    return lines.join('\n') + '\n';
+    return `${lines.join('\n')}\n`;
   }
 }
 
@@ -318,7 +318,7 @@ export class TensTextDecoder {
    * @param text - TENS-Text formatted string
    * @returns Decoded document with data, schemas, and metadata
    */
-  decode(text: string): { data: any[]; document: TensTextDocument } {
+  decode(text: string): { data: Record<string, unknown>[]; document: TensTextDocument } {
     const lines = text.split('\n');
 
     let version = TENS_TEXT_VERSION;
@@ -329,11 +329,9 @@ export class TensTextDecoder {
 
     // Track which fields are array fields (from schema or observed)
     const arrayFieldSet = new Set<string>();
-    const arrayFields = new Set<string>();
 
     // Current record being parsed
     let currentRow: TensTextRow | null = null;
-    let recordSchemaName: string | null = null;
     let rowCounter = 0;
 
     // First pass: collect directives and detect schema names
@@ -395,7 +393,6 @@ export class TensTextDecoder {
           if (currentRow) rows.push(currentRow);
           rowCounter++;
           currentRow = { rowNum: rowCounter, fields: new Map() };
-          recordSchemaName = isLegacyRow ? null : trimmed;
           continue;
         }
       }
@@ -423,7 +420,6 @@ export class TensTextDecoder {
             currentRow.fields.set(fieldName, rawValue);
           }
         }
-        continue;
       }
     }
 
@@ -437,10 +433,10 @@ export class TensTextDecoder {
 
     // ---- Reconstruct Objects ----
     const currentSchema = schemas[0];
-    const data: any[] = [];
+    const data: Record<string, unknown>[] = [];
 
     for (const row of rows) {
-      const obj: any = {};
+      const obj: Record<string, unknown> = {};
       if (currentSchema) {
         for (const field of currentSchema.fields) {
           const rawVal = row.fields.get(field.name);
@@ -454,12 +450,24 @@ export class TensTextDecoder {
             }
           } else if (Array.isArray(rawVal)) {
             // Repeated field → resolve each element
-            obj[field.name] = rawVal.map((v: string) => resolveValue(v, field.type, dictionary));
+            obj[field.name] = rawVal.map((v) =>
+              resolveValue(typeof v === 'string' ? v : String(v), field.type, dictionary),
+            );
           } else if (isArr) {
             // Single occurrence of an array field → wrap in array
-            obj[field.name] = [resolveValue(rawVal, field.type, dictionary)];
+            obj[field.name] = [
+              resolveValue(
+                typeof rawVal === 'string' ? rawVal : String(rawVal),
+                field.type,
+                dictionary,
+              ),
+            ];
           } else {
-            obj[field.name] = resolveValue(rawVal, field.type, dictionary);
+            obj[field.name] = resolveValue(
+              typeof rawVal === 'string' ? rawVal : String(rawVal),
+              field.type,
+              dictionary,
+            );
           }
         }
       } else {
@@ -467,11 +475,19 @@ export class TensTextDecoder {
         for (const [key, val] of row.fields.entries()) {
           const isArr = arrayFieldSet.has(key);
           if (Array.isArray(val)) {
-            obj[key] = val.map((v: string) => resolveValue(v, 'string', dictionary));
+            obj[key] = val.map((v) =>
+              resolveValue(typeof v === 'string' ? v : String(v), 'string', dictionary),
+            );
           } else if (isArr) {
-            obj[key] = [resolveValue(val, 'string', dictionary)];
+            obj[key] = [
+              resolveValue(typeof val === 'string' ? val : String(val), 'string', dictionary),
+            ];
           } else {
-            obj[key] = resolveValue(val, 'string', dictionary);
+            obj[key] = resolveValue(
+              typeof val === 'string' ? val : String(val),
+              'string',
+              dictionary,
+            );
           }
         }
       }
@@ -532,7 +548,7 @@ function mapShortToType(short: string): TensType {
 }
 
 /** Infer the TENS type of a JavaScript value. */
-function inferFieldType(val: any): TensType {
+function inferFieldType(val: unknown): TensType {
   if (val === null || val === undefined) return 'null';
   if (typeof val === 'boolean') return 'boolean';
   if (typeof val === 'number') return 'number';
@@ -544,7 +560,7 @@ function inferFieldType(val: any): TensType {
  * Format a scalar value for TENS-Text output.
  * No arrays or objects — those are handled at a higher level.
  */
-function formatScalarValue(val: any, dictIndex: Map<string, number>): string {
+function formatScalarValue(val: unknown, dictIndex: Map<string, number>): string {
   // Null / undefined
   if (val === null || val === undefined) return '_';
 
@@ -744,7 +760,7 @@ function parseDictLine(line: string): string[] {
  * Resolve a raw string value into a typed JavaScript value.
  * Uses type-directed parsing to avoid accidental coercion.
  */
-function resolveValue(raw: string, fieldType: TensType, dictionary: string[]): any {
+function resolveValue(raw: string, fieldType: TensType, dictionary: string[]): unknown {
   const trimmed = raw.trim();
 
   // Null

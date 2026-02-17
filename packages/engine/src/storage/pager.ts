@@ -3,17 +3,14 @@
 // ============================================================================
 
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 
 export const PAGE_SIZE = 4096;
 
 export class Pager {
   private fd: number;
-  private path: string;
   private fileLength: number;
 
   constructor(filePath: string) {
-    this.path = filePath;
     // Open file in read/write mode, create if not exists
     this.fd = fs.openSync(filePath, 'a+');
     const stats = fs.statSync(filePath);
@@ -32,7 +29,7 @@ export class Pager {
       return buffer;
     }
 
-    const bytesRead = fs.readSync(this.fd, buffer, 0, PAGE_SIZE, offset);
+    fs.readSync(this.fd, buffer, 0, PAGE_SIZE, offset);
 
     // If partial read (EOF), the rest is already zero-filled
     return buffer;

@@ -12,10 +12,20 @@ export type { CompileOptions } from './contex.js';
 
 export * from './tens/hashing.js';
 export { TokenizerManager } from './tokenizer.js';
-export { SchemaRegistry, inferType, flattenObject } from './schema.js';
+export {
+  SchemaRegistry,
+  inferType,
+  flattenObject,
+  compressFieldNames,
+  applyFieldCompression,
+} from './schema.js';
 
 // Output formatters
 export { formatOutput, analyzeFormats } from './formatters.js';
+
+// Structure analysis for smart strategy selection
+export { analyzeStructure, selectOptimalStrategy } from './analysis.js';
+export type { StructureAnalysis, StrategyRecommendation } from './analysis.js';
 
 // TENS Protocol Object
 export { Tens } from './tens.js';
@@ -35,10 +45,39 @@ export {
   ContexError,
   TensEncodeError,
   TensDecodeError,
+  ContexValidationError,
+  ContexModelNotFoundError,
+  ContexTokenizerVersionError,
+  ContexIRNotFoundError,
+  ContexStorageError,
   PqlParseError,
   CollectionNotFoundError,
   BudgetError,
+  ContextWindowExceededError,
+  ContexInjectionError,
+  ContexStreamingError,
 } from './errors.js';
+
+// Logger & Observability
+export {
+  debug,
+  info,
+  warn,
+  error,
+  timer,
+  Timer,
+  onLog,
+  logEncode,
+  logMaterialize,
+  logCacheHit,
+  logCacheMiss,
+  logInject,
+  logSavings,
+  setLogLevel,
+  getLogLevel,
+  isDebugEnabled,
+} from './logger.js';
+export type { LogLevel, LogEntry, LogCallback } from './logger.js';
 
 // Dictionary
 export { StringTable } from './tens/dictionary.js';
@@ -46,6 +85,16 @@ export { StringTable } from './tens/dictionary.js';
 // Token Cache
 export { TokenCache } from './token_cache.js';
 export type { CachedEntry } from './token_cache.js';
+
+// Cache Metrics & Diagnostics
+export { CacheDiagnostics, getGlobalDiagnostics, setGlobalDiagnostics } from './cache_metrics.js';
+export { CacheMissReason } from './cache_metrics.js';
+export type {
+  CacheAccessRecord,
+  CacheDiagnosticsOptions,
+  CacheOperation,
+  CacheTelemetry,
+} from './cache_metrics.js';
 
 // Pre-Tokenized Binary Blocks
 export {

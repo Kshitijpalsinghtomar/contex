@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "key": "week4-fixed-set",
+  "runs": [
+    {
+      "timestamp": "2026-02-16T14:43:00.924Z",
+      "date": "2026-02-16",
+      "runId": "gpt-4o-mini-week4-mlpa9nr6",
+      "bundlePath": "artifacts/scorecards/2026-02-16/week4-fixed-set/gpt-4o-mini-week4-mlpa9nr6",
+      "observed": {
+        "datasetCount": 3,
+        "floorReductionPct": 21.43,
+        "medianReductionPct": 63.49
+      },
+      "gate": {
+        "pass": false,
+        "checks": {
+          "floorPass": false,
+          "medianPass": true,
+          "datasetPass": true
+        }
+      }
+    },
+    {
+      "timestamp": "2026-02-16T18:19:02.375Z",
+      "date": "2026-02-16",
+      "runId": "gpt-4o-mini-week4-mlphz9ou",
+      "bundlePath": "artifacts/scorecards/2026-02-16/week4-fixed-set/gpt-4o-mini-week4-mlphz9ou",
+      "observed": {
+        "datasetCount": 3,
+        "floorReductionPct": 21.43,
+        "medianReductionPct": 63.49
+      },
+      "gate": {
+        "pass": false,
+        "checks": {
+          "floorPass": false,
+          "medianPass": true,
+          "datasetPass": true
+        }
+      }
+    },
+    {
+      "timestamp": "2026-02-16T18:29:12.941Z",
+      "date": "2026-02-16",
+      "runId": "gpt-4o-mini-week4-mlpib7r6",
+      "bundlePath": "artifacts/scorecards/2026-02-16/week4-fixed-set/gpt-4o-mini-week4-mlpib7r6",
+      "observed": {
+        "datasetCount": 3,
+        "floorReductionPct": 63.49,
+        "medianReductionPct": 74.18
+      },
+      "gate": {
+        "pass": true,
+        "checks": {
+          "floorPass": true,
+          "medianPass": true,
+          "datasetPass": true
+        }
+      }
+    }
+  ]
+}

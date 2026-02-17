@@ -200,7 +200,7 @@ This means:
 
 ---
 
-## 5. TENS vs TOON vs CSV
+## 5. TENS vs Output Formats
 
 These are **not competitors**. They operate at different layers:
 
@@ -209,26 +209,29 @@ Storage Layer    ──►  TENS (binary, canonical)
                           │
 Conversion Layer ──►  Format selector (based on model, data shape, budget)
                           │
-                   ┌──────┴────────────┐
-Output Layer    ──►│TOON│ CSV│ Markdown│
-                   └───────────────────┘
+                   ┌──────┴──────────────────────────┐
+Output Layer    ──►│Contex Compact│ TOON│ CSV│ Markdown│
+                   └─────────────────────────────────┘
 ```
 
-| Dimension | TENS | TOON | CSV |
-|---|---|---|---|
-| **Layer** | Storage & IR | LLM Output | LLM Output |
-| **Readable** | ❌ Binary | ✅ Text | ✅ Text |
-| **Token efficiency** | N/A (binary) | Good (tab-separated) | Best (minimal syntax) |
-| **Nesting support** | ✅ Full | ❌ Flat only | ❌ Flat only |
-| **Type preservation** | ✅ Full | ❌ Strings only | ❌ Strings only |
-| **Schema preserved** | ✅ Embedded | ❌ Header row | ❌ Header row |
-| **Lossless roundtrip** | ✅ Yes | ❌ No | ❌ No |
-| **Canonical** | ✅ Yes | ❌ No | ❌ No |
+| Dimension | TENS | Contex Compact | TOON | CSV |
+|---|---|---|---|---|
+| **Layer** | Storage & IR | LLM Output (best) | LLM Output | LLM Output |
+| **Readable** | ❌ Binary | ✅ Text | ✅ Text | ✅ Text |
+| **Token efficiency** | N/A (binary) | Best (dict+field compression) | Good (tab-separated) | Good (minimal syntax) |
+| **Nesting support** | ✅ Full | ✅ Deep flattening | ❌ Flat only | ❌ Flat only |
+| **Type preservation** | ✅ Full | ✅ Bool/null abbreviation | ❌ Strings only | ❌ Strings only |
+| **Schema preserved** | ✅ Embedded | ✅ @f field map | ❌ Header row | ❌ Header row |
+| **Dictionary compression** | ✅ Binary dict | ✅ @d/@0 refs | ❌ None | ❌ None |
+| **Lossless roundtrip** | ✅ Yes | ❌ No | ❌ No | ❌ No |
+| **Canonical** | ✅ Yes | ❌ No | ❌ No | ❌ No |
+| **Avg savings vs JSON** | N/A | 43% (best overall) | ~25% | ~38% |
 
 **When to use each**:
 - **TENS**: Internal storage, caching, deduplication, cross-system transfer
-- **TOON**: LLM prompt injection for nested/typed data
-- **CSV**: LLM prompt injection for flat, tabular data (best token density)
+- **Contex Compact**: LLM prompt injection (recommended default — best overall token efficiency)
+- **TOON**: Simple tabular LLM output (no dictionary compression)
+- **CSV**: LLM prompt injection for flat, tabular data
 
 ---
 
@@ -663,32 +666,45 @@ const { data, document } = decoder.decode(text);
 
 ## 7. Code Examples
 
-### Encoding
+### High-Level API (Recommended)
 
 ```typescript
-import { TensEncoder } from '@contex/core';
+import { Tens } from '@contex/core';
 
-const encoder = new TensEncoder();
 const data = [
   { id: 1, name: 'Alice', role: 'admin' },
   { id: 2, name: 'Bob', role: 'user' }
 ];
 
-const binary = encoder.encode(data);
-// binary: Uint8Array — canonical, deterministic
+// Encode to TENS IR
+const tens = Tens.encode(data);
+
+// Get canonical text (Contex Compact format)
+const text = tens.toString();
+
+// Materialize tokens for a specific model
+const result = tens.materialize('gpt-4o');
+console.log(result.tokenCount);
+
+// Content hash for caching/dedup
+console.log(tens.hash);  // SHA-256
 ```
 
-### Decoding
+### Direct Format Output
 
 ```typescript
-import { TensDecoder } from '@contex/core';
+import { formatOutput } from '@contex/core';
 
-const decoder = new TensDecoder();
-const restored = decoder.decode(binary);
-// restored === data (lossless roundtrip)
+// Contex Compact (best overall — 43% avg savings)
+const compact = formatOutput(data, 'contex');
+
+// Other formats
+const csv = formatOutput(data, 'csv');
+const toon = formatOutput(data, 'toon');
+const markdown = formatOutput(data, 'markdown');
 ```
 
-### Token Stream
+### Token Stream (Advanced)
 
 ```typescript
 import { TokenStreamEncoder } from '@contex/core';
@@ -698,4 +714,18 @@ const tokens = stream.encodeToTokenStream(data);
 // tokens: number[] — token IDs for the TENS representation
 const stats = stream.getStats();
 // stats: { schemaCount, tokenCount, byteCount }
+```
+
+### TENS-Text (Human-Readable IR)
+
+```typescript
+import { TensTextEncoder, TensTextDecoder } from '@contex/core';
+
+// Encode to TENS-Text
+const encoder = new TensTextEncoder('o200k_base');
+const text = encoder.encode(data, 'ticket');
+
+// Decode back (lossless roundtrip)
+const decoder = new TensTextDecoder();
+const { data: restored } = decoder.decode(text);
 ```

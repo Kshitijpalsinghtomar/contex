@@ -47,13 +47,13 @@ describe('Integration: Public API Surface', () => {
 
     const tensText = analyses.find((a) => a.format === 'tens-text');
     expect(tensText).toBeDefined();
-    expect(tensText!.byteSize).toBeGreaterThan(0);
-    expect(tensText!.output).toContain('@version');
+    expect(tensText?.byteSize).toBeGreaterThan(0);
+    expect(tensText?.output).toContain('@version');
 
     // TENS-Text should be smaller than JSON for tabular data
     const json = analyses.find((a) => a.format === 'json');
     expect(json).toBeDefined();
-    expect(tensText!.byteSize).toBeLessThan(json!.byteSize);
+    expect(tensText?.byteSize).toBeLessThan(json?.byteSize ?? Number.POSITIVE_INFINITY);
   });
 
   it('encoder accepts custom schema names', () => {
@@ -238,7 +238,7 @@ describe('Integration: File I/O Workflow', () => {
     expect(d1).toEqual(data);
 
     // Multiple trailing newlines
-    const multiTrailing = text + '\n\n\n';
+    const multiTrailing = `${text}\n\n\n`;
     const { data: d2 } = decoder.decode(multiTrailing);
     expect(d2).toEqual(data);
   });

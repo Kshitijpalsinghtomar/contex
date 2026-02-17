@@ -1,5 +1,8 @@
+import { logCacheHit, logCacheMiss, logMaterialize, timer } from './logger.js';
+import { formatOutput } from './formatters.js';
 import { TokenizerManager } from './tokenizer.js';
 import type { MaterializedTokens, TensIR, TokenizerEncoding } from './types.js';
+import { CacheMissReason, getGlobalDiagnostics, type CacheDiagnostics } from './cache_metrics.js';
 
 // ---- Model → Encoding Registry ----
 // Maps model IDs to their tokenizer encoding.
@@ -91,6 +94,9 @@ import { computeStructuralHash } from './tens/hashing.js';
 /** Tokenizer library version — bump when js-tiktoken is updated */
 export const TOKENIZER_VERSION = 'v1';
 
+/** Format version — bump when the materialization text format changes */
+export const FORMAT_VERSION = 'contex-v1';
+
 /** Canonical probe string for fingerprint computation */
 const FINGERPRINT_PROBE = 'The quick brown fox jumps over 42 lazy dogs.';
 
@@ -117,7 +123,12 @@ function computeTokenizerFingerprint(
 
   const probeTokens = tokenizer.tokenize(FINGERPRINT_PROBE, encoding);
   const buffer = new Int32Array(probeTokens).buffer;
-  const fingerprint = computeStructuralHash(new Uint8Array(buffer));
+  // Include FORMAT_VERSION in fingerprint so cache invalidates when format changes
+  const combined = new Uint8Array([
+    ...new Uint8Array(buffer),
+    ...new TextEncoder().encode(FORMAT_VERSION),
+  ]);
+  const fingerprint = computeStructuralHash(combined);
   fingerprintCache.set(encoding, fingerprint);
   return fingerprint;
 }
@@ -207,33 +218,81 @@ export class Materializer {
    * @param opts - Optional: { maxTokens } to truncate result
    */
   materialize(tensIR: TensIR, modelId: string, opts?: MaterializeOptions): MaterializedTokens {
+    const t = timer(`materialize:${modelId}`);
     const cacheKey = `${tensIR.hash}:${modelId}`;
+    const encoding = resolveEncoding(modelId);
+    let diagnostics: CacheDiagnostics | undefined;
+    
+    // Try to get global diagnostics (optional - don't fail if not available)
+    try {
+      diagnostics = getGlobalDiagnostics();
+    } catch {
+      // Diagnostics not initialized, skip
+    }
 
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached) {
       // Apply maxTokens to cached result if needed
       if (opts?.maxTokens && cached.tokenCount > opts.maxTokens) {
-        return {
+        const truncated = {
           ...cached,
           tokens: cached.tokens.slice(0, opts.maxTokens),
           tokenCount: opts.maxTokens,
         };
+        // Record hit with MAX_TOKENS_CHANGED reason
+        if (diagnostics) {
+          diagnostics.recordMiss(
+            'materialize',
+            tensIR.hash,
+            CacheMissReason.MAX_TOKENS_CHANGED,
+            modelId,
+            encoding,
+            t.end(),
+            truncated.tokenCount,
+            { originalTokenCount: cached.tokenCount },
+          );
+        }
+        return truncated;
       }
+      
+      // Record hit
+      if (diagnostics) {
+        diagnostics.recordHit('materialize', tensIR.hash, modelId, encoding, t.end(), cached.tokenCount);
+      }
+      logCacheHit(tensIR.hash, modelId);
+      logMaterialize(modelId, t.end(), cached.tokenCount, true);
       return cached;
     }
 
-    // Resolve model encoding
-    const encoding = resolveEncoding(modelId);
+    // Record miss
+    if (diagnostics) {
+      diagnostics.recordMiss(
+        'materialize',
+        tensIR.hash,
+        CacheMissReason.TOKEN_CACHE_MISSED,
+        modelId,
+        encoding,
+        t.end(),
+      );
+    }
+    logCacheMiss(tensIR.hash, modelId);
 
     // Compute tokenizer fingerprint (drift detection)
     const fingerprint = computeTokenizerFingerprint(this.tokenizer, encoding);
 
-    // Format canonicalized data as JSON text for tokenization
-    const jsonText = JSON.stringify(tensIR.data);
+    // Format data using Contex Compact format (dictionary-compressed, tab-separated)
+    // This is the core optimization: instead of JSON.stringify which wastes tokens
+    // on structural overhead ({, }, "key":, commas), we use a format that puts
+    // schema once in a header and values in tab-separated rows with dictionary
+    // compression for repeated strings.
+    const optimizedText = formatOutput(
+      tensIR.data as Record<string, unknown>[],
+      'contex',
+    );
 
     // Tokenize with the target model's encoding
-    let tokens = this.tokenizer.tokenize(jsonText, encoding);
+    let tokens = this.tokenizer.tokenize(optimizedText, encoding);
 
     // Apply maxTokens budget cap
     if (opts?.maxTokens && tokens.length > opts.maxTokens) {
@@ -264,6 +323,7 @@ export class Materializer {
       this.cache.set(cacheKey, result);
     }
 
+    logMaterialize(modelId, t.end(), result.tokenCount, false);
     return result;
   }
 

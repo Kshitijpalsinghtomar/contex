@@ -15,7 +15,8 @@
 
 import { canonicalize } from './canonical.js';
 import { TensEncoder } from './encoder.js';
-import { SchemaRegistry, flattenObject, inferType } from './schema.js';
+import { logEncode } from './logger.js';
+import { SchemaRegistry, flattenObject } from './schema.js';
 import { computeStructuralHash } from './tens/hashing.js';
 import type { TensIR, TensSchema } from './types.js';
 
@@ -65,9 +66,7 @@ export function encodeIR(data: object[]): TensIR {
   const schemas = extractSchemas(canonicalized);
 
   const end = performance.now();
-  if (typeof process !== 'undefined' && (process.env.CONTEX_DEBUG || process.env.CONTEX_PROFILE)) {
-    console.log(`[Contex] encodeIR: ${(end - start).toFixed(2)}ms for ${data.length} rows`);
-  }
+  logEncode(data.length, end - start, hash);
 
   return {
     ir,

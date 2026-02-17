@@ -1,6 +1,7 @@
 {
     "name": "@contex/server",
     "version": "0.1.0",
+    "private": true,
     "description": "contex REST API Server",
     "type": "module",
     "main": "dist/index.js",
@@ -13,9 +14,13 @@
     "dependencies": {
         "@contex/core": "workspace:*",
         "@contex/engine": "workspace:*",
+        "@contex/middleware": "workspace:*",
+        "@anthropic-ai/sdk": "^0.33.1",
+        "@google/generative-ai": "^0.24.1",
         "@hono/node-server": "^1.13.7",
         "@hono/zod-validator": "^0.4.2",
         "hono": "^4.11.9",
+        "openai": "^4.76.0",
         "zod": "^3.25.76"
     },
     "devDependencies": {

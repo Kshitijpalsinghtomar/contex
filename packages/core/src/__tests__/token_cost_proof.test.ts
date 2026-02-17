@@ -94,7 +94,7 @@ function printTable(label: string, results: FormatResult[], encodings: Tokenizer
   }
 
   // Print savings vs JSON
-  const jsonResult = results.find((r) => r.format === 'json')!;
+  const jsonResult = requireFormatResult(results, 'json');
   console.log('\n  Token savings vs JSON:');
   for (const r of results) {
     if (r.format === 'json') continue;
@@ -103,6 +103,14 @@ function printTable(label: string, results: FormatResult[], encodings: Tokenizer
       console.log(`    ${r.format} (${enc}): ${savings.toFixed(1)}%`);
     }
   }
+}
+
+function requireFormatResult(results: FormatResult[], format: OutputFormat): FormatResult {
+  const found = results.find((result) => result.format === format);
+  if (!found) {
+    throw new Error(`Expected benchmark results to include format: ${format}`);
+  }
+  return found;
 }
 
 // ============================================================================
@@ -124,20 +132,20 @@ describe('Token Cost Proof — User Data', () => {
       });
 
       it('TENS-Text uses fewer tokens than JSON (cl100k_base)', () => {
-        const json = results.find((r) => r.format === 'json')!;
-        const tens = results.find((r) => r.format === 'tens-text')!;
-        expect(tens.tokens['cl100k_base']).toBeLessThan(json.tokens['cl100k_base']);
+        const json = requireFormatResult(results, 'json');
+        const tens = requireFormatResult(results, 'tens-text');
+        expect(tens.tokens.cl100k_base).toBeLessThan(json.tokens.cl100k_base);
       });
 
       it('TENS-Text uses fewer tokens than JSON (o200k_base)', () => {
-        const json = results.find((r) => r.format === 'json')!;
-        const tens = results.find((r) => r.format === 'tens-text')!;
-        expect(tens.tokens['o200k_base']).toBeLessThan(json.tokens['o200k_base']);
+        const json = requireFormatResult(results, 'json');
+        const tens = requireFormatResult(results, 'tens-text');
+        expect(tens.tokens.o200k_base).toBeLessThan(json.tokens.o200k_base);
       });
 
       it('TENS-Text uses fewer bytes than JSON', () => {
-        const json = results.find((r) => r.format === 'json')!;
-        const tens = results.find((r) => r.format === 'tens-text')!;
+        const json = requireFormatResult(results, 'json');
+        const tens = requireFormatResult(results, 'tens-text');
         expect(tens.bytes).toBeLessThan(json.bytes);
       });
     });
@@ -157,9 +165,9 @@ describe('Token Cost Proof — Product Data (with arrays)', () => {
       });
 
       it('TENS-Text uses fewer tokens than JSON', () => {
-        const json = results.find((r) => r.format === 'json')!;
-        const tens = results.find((r) => r.format === 'tens-text')!;
-        expect(tens.tokens['cl100k_base']).toBeLessThan(json.tokens['cl100k_base']);
+        const json = requireFormatResult(results, 'json');
+        const tens = requireFormatResult(results, 'tens-text');
+        expect(tens.tokens.cl100k_base).toBeLessThan(json.tokens.cl100k_base);
       });
     });
   }
@@ -170,8 +178,8 @@ describe('Cost Savings at Model Pricing', () => {
 
   it('calculates real dollar savings per 1M requests', () => {
     const results = measureFormats(data, ENCODINGS);
-    const json = results.find((r) => r.format === 'json')!;
-    const tens = results.find((r) => r.format === 'tens-text')!;
+    const json = requireFormatResult(results, 'json');
+    const tens = requireFormatResult(results, 'tens-text');
 
     console.log('\n═══ Cost Savings per 1M Requests ═══');
     console.log('Model\t\t\tJSON Cost\tTENS Cost\tSavings\t\t%');

@@ -13,16 +13,13 @@
 // ============================================================================
 
 import {
-  type MaterializedTokens,
   Materializer,
   type OutputFormat,
   Tens,
-  type TensIR,
   type TokenizerEncoding,
   TokenizerManager,
   encodeIR,
   formatOutput,
-  resolveEncoding,
 } from '@contex/core';
 import { MODEL_REGISTRY } from './budget.js';
 import type { ModelSpec } from './budget.js';
@@ -176,8 +173,8 @@ export function quick(
         if (format) {
           return formatOutput(data, format);
         }
-        // Default: canonical JSON (matches what tokens were materialized from)
-        return JSON.stringify(ir.data);
+        // Default: Contex Compact format (matches what tokens were materialized from)
+        return formatOutput(data, 'contex');
       },
     };
   } finally {

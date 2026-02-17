@@ -1,0 +1,6 @@
+Correctness checks
+- roundtrip: PASS/FAIL
+- semantic guard: PASS/FAIL
+- deterministic hash: PASS/FAIL
+
+Notes:

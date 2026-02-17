@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "timestamp": "2026-02-16T18:43:09.930Z",
+      "command": "analyze",
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\dummy.json",
+      "model": "gpt-4o-mini",
+      "metrics": {
+        "jsonTokens": 1254622,
+        "contexTokens": 206995,
+        "bestStrategy": "Contex",
+        "bestTokens": 206995,
+        "autoStrategy": "contex",
+        "autoConfidencePct": 100,
+        "tokenReductionPct": 83.5,
+        "breakthroughReductionPct": 83.5
+      }
+    },
+    {
+      "timestamp": "2026-02-16T18:43:26.065Z",
+      "command": "analyze",
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_1000.json",
+      "model": "gpt-4o-mini",
+      "metrics": {
+        "jsonTokens": 79202,
+        "contexTokens": 28915,
+        "bestStrategy": "Contex",
+        "bestTokens": 28915,
+        "autoStrategy": "contex",
+        "autoConfidencePct": 100,
+        "tokenReductionPct": 63.49,
+        "breakthroughReductionPct": 63.49
+      }
+    },
+    {
+      "timestamp": "2026-02-16T18:43:46.487Z",
+      "command": "analyze",
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_2000.json",
+      "model": "gpt-4o-mini",
+      "metrics": {
+        "jsonTokens": 158433,
+        "contexTokens": 40915,
+        "bestStrategy": "Contex",
+        "bestTokens": 40915,
+        "autoStrategy": "contex",
+        "autoConfidencePct": 100,
+        "tokenReductionPct": 74.18,
+        "breakthroughReductionPct": 74.18
+      }
+    }
+  ]
+}

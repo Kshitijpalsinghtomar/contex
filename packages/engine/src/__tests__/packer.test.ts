@@ -177,8 +177,13 @@ describe('Packer — Edge Cases', () => {
     const result = packContext(items, config, tokenizer);
 
     // Both should fit, but 'new' should have higher score
-    const newItem = result.selectedItems.find((i) => i.id === 'new')!;
-    const oldItem = result.selectedItems.find((i) => i.id === 'old')!;
+    const newItem = result.selectedItems.find((i) => i.id === 'new');
+    const oldItem = result.selectedItems.find((i) => i.id === 'old');
+    expect(newItem).toBeDefined();
+    expect(oldItem).toBeDefined();
+    if (!newItem || !oldItem) {
+      throw new Error('Expected both items to be selected');
+    }
     expect(newItem.score).toBeGreaterThan(oldItem.score);
   });
 });

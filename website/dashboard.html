@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contex — Observability Dashboard</title>
+  <meta name="description"
+    content="Real-time observability dashboard for Contex: token savings, compression ratios, cache hit rates, cost analysis, and per-model performance metrics.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="./style.css">
+  <script>
+    const theme = localStorage.getItem('contex-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  </script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       DASHBOARD-SPECIFIC STYLES
+       ═══════════════════════════════════════════════════════════ */
+
+    /* ─── Dashboard Hero ─── */
+    .dash-hero {
+      padding: 120px 32px 60px;
+      text-align: center;
+    }
+    .dash-hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .dash-hero p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* ─── KPI Strip ─── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: var(--max-width);
+      margin: 0 auto 48px;
+      padding: 0 32px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .kpi-card:hover {
+      border-color: var(--border-active);
+      box-shadow: var(--glow-subtle);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .kpi-card.blue::before { background: var(--accent-blue); }
+    .kpi-card.green::before { background: var(--accent-green); }
+    .kpi-card.purple::before { background: var(--accent-purple); }
+    .kpi-card.amber::before { background: var(--accent-amber); }
+    .kpi-card.red::before { background: var(--accent-red); }
+    .kpi-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .kpi-card.blue .kpi-value { color: var(--accent-blue); }
+    .kpi-card.green .kpi-value { color: var(--accent-green); }
+    .kpi-card.purple .kpi-value { color: var(--accent-purple); }
+    .kpi-card.amber .kpi-value { color: var(--accent-amber); }
+    .kpi-card.red .kpi-value { color: var(--accent-red); }
+    .kpi-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 6px;
+    }
+    .kpi-delta {
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-top: 8px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      display: inline-block;
+    }
+    .kpi-delta.up {
+      color: var(--accent-green);
+      background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+    }
+    .kpi-delta.down {
+      color: var(--accent-red);
+      background: color-mix(in srgb, var(--accent-red) 10%, transparent);
+    }
+
+    /* ─── Dashboard Grid ─── */
+    .dash-grid {
+      display: grid;
+      gap: 24px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    .dash-grid.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+    .dash-grid.three-col {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    @media (max-width: 768px) {
+      .dash-grid.two-col,
+      .dash-grid.three-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ─── Dashboard Panel ─── */
+    .dash-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      transition: border-color var(--transition);
+    }
+    .dash-panel:hover {
+      border-color: var(--border-active);
+    }
+    .dash-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .dash-panel-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .dash-panel-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--accent-green) 10%, transparent);
+      color: var(--accent-green);
+    }
+    .dash-panel-badge.warn {
+      background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+      color: var(--accent-amber);
+    }
+
+    /* ─── Simulated Chart (CSS-only bar chart) ─── */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 160px;
+      padding-top: 10px;
+    }
+    .bar-chart .bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      min-width: 18px;
+      position: relative;
+      transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+    .bar-chart .bar:hover {
+      filter: brightness(1.3);
+    }
+    .bar-chart .bar .bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .bar-chart .bar .bar-val {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.62rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ─── Sparkline (CSS-only) ─── */
+    .sparkline-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sparkline-row:last-child { border-bottom: none; }
+    .sparkline-label {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      min-width: 120px;
+    }
+    .sparkline-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 24px;
+      flex: 1;
+    }
+    .sparkline-bars .sp-bar {
+      flex: 1;
+      border-radius: 2px;
+      background: var(--accent-blue);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .sparkline-bars .sp-bar:hover { opacity: 1; }
+    .sparkline-val {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* ─── Ring / Donut (CSS conic-gradient) ─── */
+    .donut-container {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .donut {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .donut-inner {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .donut-inner .donut-pct {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .donut-inner .donut-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .donut-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── Table Panel ─── */
+    .dash-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .dash-table th {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .dash-table td {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .dash-table tr:last-child td { border-bottom: none; }
+    .dash-table tr:hover td {
+      background: var(--bg-hover);
+    }
+    .dash-table .val-blue { color: var(--accent-blue); font-weight: 600; }
+    .dash-table .val-green { color: var(--accent-green); font-weight: 600; }
+    .dash-table .val-purple { color: var(--accent-purple); font-weight: 600; }
+    .dash-table .val-amber { color: var(--accent-amber); font-weight: 600; }
+
+    /* ─── Status Pill ─── */
+    .status-pill {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-pill.healthy {
+      background: color-mix(in srgb, var(--accent-green) 12%, transparent);
+      color: var(--accent-green);
+    }
+    .status-pill.warn {
+      background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
+      color: var(--accent-amber);
+    }
+    .status-pill.critical {
+      background: color-mix(in srgb, var(--accent-red) 12%, transparent);
+      color: var(--accent-red);
+    }
+
+    /* ─── Live Dot ─── */
+    .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      margin-right: 6px;
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    }
+
+    /* ─── Timeline Feed ─── */
+    .event-feed {
+      max-height: 320px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-subtle) transparent;
+    }
+    .event-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: flex-start;
+    }
+    .event-item:last-child { border-bottom: none; }
+    .event-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.7rem;
+    }
+    .event-icon.green { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
+    .event-icon.blue { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
+    .event-icon.amber { background: color-mix(in srgb, var(--accent-amber) 15%, transparent); color: var(--accent-amber); }
+    .event-icon.purple { background: color-mix(in srgb, var(--accent-purple) 15%, transparent); color: var(--accent-purple); }
+    .event-body {
+      flex: 1;
+    }
+    .event-title {
+      font-size: 0.82rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .event-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ─── Heatmap Grid ─── */
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(24, 1fr);
+      gap: 3px;
+    }
+    .heatmap-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: transform 0.15s;
+      position: relative;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.3);
+      z-index: 2;
+    }
+    .heatmap-cell.l0 { background: var(--bg-elevated); }
+    .heatmap-cell.l1 { background: color-mix(in srgb, var(--accent-green) 25%, var(--bg-elevated)); }
+    .heatmap-cell.l2 { background: color-mix(in srgb, var(--accent-green) 45%, var(--bg-elevated)); }
+    .heatmap-cell.l3 { background: color-mix(in srgb, var(--accent-green) 65%, var(--bg-elevated)); }
+    .heatmap-cell.l4 { background: color-mix(in srgb, var(--accent-green) 85%, var(--bg-elevated)); }
+    .heatmap-cell.l5 { background: var(--accent-green); }
+
+    /* ─── Architecture Diagram (fixed pre rendering) ─── */
+    .arch-diagram {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      white-space: pre;
+      -moz-tab-size: 4;
+      tab-size: 4;
+    }
+    .arch-diagram .hl-blue { color: var(--accent-blue); }
+    .arch-diagram .hl-green { color: var(--accent-green); }
+    .arch-diagram .hl-purple { color: var(--accent-purple); }
+    .arch-diagram .hl-amber { color: var(--accent-amber); }
+    .arch-diagram .hl-red { color: var(--accent-red); }
+    .arch-diagram .hl-dim { color: var(--text-muted); }
+
+    /* ─── Metric Progress Bar ─── */
+    .metric-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .metric-bar:last-child { margin-bottom: 0; }
+    .metric-bar-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      min-width: 100px;
+    }
+    .metric-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .metric-bar-fill.blue { background: var(--accent-blue); }
+    .metric-bar-fill.green { background: var(--accent-green); }
+    .metric-bar-fill.purple { background: var(--accent-purple); }
+    .metric-bar-fill.amber { background: var(--accent-amber); }
+    .metric-bar-val {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 48px;
+      text-align: right;
+    }
+
+    /* ─── Section Spacer ─── */
+    .dash-spacer {
+      height: 48px;
+    }
+
+    /* ─── Controls Row ─── */
+    .dash-controls {
+      max-width: var(--max-width);
+      margin: 0 auto 24px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .dash-control-btn {
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .dash-control-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+    .dash-control-btn.active {
+      background: var(--accent-blue);
+      color: #fff;
+      border-color: var(--accent-blue);
+    }
+
+    /* ─── Tooltip ─── */
+    .tooltip {
+      position: relative;
+    }
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      border: 1px solid var(--border-subtle);
+    }
+    .tooltip:hover::after {
+      opacity: 1;
+    }
+
+    /* ─── Animate-in ─── */
+    .dash-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .dash-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">C</div>
+      Contex
+    </a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="./docs.html">Docs</a></li>
+      <li><a href="./tens-text.html">TENS-Text</a></li>
+      <li><a href="./benchmarks.html">Benchmarks</a></li>
+      <li><a href="./playground.html">Playground</a></li>
+      <li><a href="./vision.html">Vision</a></li>
+      <li><a href="./dashboard.html" class="active">Dashboard</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="btn btn-ghost btn-sm" id="theme-toggle" aria-label="Toggle theme">
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      <a href="https://github.com/kshitij-contex/contex" target="_blank" class="btn btn-ghost btn-sm"
+        aria-label="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path
+            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+        </svg>
+      </a>
+    </div>
+  </nav>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  HERO                                  -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-hero">
+    <h1><span class="live-dot"></span>Contex Observability Dashboard</h1>
+    <p>Real-time visibility into token savings, compression ratios, cache performance, and cost analysis across every model and data source.</p>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  KPI STRIP (Top-Level Metrics)         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="kpi-strip dash-reveal">
+
+    <div class="kpi-card green">
+      <div class="kpi-value" id="kpi-tokens-saved">847,293</div>
+      <div class="kpi-label">Tokens Saved</div>
+      <div class="kpi-delta up">▲ 12.4% vs last week</div>
+    </div>
+
+    <div class="kpi-card blue">
+      <div class="kpi-value" id="kpi-compression">46.2%</div>
+      <div class="kpi-label">Avg Compression</div>
+      <div class="kpi-delta up">▲ 3.1% improvement</div>
+    </div>
+
+    <div class="kpi-card purple">
+      <div class="kpi-value" id="kpi-cache-hit">91.7%</div>
+      <div class="kpi-label">Cache Hit Rate</div>
+      <div class="kpi-delta up">▲ 2.8% vs yesterday</div>
+    </div>
+
+    <div class="kpi-card amber">
+      <div class="kpi-value" id="kpi-cost-saved">$142.38</div>
+      <div class="kpi-label">Cost Saved (30d)</div>
+      <div class="kpi-delta up">▲ $18.50 vs prev month</div>
+    </div>
+
+    <div class="kpi-card red">
+      <div class="kpi-value" id="kpi-requests">12,847</div>
+      <div class="kpi-label">Total Requests</div>
+      <div class="kpi-delta up">▲ 340 today</div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CONTROLS                              -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-controls">
+    <button class="dash-control-btn active" data-range="1h">1H</button>
+    <button class="dash-control-btn" data-range="6h">6H</button>
+    <button class="dash-control-btn" data-range="24h">24H</button>
+    <button class="dash-control-btn" data-range="7d">7D</button>
+    <button class="dash-control-btn" data-range="30d">30D</button>
+    <span style="flex:1;"></span>
+    <span style="font-size: 0.75rem; color: var(--text-muted);"><span class="live-dot"></span>Live — last updated 2s ago</span>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 1: Compression + Cache            -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid two-col dash-reveal">
+
+    <!-- Token Savings Over Time (Bar Chart) -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Token Savings Over Time</span>
+        <span class="dash-panel-badge">Healthy</span>
+      </div>
+      <div class="bar-chart" id="savings-chart">
+        <div class="bar tooltip" data-tip="Mon: 34,210 saved" style="height: 68%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">34K</span><span class="bar-label">Mon</span></div>
+        <div class="bar tooltip" data-tip="Tue: 41,832 saved" style="height: 83%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">42K</span><span class="bar-label">Tue</span></div>
+        <div class="bar tooltip" data-tip="Wed: 38,910 saved" style="height: 77%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">39K</span><span class="bar-label">Wed</span></div>
+        <div class="bar tooltip" data-tip="Thu: 45,220 saved" style="height: 90%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">45K</span><span class="bar-label">Thu</span></div>
+        <div class="bar tooltip" data-tip="Fri: 50,100 saved" style="height: 100%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">50K</span><span class="bar-label">Fri</span></div>
+        <div class="bar tooltip" data-tip="Sat: 28,400 saved" style="height: 56%; background: var(--accent-blue);"><span class="bar-val" style="color: var(--accent-blue);">28K</span><span class="bar-label">Sat</span></div>
+        <div class="bar tooltip" data-tip="Sun: 22,180 saved" style="height: 44%; background: var(--accent-blue);"><span class="bar-val" style="color: var(--accent-blue);">22K</span><span class="bar-label">Sun</span></div>
+      </div>
+    </div>
+
+    <!-- Format Distribution Donut -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Format Distribution</span>
+        <span class="dash-panel-badge">5 Formats Active</span>
+      </div>
+      <div class="donut-container">
+        <div class="donut" style="background: conic-gradient(
+          var(--accent-blue) 0deg 173deg,
+          var(--accent-green) 173deg 252deg,
+          var(--accent-purple) 252deg 306deg,
+          var(--accent-amber) 306deg 338deg,
+          var(--text-muted) 338deg 360deg
+        );">
+          <div class="donut-inner">
+            <span class="donut-pct">48%</span>
+            <span class="donut-sub">Contex</span>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-blue);"></div> Contex Compact — 48%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-green);"></div> TENS-Text — 22%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-purple);"></div> TOON — 15%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-amber);"></div> CSV — 9%</div>
+          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--text-muted);"></div> JSON (fallback) — 6%</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dash-spacer"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 2: Per-Model + Per-Source         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid two-col dash-reveal">
+
+    <!-- Per-Model Performance -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Per-Model Performance</span>
+        <span class="dash-panel-badge">4 Models</span>
+      </div>
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Requests</th>
+            <th>Tokens Saved</th>
+            <th>Compression</th>
+            <th>Cache Hit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>gpt-4o</strong></td>
+            <td>5,230</td>
+            <td class="val-green">412,800</td>
+            <td class="val-blue">48.3%</td>
+            <td class="val-purple">94.1%</td>
+          </tr>
+          <tr>
+            <td><strong>claude-3.5-sonnet</strong></td>
+            <td>3,847</td>
+            <td class="val-green">248,100</td>
+            <td class="val-blue">44.7%</td>
+            <td class="val-purple">90.3%</td>
+          </tr>
+          <tr>
+            <td><strong>gpt-4o-mini</strong></td>
+            <td>2,419</td>
+            <td class="val-green">121,900</td>
+            <td class="val-blue">42.1%</td>
+            <td class="val-purple">88.9%</td>
+          </tr>
+          <tr>
+            <td><strong>gemini-1.5-pro</strong></td>
+            <td>1,351</td>
+            <td class="val-green">64,493</td>
+            <td class="val-blue">39.8%</td>
+            <td class="val-purple">92.6%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Per-Source Compression -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Compression by Data Source</span>
+        <span class="dash-panel-badge">6 Sources</span>
+      </div>
+
+      <div class="metric-bar">
+        <span class="metric-bar-label">User Profiles</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill green" style="width: 62%;"></div></div>
+        <span class="metric-bar-val">62%</span>
+      </div>
+      <div class="metric-bar">
+        <span class="metric-bar-label">Product Catalog</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill blue" style="width: 54%;"></div></div>
+        <span class="metric-bar-val">54%</span>
+      </div>
+      <div class="metric-bar">
+        <span class="metric-bar-label">Order History</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill blue" style="width: 48%;"></div></div>
+        <span class="metric-bar-val">48%</span>
+      </div>
+      <div class="metric-bar">
+        <span class="metric-bar-label">Chat Messages</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill purple" style="width: 41%;"></div></div>
+        <span class="metric-bar-val">41%</span>
+      </div>
+      <div class="metric-bar">
+        <span class="metric-bar-label">Support Tickets</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill purple" style="width: 37%;"></div></div>
+        <span class="metric-bar-val">37%</span>
+      </div>
+      <div class="metric-bar">
+        <span class="metric-bar-label">Log Events</span>
+        <div class="metric-bar-track"><div class="metric-bar-fill amber" style="width: 29%;"></div></div>
+        <span class="metric-bar-val">29%</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dash-spacer"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 3: Session Dedup + Event Feed     -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid two-col dash-reveal">
+
+    <!-- Session Dedup Stats -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Session Dedup Analytics</span>
+        <span class="dash-panel-badge">StructuralDedupCache</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue);" id="dedup-schemas">23</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Known Schemas</div>
+        </div>
+        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-green);" id="dedup-dict">1,247</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Dictionary Entries</div>
+        </div>
+        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-purple);" id="dedup-schema-hits">8,412</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Schema Cache Hits</div>
+        </div>
+        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-amber);" id="dedup-dict-hits">34,891</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Dict Cache Hits</div>
+        </div>
+      </div>
+
+      <!-- Sparkline: dedup effectiveness over time -->
+      <div class="sparkline-row">
+        <span class="sparkline-label">Schema Reuse</span>
+        <div class="sparkline-bars">
+          <div class="sp-bar" style="height: 60%;"></div>
+          <div class="sp-bar" style="height: 75%;"></div>
+          <div class="sp-bar" style="height: 80%;"></div>
+          <div class="sp-bar" style="height: 72%;"></div>
+          <div class="sp-bar" style="height: 88%;"></div>
+          <div class="sp-bar" style="height: 91%;"></div>
+          <div class="sp-bar" style="height: 85%;"></div>
+          <div class="sp-bar" style="height: 94%;"></div>
+          <div class="sp-bar" style="height: 90%;"></div>
+          <div class="sp-bar" style="height: 96%;"></div>
+          <div class="sp-bar" style="height: 93%;"></div>
+          <div class="sp-bar" style="height: 100%;"></div>
+        </div>
+        <span class="sparkline-val" style="color: var(--accent-green);">96%</span>
+      </div>
+      <div class="sparkline-row">
+        <span class="sparkline-label">Dict Dedup Rate</span>
+        <div class="sparkline-bars">
+          <div class="sp-bar" style="height: 40%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 55%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 62%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 58%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 70%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 74%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 68%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 78%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 82%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 79%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 85%; background: var(--accent-purple);"></div>
+          <div class="sp-bar" style="height: 81%; background: var(--accent-purple);"></div>
+        </div>
+        <span class="sparkline-val" style="color: var(--accent-purple);">81%</span>
+      </div>
+      <div class="sparkline-row">
+        <span class="sparkline-label">Incremental Δ</span>
+        <div class="sparkline-bars">
+          <div class="sp-bar" style="height: 30%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 45%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 52%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 48%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 55%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 60%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 58%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 65%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 70%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 68%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 72%; background: var(--accent-amber);"></div>
+          <div class="sp-bar" style="height: 74%; background: var(--accent-amber);"></div>
+        </div>
+        <span class="sparkline-val" style="color: var(--accent-amber);">74%</span>
+      </div>
+    </div>
+
+    <!-- Live Event Feed -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Live Event Feed</span>
+        <span class="dash-panel-badge"><span class="live-dot"></span>Streaming</span>
+      </div>
+      <div class="event-feed" id="event-feed">
+        <div class="event-item">
+          <div class="event-icon green">✓</div>
+          <div class="event-body">
+            <div class="event-title">Schema cache hit — <code>user_profiles</code> (12th reuse)</div>
+            <div class="event-meta">gpt-4o · 847 tokens saved · 2s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon blue">⚡</div>
+          <div class="event-body">
+            <div class="event-title">Incremental encode — 3 delta rows out of 48</div>
+            <div class="event-meta">claude-3.5-sonnet · 1,240 tokens saved · 8s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon purple">📊</div>
+          <div class="event-body">
+            <div class="event-title">New schema registered — <code>support_tickets_v2</code></div>
+            <div class="event-meta">gemini-1.5-pro · 5 fields · 14s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon green">✓</div>
+          <div class="event-body">
+            <div class="event-title">Contex Compact format selected — 52% compression</div>
+            <div class="event-meta">gpt-4o-mini · 380 → 182 tokens · 21s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon amber">⚠</div>
+          <div class="event-body">
+            <div class="event-title">Budget threshold reached — switched from <code>toon</code> → <code>contex</code></div>
+            <div class="event-meta">gpt-4o · 4,096 token budget · 34s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon blue">⚡</div>
+          <div class="event-body">
+            <div class="event-title">Token cache materialized — <code>o200k_base</code> fingerprint match</div>
+            <div class="event-meta">gpt-4o · cache restored from disk · 41s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon green">✓</div>
+          <div class="event-body">
+            <div class="event-title">Dictionary dedup — 34 values reused across session</div>
+            <div class="event-meta">claude-3.5-sonnet · 892 tokens saved · 55s ago</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-icon purple">📊</div>
+          <div class="event-body">
+            <div class="event-title">Session state serialized — 23 schemas, 1,247 dict entries</div>
+            <div class="event-meta">persistence layer · .contex/session.json · 1m ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 4: Cost Analysis + Request Heatmap -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid two-col dash-reveal">
+
+    <!-- Cost Analysis -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Cost Analysis — JSON vs Contex</span>
+        <span class="dash-panel-badge">$142.38 saved</span>
+      </div>
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Without Contex</th>
+            <th>With Contex</th>
+            <th>Savings</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Input tokens (30d)</td>
+            <td>1,582,400</td>
+            <td class="val-green">847,293</td>
+            <td class="val-green">735,107 (46.5%)</td>
+          </tr>
+          <tr>
+            <td>Input cost (GPT-4o)</td>
+            <td>$237.36</td>
+            <td class="val-green">$127.09</td>
+            <td class="val-green">$110.27</td>
+          </tr>
+          <tr>
+            <td>Input cost (Claude)</td>
+            <td>$47.47</td>
+            <td class="val-green">$25.42</td>
+            <td class="val-green">$22.05</td>
+          </tr>
+          <tr>
+            <td>Prefix cache hits</td>
+            <td>—</td>
+            <td class="val-purple">11,782</td>
+            <td class="val-purple">91.7% hit rate</td>
+          </tr>
+          <tr>
+            <td>Re-tokenizations avoided</td>
+            <td>—</td>
+            <td class="val-blue">8,412</td>
+            <td class="val-blue">~3.2s CPU saved</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Request Heatmap (24h × 7d) -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Request Volume Heatmap (7d × 24h)</span>
+        <span class="dash-panel-badge">Peak: 2PM Tue</span>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); margin-bottom: 4px;">
+          <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
+        </div>
+      </div>
+      <!-- Mon -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Mon</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Tue -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Tue</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div>
+          <div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Wed -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Wed</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Thu -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Thu</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Fri -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Fri</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div>
+          <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Sat -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Sat</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+      <!-- Sun -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Sun</span>
+        <div class="heatmap" style="flex: 1;">
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div>
+          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display: flex; align-items: center; gap: 4px; margin-top: 12px; justify-content: flex-end;">
+        <span style="font-size: 0.62rem; color: var(--text-muted);">Less</span>
+        <div class="heatmap-cell l0" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <div class="heatmap-cell l1" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <div class="heatmap-cell l2" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <div class="heatmap-cell l3" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <div class="heatmap-cell l4" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <div class="heatmap-cell l5" style="width: 12px; height: 12px; display: inline-block;"></div>
+        <span style="font-size: 0.62rem; color: var(--text-muted);">More</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 5: Architecture Diagram           -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section dash-reveal">
+    <div class="section-header">
+      <h2 class="section-title">Observability Architecture</h2>
+      <p class="section-desc">How the dashboard hooks into the Contex pipeline — every metric comes from real internal APIs.</p>
+    </div>
+
+    <div style="max-width: 860px; margin: 0 auto;">
+      <div class="arch-diagram"><span class="hl-green">CONTEX OBSERVABILITY PIPELINE</span>
+
+<span class="hl-blue">┌──────────────────────────────────────────────────────────────────┐</span>
+<span class="hl-blue">│  YOUR APPLICATION                                                │</span>
+<span class="hl-blue">│  data → contex.compile() → LLM                                  │</span>
+<span class="hl-blue">└────────────────┬─────────────────────────────────────────────────┘</span>
+                 │
+                 │ <span class="hl-dim">hooks into</span>
+                 ▼
+<span class="hl-purple">┌──────────────────────────────────────────────────────────────────┐</span>
+<span class="hl-purple">│  CONTEX ENGINE                                                   │</span>
+<span class="hl-purple">│  ┌────────────────┐  ┌─────────────────┐  ┌──────────────────┐   │</span>
+<span class="hl-purple">│  │ FormatSelector │  │ IR Pipeline     │  │ Token Materializ │   │</span>
+<span class="hl-purple">│  │ <span class="hl-dim">format chosen</span>  │  │ <span class="hl-dim">compression %</span>  │  │ <span class="hl-dim">tokens counted</span>  │   │</span>
+<span class="hl-purple">│  └───────┬────────┘  └────────┬────────┘  └────────┬─────────┘   │</span>
+<span class="hl-purple">│          │                    │                    │              │</span>
+<span class="hl-purple">│  ┌───────┴────────────────────┴────────────────────┴───────────┐  │</span>
+<span class="hl-purple">│  │  <span class="hl-amber">StructuralDedupCache</span>                                     │  │</span>
+<span class="hl-purple">│  │  <span class="hl-dim">schemas · dictionary · schemaCacheHits · dictCacheHits</span>    │  │</span>
+<span class="hl-purple">│  │  <span class="hl-dim">estimatedTokensSaved · encodeIncremental()</span>               │  │</span>
+<span class="hl-purple">│  └───────────────────────────┬────────────────────────────────┘  │</span>
+<span class="hl-purple">│                              │                                   │</span>
+<span class="hl-purple">│  ┌───────────────────────────┴────────────────────────────────┐  │</span>
+<span class="hl-purple">│  │  <span class="hl-green">Metrics Emitter</span>                                          │  │</span>
+<span class="hl-purple">│  │  <span class="hl-dim">getStats() · serializeState() · analyzeSavings()</span>         │  │</span>
+<span class="hl-purple">│  └───────────────────────────┬────────────────────────────────┘  │</span>
+<span class="hl-purple">└──────────────────────────────┬───────────────────────────────────┘</span>
+                               │
+                               │ <span class="hl-dim">emits metrics</span>
+                               ▼
+<span class="hl-green">┌──────────────────────────────────────────────────────────────────┐</span>
+<span class="hl-green">│  OBSERVABILITY DASHBOARD                                         │</span>
+<span class="hl-green">│  ────────────────────────                                        │</span>
+<span class="hl-green">│  KPIs · Bar Charts · Donut · Heatmap · Event Feed · Tables      │</span>
+<span class="hl-green">│  Alerts · Budget thresholds · Session state persistence          │</span>
+<span class="hl-green">└──────────────────────────────────────────────────────────────────┘</span></div>
+    </div>
+  </section>
+
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 6: Health Checks + Alerts         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid two-col dash-reveal">
+
+    <!-- System Health -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">System Health</span>
+        <span class="dash-panel-badge">All Clear</span>
+      </div>
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Status</th>
+            <th>Latency</th>
+            <th>Uptime</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>IR Pipeline</td>
+            <td><span class="status-pill healthy">Healthy</span></td>
+            <td class="val-green">0.8ms</td>
+            <td>99.99%</td>
+          </tr>
+          <tr>
+            <td>Token Materializer</td>
+            <td><span class="status-pill healthy">Healthy</span></td>
+            <td class="val-green">1.2ms</td>
+            <td>99.98%</td>
+          </tr>
+          <tr>
+            <td>Format Selector</td>
+            <td><span class="status-pill healthy">Healthy</span></td>
+            <td class="val-green">0.1ms</td>
+            <td>100%</td>
+          </tr>
+          <tr>
+            <td>Dedup Cache</td>
+            <td><span class="status-pill healthy">Healthy</span></td>
+            <td class="val-green">0.3ms</td>
+            <td>99.97%</td>
+          </tr>
+          <tr>
+            <td>Session Persistence</td>
+            <td><span class="status-pill warn">Degraded</span></td>
+            <td class="val-amber">4.1ms</td>
+            <td>98.2%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Alert Thresholds -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Alert Configuration</span>
+        <span class="dash-panel-badge warn">1 Active Alert</span>
+      </div>
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Alert</th>
+            <th>Threshold</th>
+            <th>Current</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Compression drops below</td>
+            <td>30%</td>
+            <td class="val-green">46.2%</td>
+            <td><span class="status-pill healthy">OK</span></td>
+          </tr>
+          <tr>
+            <td>Cache hit rate below</td>
+            <td>80%</td>
+            <td class="val-green">91.7%</td>
+            <td><span class="status-pill healthy">OK</span></td>
+          </tr>
+          <tr>
+            <td>Encode latency above</td>
+            <td>5ms</td>
+            <td class="val-green">0.8ms</td>
+            <td><span class="status-pill healthy">OK</span></td>
+          </tr>
+          <tr>
+            <td>Session persist latency</td>
+            <td>3ms</td>
+            <td class="val-amber">4.1ms</td>
+            <td><span class="status-pill warn">Warning</span></td>
+          </tr>
+          <tr>
+            <td>Daily cost exceeds</td>
+            <td>$10.00</td>
+            <td class="val-green">$4.24</td>
+            <td><span class="status-pill healthy">OK</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 7: SDK Integration Code           -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section dash-reveal">
+    <div class="section-header">
+      <h2 class="section-title">Integration</h2>
+      <p class="section-desc">Add observability to your Contex pipeline in 3 lines.</p>
+    </div>
+
+    <div style="max-width: 860px; margin: 0 auto;">
+      <div class="code-block" style="white-space: pre; text-align: left; line-height: 1.7; font-size: 0.82rem;"><span style="color: var(--accent-purple);">import</span> { StructuralDedupCache } <span style="color: var(--accent-purple);">from</span> <span style="color: var(--accent-green);">'@contex/engine'</span>;
+<span style="color: var(--accent-purple);">import</span> { quick, analyzeSavings } <span style="color: var(--accent-purple);">from</span> <span style="color: var(--accent-green);">'@contex/engine'</span>;
+
+<span style="color: var(--text-muted);">// Initialize session cache with observability</span>
+<span style="color: var(--accent-purple);">const</span> cache = <span style="color: var(--accent-purple);">new</span> StructuralDedupCache(<span style="color: var(--accent-green);">'o200k_base'</span>);
+
+<span style="color: var(--text-muted);">// Encode with dedup tracking</span>
+<span style="color: var(--accent-purple);">const</span> result = cache.encode(userData, <span style="color: var(--accent-green);">'contex'</span>);
+console.log(result.isSchemaKnown);       <span style="color: var(--text-muted);">// true if schema seen before</span>
+console.log(result.tokensSaved);         <span style="color: var(--text-muted);">// tokens saved via dedup</span>
+
+<span style="color: var(--text-muted);">// Get full session stats (feeds the dashboard)</span>
+<span style="color: var(--accent-purple);">const</span> stats = cache.getStats();
+console.log(stats.knownSchemas);         <span style="color: var(--text-muted);">// 23</span>
+console.log(stats.dictionarySize);       <span style="color: var(--text-muted);">// 1,247</span>
+console.log(stats.schemaCacheHits);      <span style="color: var(--text-muted);">// 8,412</span>
+console.log(stats.dictCacheHits);        <span style="color: var(--text-muted);">// 34,891</span>
+console.log(stats.estimatedTokensSaved); <span style="color: var(--text-muted);">// 847,293</span>
+
+<span style="color: var(--text-muted);">// Incremental encoding — only send deltas</span>
+<span style="color: var(--accent-purple);">const</span> delta = cache.encodeIncremental(newBatch, prevBatch, <span style="color: var(--accent-green);">'id'</span>);
+console.log(delta.deltaRows);            <span style="color: var(--text-muted);">// 3 new rows out of 48</span>
+console.log(delta.tokensSaved);          <span style="color: var(--text-muted);">// 1,240 tokens saved</span>
+
+<span style="color: var(--text-muted);">// Persist session state across restarts</span>
+<span style="color: var(--accent-purple);">const</span> state = cache.serializeState();
+fs.writeFileSync(<span style="color: var(--accent-green);">'.contex/session.json'</span>, JSON.stringify(state));
+
+<span style="color: var(--text-muted);">// Restore on next startup</span>
+<span style="color: var(--accent-purple);">const</span> restored = StructuralDedupCache.fromState(JSON.parse(saved));
+<span style="color: var(--text-muted);">// → All schemas, dictionary, and stats are preserved</span></div>
+    </div>
+  </section>
+
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CTA                                   -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="cta-box" style="margin-top: 40px;">
+    <h2>See inside your context layer</h2>
+    <p>The observability APIs are available today in <code>@contex/engine</code>.<br>Use <code>getStats()</code>, <code>analyzeSavings()</code>, and <code>serializeState()</code> to build your own dashboards.</p>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <a href="./playground.html" class="btn btn-primary">Try the Playground</a>
+      <a href="./docs.html" class="btn btn-ghost">Read the Docs</a>
+      <a href="./benchmarks.html" class="btn btn-ghost">View Benchmarks</a>
+    </div>
+  </section>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Contex. MIT License. Built for the compiled AI future.</p>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  SCRIPTS                               -->
+  <!-- ═══════════════════════════════════════ -->
+  <script>
+    // ── Theme toggle ──
+    const toggle = document.getElementById('theme-toggle');
+    const sun = toggle.querySelector('.sun-icon');
+    const moon = toggle.querySelector('.moon-icon');
+
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('contex-theme', t);
+      sun.style.display = t === 'dark' ? 'none' : 'block';
+      moon.style.display = t === 'dark' ? 'block' : 'none';
+    }
+    applyTheme(localStorage.getItem('contex-theme') || 'dark');
+
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    });
+
+
+    // ── Scroll reveal ──
+    const dashObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.dash-reveal').forEach(el => dashObserver.observe(el));
+
+
+    // ── Simulate live counter updates ──
+    function animateValue(el, start, end, duration, prefix, suffix) {
+      const range = end - start;
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = Math.round(start + range * eased);
+        el.textContent = prefix + current.toLocaleString() + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Animate KPIs on first view
+    const kpiObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !entry.target.dataset.animated) {
+          entry.target.dataset.animated = 'true';
+          animateValue(document.getElementById('kpi-tokens-saved'), 0, 847293, 2000, '', '');
+          animateValue(document.getElementById('kpi-requests'), 0, 12847, 1800, '', '');
+        }
+      });
+    }, { threshold: 0.3 });
+    kpiObserver.observe(document.querySelector('.kpi-strip'));
+
+
+    // ── Simulate live event feed ──
+    const feedEvents = [
+      { icon: 'green', sym: '✓', title: 'Schema cache hit — <code>orders</code> (8th reuse)', meta: 'gpt-4o · 623 tokens saved' },
+      { icon: 'blue', sym: '⚡', title: 'Contex Compact selected — 58% compression', meta: 'claude-3.5-sonnet · 1,024 → 430 tokens' },
+      { icon: 'green', sym: '✓', title: 'Dictionary dedup — 12 values reused', meta: 'gpt-4o-mini · 345 tokens saved' },
+      { icon: 'purple', sym: '📊', title: 'Token fingerprint validated — <code>o200k_base</code>', meta: 'materializer · cache restored' },
+      { icon: 'amber', sym: '⚠', title: 'Budget cap engaged — max 2,048 tokens', meta: 'gemini-1.5-pro · 3,200 → 2,048 tokens' },
+      { icon: 'blue', sym: '⚡', title: 'Incremental encode — 7 delta rows out of 120', meta: 'gpt-4o · 2,890 tokens saved' },
+      { icon: 'green', sym: '✓', title: 'Session state persisted — 24 schemas', meta: 'persistence · .contex/session.json' },
+    ];
+
+    let feedIdx = 0;
+    setInterval(() => {
+      const feed = document.getElementById('event-feed');
+      const evt = feedEvents[feedIdx % feedEvents.length];
+      const item = document.createElement('div');
+      item.className = 'event-item';
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(-10px)';
+      item.innerHTML = `
+        <div class="event-icon ${evt.icon}">${evt.sym}</div>
+        <div class="event-body">
+          <div class="event-title">${evt.title}</div>
+          <div class="event-meta">${evt.meta} · just now</div>
+        </div>`;
+      feed.insertBefore(item, feed.firstChild);
+      requestAnimationFrame(() => {
+        item.style.transition = 'opacity 0.4s, transform 0.4s';
+        item.style.opacity = '1';
+        item.style.transform = 'translateY(0)';
+      });
+
+      // Keep feed manageable
+      while (feed.children.length > 15) {
+        feed.removeChild(feed.lastChild);
+      }
+      feedIdx++;
+    }, 5000);
+
+
+    // ── Time range buttons ──
+    document.querySelectorAll('.dash-control-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dash-control-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 // Cross-Session Structural Dedup — Tests
 // ============================================================================
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { StructuralDedupCache } from '../session_dedup.js';
 
 describe('StructuralDedupCache — Schema Dedup', () => {

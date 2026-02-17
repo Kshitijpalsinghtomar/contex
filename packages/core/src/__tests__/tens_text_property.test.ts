@@ -31,18 +31,6 @@ const safeString = fc.oneof(
   fc.stringMatching(/["\\\n\r\t @#|>,={}[\]]{1,20}/),
 );
 
-/** Generate a scalar value (string, number, boolean, or null). */
-const scalarValue = fc.oneof(
-  { weight: 3, arbitrary: safeString },
-  { weight: 2, arbitrary: fc.integer({ min: -1_000_000, max: 1_000_000 }) },
-  {
-    weight: 2,
-    arbitrary: fc.double({ min: -1e6, max: 1e6, noNaN: true, noDefaultInfinity: true }),
-  },
-  { weight: 1, arbitrary: fc.boolean() },
-  { weight: 1, arbitrary: fc.constant(null) },
-);
-
 /** Generate a simple data row (flat object). */
 const simpleRow = fc.record({
   id: fc.integer({ min: 1, max: 100_000 }),
@@ -226,8 +214,8 @@ describe('Property: Dictionary Correctness', () => {
         const refPattern = /@(\d+)/g;
         for (const line of lines) {
           if (!line.startsWith('  ')) continue;
-          let match;
-          while ((match = refPattern.exec(line)) !== null) {
+          const matches = line.matchAll(refPattern);
+          for (const match of matches) {
             const idx = Number.parseInt(match[1], 10);
             expect(idx).toBeLessThan(dictEntryCount);
           }
@@ -252,8 +240,8 @@ describe('Property: Schema Completeness', () => {
         expect(schemaLine).toBeDefined();
 
         // Extract field names from schema
-        const schemaFields = schemaLine!
-          .split(/\s+/)
+        const schemaFields = schemaLine
+          ?.split(/\s+/)
           .slice(2)
           .map((f: string) => f.split(':')[0]);
 

@@ -14,6 +14,15 @@ import { TensTextDecoder, TensTextEncoder } from '../tens_text.js';
 const encoder = new TensTextEncoder('o200k_base');
 const decoder = new TensTextDecoder();
 
+function mustFindLine(text: string, prefix: string): string {
+  const line = text.split('\n').find((entry: string) => entry.startsWith(prefix));
+  expect(line).toBeDefined();
+  if (line === undefined) {
+    throw new Error(`Expected line starting with ${prefix}`);
+  }
+  return line;
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Directive Order & Format
 // ────────────────────────────────────────────────────────────────────────────
@@ -62,7 +71,7 @@ describe('Conformance: Schema Format', () => {
   it('schema format: @schema NAME field:type field:type?', () => {
     const data = [{ id: 1, name: 'Alice', score: null, active: true }];
     const text = encoder.encode(data);
-    const schemaLine = text.split('\n').find((l: string) => l.startsWith('@schema'))!;
+    const schemaLine = mustFindLine(text, '@schema');
 
     // Format: @schema data field1:type field2:type ...
     expect(schemaLine).toMatch(/^@schema \w+/);
@@ -95,7 +104,7 @@ describe('Conformance: Schema Format', () => {
       { id: 2, tag: null },
     ];
     const text = encoder.encode(data);
-    const schemaLine = text.split('\n').find((l: string) => l.startsWith('@schema'))!;
+    const schemaLine = mustFindLine(text, '@schema');
     // tag should be str[]?
     expect(schemaLine).toContain('tag:str[]?');
   });
@@ -103,7 +112,7 @@ describe('Conformance: Schema Format', () => {
   it('type inference: numbers → num, strings → str, booleans → bool', () => {
     const data = [{ a: 42, b: 'hello', c: true }];
     const text = encoder.encode(data);
-    const schemaLine = text.split('\n').find((l: string) => l.startsWith('@schema'))!;
+    const schemaLine = mustFindLine(text, '@schema');
     expect(schemaLine).toContain('a:num');
     expect(schemaLine).toContain('b:str');
     expect(schemaLine).toContain('c:bool');
@@ -166,7 +175,7 @@ describe('Conformance: Dictionary Format', () => {
       { id: 4, role: 'user' },
     ];
     const text = encoder.encode(data);
-    const dictLine = text.split('\n').find((l: string) => l.startsWith('@dict'))!;
+    const dictLine = mustFindLine(text, '@dict');
     expect(dictLine).toBeDefined();
     expect(dictLine).toMatch(/^@dict .+$/);
 
@@ -181,7 +190,7 @@ describe('Conformance: Dictionary Format', () => {
       { id: 2, desc: 'hello world' },
     ];
     const text = encoder.encode(data);
-    const dictLine = text.split('\n').find((l: string) => l.startsWith('@dict'))!;
+    const dictLine = mustFindLine(text, '@dict');
     expect(dictLine).toContain('"hello world"');
   });
 
@@ -264,18 +273,18 @@ describe('Conformance: Quoting Rules (§6.3.1)', () => {
 
 describe('Conformance: Escape Sequences (all 5)', () => {
   const escapes = [
-    { char: '"', escape: '\\"', label: 'double quote' },
-    { char: '\\', escape: '\\\\', label: 'backslash' },
-    { char: '\n', escape: '\\n', label: 'newline' },
-    { char: '\r', escape: '\\r', label: 'carriage return' },
-    { char: '\t', escape: '\\t', label: 'tab' },
+    { char: '"', escaped: '\\"', label: 'double quote' },
+    { char: '\\', escaped: '\\\\', label: 'backslash' },
+    { char: '\n', escaped: '\\n', label: 'newline' },
+    { char: '\r', escaped: '\\r', label: 'carriage return' },
+    { char: '\t', escaped: '\\t', label: 'tab' },
   ];
 
-  for (const { char, escape, label } of escapes) {
-    it(`escapes: ${label} → ${escape}`, () => {
+  for (const { char, escaped, label } of escapes) {
+    it(`escapes: ${label} → ${escaped}`, () => {
       const data = [{ id: 1, val: `before${char}after` }];
       const text = encoder.encode(data);
-      expect(text).toContain(escape);
+      expect(text).toContain(escaped);
 
       const { data: decoded } = decoder.decode(text);
       expect(decoded[0].val).toBe(`before${char}after`);

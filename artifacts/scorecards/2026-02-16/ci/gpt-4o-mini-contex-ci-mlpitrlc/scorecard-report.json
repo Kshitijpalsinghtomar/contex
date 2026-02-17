@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-02-16T18:43:48.051Z",
+  "source": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\artifacts\\scorecards\\2026-02-16\\ci\\gpt-4o-mini-contex-ci-mlpitrlc\\analyze-report.json",
+  "model": "gpt-4o-mini",
+  "targets": {
+    "floorPct": 35,
+    "medianPct": 60,
+    "minDatasets": 3
+  },
+  "observed": {
+    "datasetCount": 3,
+    "floorReductionPct": 63.49,
+    "medianReductionPct": 74.18
+  },
+  "gate": {
+    "pass": true,
+    "checks": {
+      "floorPass": true,
+      "medianPass": true,
+      "datasetPass": true
+    }
+  },
+  "datasets": [
+    {
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_1000.json",
+      "timestamp": "2026-02-16T18:43:26.065Z",
+      "tokenReductionPct": 63.49,
+      "bestStrategy": "Contex",
+      "bestTokens": 28915,
+      "contexTokens": 28915,
+      "jsonTokens": 79202
+    },
+    {
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\.contex\\dummy_2000.json",
+      "timestamp": "2026-02-16T18:43:46.487Z",
+      "tokenReductionPct": 74.18,
+      "bestStrategy": "Contex",
+      "bestTokens": 40915,
+      "contexTokens": 40915,
+      "jsonTokens": 158433
+    },
+    {
+      "inputPath": "C:\\Users\\kshit\\Downloads\\Startups\\ContexDB\\dummy.json",
+      "timestamp": "2026-02-16T18:43:09.930Z",
+      "tokenReductionPct": 83.5,
+      "bestStrategy": "Contex",
+      "bestTokens": 206995,
+      "contexTokens": 206995,
+      "jsonTokens": 1254622
+    }
+  ]
+}

@@ -1,7 +1,5 @@
 import { existsSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { formatOutput } from '../formatters.js';
 import { TokenMemory } from '../memory.js';
 import { Tens } from '../tens.js';
 
@@ -27,17 +25,26 @@ describe('Tens Integration', () => {
     expect(tens1.ir).toEqual(tens2.ir);
   });
 
-  it('should implement toString() as canonical text (JSON)', () => {
+  it('should implement toString() as Contex Compact text', () => {
     const data = [{ id: 1, name: 'Test' }];
     const tens = Tens.encode(data);
     const text = tens.toString();
-    // Should match JSON.stringify of canonical data
-    expect(text).toBe(JSON.stringify(data));
+    // Should return Contex Compact format (tab-separated, schema header)
+    expect(text).toContain('id');
+    expect(text).toContain('name');
+    expect(text).toContain('Test');
+    expect(text).toContain('1');
+    // Should NOT be JSON
+    expect(text).not.toContain('{');
+    expect(text).not.toContain('"');
 
-    // Also check if canonicalization happened
+    // toJSON() should still return canonical JSON
+    expect(tens.toJSON()).toBe(JSON.stringify(data));
+
+    // Canonicalization: sorted keys
     const mixed = [{ b: 2, a: 1 }];
     const tensMixed = Tens.encode(mixed);
-    expect(tensMixed.toString()).toBe('[{"a":1,"b":2}]'); // Sorted keys
+    expect(tensMixed.toJSON()).toBe('[{"a":1,"b":2}]');
   });
 
   it('should load from hash', () => {
@@ -62,7 +69,7 @@ describe('Tens Integration', () => {
     // First call (cold)
     const startCold = performance.now();
     const tokens1 = tens.materialize('gpt-4o');
-    const coldTime = performance.now() - startCold;
+    performance.now() - startCold;
 
     expect(tokens1).toBeInstanceOf(Int32Array);
     expect(tokens1.length).toBeGreaterThan(0);
@@ -70,7 +77,7 @@ describe('Tens Integration', () => {
     // Second call (warm)
     const startWarm = performance.now();
     const tokens2 = tens.materialize('gpt-4o');
-    const warmTime = performance.now() - startWarm;
+    performance.now() - startWarm;
 
     expect(tokens2).toEqual(tokens1);
     // Warm should be significantly faster (though in unit test environment with small data it might be close)

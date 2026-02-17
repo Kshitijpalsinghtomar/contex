@@ -1,4 +1,4 @@
-import { type MaterializedTokens, Tens, type TensIR, TokenMemory, encodeIR } from '@contex/core';
+import { Tens, type TensIR, TokenMemory, encodeIR, formatOutput, getGlobalDiagnostics, CacheMissReason } from '@contex/core';
 import type { ContexMiddlewareOptions, InjectionInfo } from './types.js';
 
 // ============================================================================
@@ -19,13 +19,11 @@ export class ContexContext {
   private collections: Map<string, string> = new Map(); // name → IR hash
   private irCache: Map<string, TensIR | Tens> = new Map();
   private textCache: Map<string, string> = new Map(); // "hash:model" → canonical text
-  private defaultReserve: number;
   private onInject?: (info: InjectionInfo) => void;
   private onError?: (error: Error, collection: string) => void;
 
   constructor(options: ContexMiddlewareOptions = {}) {
     this.memory = new TokenMemory(options.storeDir ?? '.contex');
-    this.defaultReserve = options.defaultReserve ?? 1000;
     this.onInject = options.onInject;
     this.onError = options.onError;
 
@@ -104,10 +102,23 @@ export class ContexContext {
       throw new Error(`Collection "${collection}" not registered. Use data or hashes option.`);
     }
 
+    // Try to get global diagnostics (optional)
+    let diagnostics;
+    try {
+      diagnostics = getGlobalDiagnostics();
+    } catch {
+      diagnostics = null;
+    }
+
     // Check text cache
     const cacheKey = `${hash}:${model}`;
     const cachedText = this.textCache.get(cacheKey);
     if (cachedText !== undefined) {
+      // Record text cache hit
+      if (diagnostics) {
+        diagnostics.recordHit('text', hash, model);
+      }
+      
       // Fire callback with cache hit
       if (this.onInject) {
         const materialized = this.memory.materializeAndCache(hash, model);
@@ -123,6 +134,11 @@ export class ContexContext {
       return cachedText;
     }
 
+    // Record text cache miss
+    if (diagnostics) {
+      diagnostics.recordMiss('text', hash, CacheMissReason.TEXT_CACHE_MISSED, model);
+    }
+
     // Materialize → get token count, then generate canonical JSON text
     const materialized = this.memory.materializeAndCache(hash, model);
 
@@ -133,12 +149,12 @@ export class ContexContext {
     if (cachedItem instanceof Tens) {
       canonicalText = cachedItem.toString();
     } else if (cachedItem) {
-      // TensIR
-      canonicalText = JSON.stringify(cachedItem.data);
+      // TensIR — use Contex Compact format for optimal token efficiency
+      canonicalText = formatOutput(cachedItem.data, 'contex');
     } else {
       // Not in cache, load from memory
       const ir = this.memory.load(hash);
-      canonicalText = JSON.stringify(ir.data);
+      canonicalText = formatOutput(ir.data, 'contex');
     }
 
     // Cache the text
@@ -188,12 +204,22 @@ export function messageHasPlaceholder(content: unknown): boolean {
     return content.includes('{{CONTEX:');
   }
   if (Array.isArray(content)) {
-    return content.some(
-      (part: any) =>
-        (typeof part === 'string' && part.includes('{{CONTEX:')) ||
-        part?.text?.includes?.('{{CONTEX:') ||
-        (part?.type === 'text' && part?.text?.includes?.('{{CONTEX:')),
-    );
+    const hasTextPlaceholder = (value: unknown): boolean => {
+      if (typeof value === 'string') {
+        return value.includes('{{CONTEX:');
+      }
+      if (typeof value !== 'object' || value === null) {
+        return false;
+      }
+      const part = value as { text?: unknown; type?: unknown };
+      if (typeof part.text === 'string' && part.text.includes('{{CONTEX:')) {
+        return true;
+      }
+      return (
+        part.type === 'text' && typeof part.text === 'string' && part.text.includes('{{CONTEX:')
+      );
+    };
+    return content.some((part) => hasTextPlaceholder(part));
   }
   return false;
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================================
-// contex CLI (v3)
+// @contex/cli v3 — Context-window-optimized data engine
 // ============================================================================
 // Commands:
 //   contex encode   <file.json> [--encoding cl100k_base]  → file.tens
@@ -9,15 +9,22 @@
 //   contex formats  <file.json>                           → multi-format comparison
 //   contex convert  <file.json>                           → export ALL formats
 //   contex validate <file.json>                           → roundtrip integrity
+//   contex guard    <file.json>                           → semantic relation diagnostics
 //   contex savings  <file.json> [--model gpt-4o]          → dollar-cost savings report
+//   contex analyze  <file.json> [--reality-gate]          → analysis + execution gates
+//   contex scorecard [--in .contex/analyze_report.json]   → reproducible scorecard gate
+//   contex status [--url http://127.0.0.1:3000]           → server/provider readiness
 //   contex ir-encode      <file.json>                     → encode to Canonical IR
 //   contex ir-inspect     <hash>                          → inspect stored IR
 //   contex ir-materialize <hash> --model <model>          → materialize for model
-//   contex bench                                          → full benchmark suite
+//   contex bench                                           → full benchmark suite
 // ============================================================================
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import path from 'node:path';
+import { URL } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   TensTextDecoder,
@@ -31,6 +38,8 @@ import {
   compose,
   encodeIR,
   formatOutput,
+  selectOptimalStrategy,
+  getGlobalDiagnostics,
 } from '@contex/core';
 import { MODEL_REGISTRY } from '@contex/engine';
 import { createContexAnthropic, createContexOpenAI } from '@contex/middleware';
@@ -38,6 +47,30 @@ import OpenAI from 'openai';
 
 const args = process.argv.slice(2);
 const command = args[0];
+
+type ComposeInput = Parameters<typeof compose>[0];
+type ComposeBlock = ComposeInput['blocks'][number];
+
+type ComposeConfigBlock =
+  | {
+      type: 'file';
+      path: string;
+      name?: string;
+      priority?: 'required' | 'optional';
+    }
+  | {
+      type: 'text';
+      content: string;
+      name?: string;
+      priority?: 'required' | 'optional';
+    };
+
+type ComposeConfig = {
+  model?: string;
+  reserve?: number;
+  system?: string;
+  blocks?: ComposeConfigBlock[];
+};
 
 function getFlag(name: string): string | undefined {
   const idx = args.indexOf(`--${name}`);
@@ -47,6 +80,36 @@ function getFlag(name: string): string | undefined {
 
 function hasFlag(name: string): boolean {
   return args.includes(`--${name}`);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
+function extractRowsFromDecoded(decoded: unknown): unknown[] {
+  if (Array.isArray(decoded)) {
+    return decoded;
+  }
+
+  if (isPlainRecord(decoded) && Array.isArray(decoded.rows)) {
+    return decoded.rows;
+  }
+
+  return [];
+}
+
+function extractAnthropicText(response: { content: unknown[] }): string {
+  for (const block of response.content) {
+    if (
+      isPlainRecord(block) &&
+      block.type === 'text' &&
+      typeof block.text === 'string' &&
+      block.text.length > 0
+    ) {
+      return block.text;
+    }
+  }
+  return '[no text response]';
 }
 
 const line = '─'.repeat(60);
@@ -65,44 +128,780 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
-function preview(text: string, lines = 5): string {
-  const allLines = text.split('\n');
-  const shown = allLines.slice(0, lines).join('\n');
-  const remaining = allLines.length - lines;
-  return remaining > 0 ? `${shown}\n    ... (${remaining} more lines)` : shown;
+// ============================================================================
+// Beautiful Box Formatting (P1-2: CLI Polish)
+// ============================================================================
+
+/**
+ * Draw a beautiful box with content
+ */
+function drawBox(title: string, width: number, lines: string[]): string {
+  const borderH = '─'.repeat(width - 2);
+  const borderV = '│';
+  const cornerTL = '╭';
+  const cornerTR = '╮';
+  const cornerBL = '╰';
+  const cornerBR = '╯';
+
+  let result = `${cornerTL}${borderH}${cornerTR}\n`;
+  if (title) {
+    const padding = width - 4 - title.length;
+    const padLeft = Math.floor(padding / 2);
+    const padRight = padding - padLeft;
+    result += `${borderV} ${' '.repeat(padLeft)}${title}${' '.repeat(padRight)} ${borderV}\n`;
+    result += `${borderV}${borderH}${borderV}\n`;
+  }
+
+  for (const line of lines) {
+    const padding = width - 4 - line.length;
+    result += `${borderV} ${line}${' '.repeat(Math.max(0, padding))} ${borderV}\n`;
+  }
+
+  result += `${cornerBL}${borderH}${cornerBR}`;
+  return result;
+}
+
+/**
+ * Draw a comparison table (like the formats analysis)
+ */
+function drawComparisonTable(title: string, headers: string[], rows: Array<string[]>): string {
+  const colWidths = headers.map((h, i) => {
+    const maxRowVal = Math.max(...rows.map((r) => (r[i] || '').length));
+    return Math.max(h.length, maxRowVal);
+  });
+
+  const totalWidth = colWidths.reduce((a, b) => a + b + 3, 1);
+  const borderH = '═'.repeat(totalWidth);
+  const borderH2 = '─'.repeat(totalWidth);
+  const borderV = '║';
+  const cornerTL = '╔';
+  const cornerTR = '╗';
+  const cornerBL = '╚';
+  const cornerBR = '╝';
+  const TDown = '╦';
+  const TVert = '╠';
+  const TVertright = '╣';
+
+  let result = `${cornerTL}${borderH}${cornerTR}\n`;
+
+  // Title
+  if (title) {
+    const titlePadding = totalWidth - 2 - title.length;
+    const padLeft = Math.floor(titlePadding / 2);
+    const padRight = titlePadding - padLeft;
+    result += `${borderV} ${' '.repeat(padLeft)}${title}${' '.repeat(padRight)} ${borderV}\n`;
+    result += `${cornerTL}${borderH}${cornerTR}\n`;
+  }
+
+  // Headers
+  result += borderV;
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i];
+    const w = colWidths[i];
+    const pad = w - h.length;
+    result += ` ${h}${' '.repeat(pad)} ${i < headers.length - 1 ? borderV : ''}`;
+  }
+  result += `${borderV}\n`;
+  result += `${TVert}${colWidths.map((w) => '─'.repeat(w + 2)).join(TDown)}${TVertright}\n`;
+
+  // Rows
+  for (const row of rows) {
+    result += borderV;
+    for (let i = 0; i < row.length; i++) {
+      const cell = row[i] || '';
+      const w = colWidths[i];
+      const pad = w - cell.length;
+      result += ` ${cell}${' '.repeat(pad)} ${i < row.length - 1 ? borderV : ''}`;
+    }
+    result += `${borderV}\n`;
+  }
+
+  result += `${cornerBL}${borderH2}${cornerBR}`;
+  return result;
+}
+
+type StrategyName = 'contex' | 'csv' | 'toon' | 'markdown' | 'auto';
+
+interface StrategyCandidate {
+  name: Exclude<StrategyName, 'auto'>;
+  tokens: number;
+  text?: string;
+}
+
+interface SnapshotRun {
+  timestamp: string;
+  command: 'analyze' | 'savings';
+  inputPath: string;
+  model: string;
+  metrics: Record<string, number | string | boolean>;
+}
+
+type CacheTaxonomyReason =
+  | 'cache_hit'
+  | 'prefix_drift'
+  | 'provider_behavior'
+  | 'request_variance'
+  | 'unknown';
+
+type CacheTaxonomyStatus = 'hit' | 'miss' | 'unknown';
+
+interface CacheTaxonomy {
+  status: CacheTaxonomyStatus;
+  reason: CacheTaxonomyReason;
+  detail: string;
+}
+
+interface AutoStrategyConfidence {
+  scorePct: number;
+  level: 'low' | 'medium' | 'high';
+  marginPct: number;
+}
+
+const ANALYZE_DEFAULT_OUT = path.join('.contex', 'analyze_report.json');
+const SAVINGS_DEFAULT_OUT = path.join('.contex', 'savings_report.json');
+const SCORECARD_DEFAULT_OUT = path.join('.contex', 'scorecard_report.json');
+
+const TOKEN_CAP_PRESETS: Record<string, number> = {
+  'gpt-4o': 50000,
+  'gpt-4o-mini': 50000,
+  'gpt-5': 65000,
+  'gpt-5-mini': 65000,
+  'gpt-5.3-codex': 65000,
+  'claude-3-5-sonnet': 45000,
+  'claude-3-5-sonnet-20240620': 45000,
+  'claude-4-sonnet': 50000,
+  'claude-4-5-sonnet': 50000,
+  'gemini-2-5-flash': 55000,
+  'gemini-2-5-pro': 55000,
+};
+
+function parseStrategies(input: string | undefined, defaults: StrategyName[]): StrategyName[] {
+  if (!input || input.trim().length === 0) return defaults;
+
+  const normalized = input
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const allowed: StrategyName[] = ['contex', 'csv', 'toon', 'markdown', 'auto'];
+  const invalid = normalized.filter((s) => !(allowed as string[]).includes(s));
+  if (invalid.length > 0) {
+    console.error(`Error: invalid --strategy value(s): ${invalid.join(', ')}`);
+    console.error('Allowed values: contex,csv,toon,markdown,auto');
+    process.exit(1);
+  }
+
+  return [...new Set(normalized as StrategyName[])];
+}
+
+function buildStrategyCandidates(
+  data: Record<string, unknown>[],
+  modelEncoding: TokenizerEncoding,
+  tokenizer: TokenizerManager,
+): StrategyCandidate[] {
+  const contexEncoder = new TokenStreamEncoder(modelEncoding);
+  const csvText = formatOutput(data, 'csv');
+  const toonText = formatOutput(data, 'toon');
+  const markdownText = formatOutput(data, 'markdown');
+
+  const candidates: StrategyCandidate[] = [
+    { name: 'contex', tokens: contexEncoder.encodeToTokenStream(data).length },
+    { name: 'csv', tokens: tokenizer.countTokens(csvText, modelEncoding), text: csvText },
+    { name: 'toon', tokens: tokenizer.countTokens(toonText, modelEncoding), text: toonText },
+    {
+      name: 'markdown',
+      tokens: tokenizer.countTokens(markdownText, modelEncoding),
+      text: markdownText,
+    },
+  ];
+
+  contexEncoder.dispose();
+  return candidates;
+}
+
+function appendSnapshot(outPath: string, run: SnapshotRun): SnapshotRun | undefined {
+  const outDir = path.dirname(outPath);
+  if (!existsSync(outDir)) {
+    mkdirSync(outDir, { recursive: true });
+  }
+
+  let runs: SnapshotRun[] = [];
+  if (existsSync(outPath)) {
+    try {
+      const current = JSON.parse(readFileSync(outPath, 'utf-8'));
+      if (Array.isArray(current?.runs)) {
+        runs = current.runs as SnapshotRun[];
+      }
+    } catch {
+      runs = [];
+    }
+  }
+
+  const previous = [...runs]
+    .reverse()
+    .find(
+      (r) => r.command === run.command && r.inputPath === run.inputPath && r.model === run.model,
+    );
+
+  runs.push(run);
+  writeFileSync(
+    outPath,
+    JSON.stringify(
+      {
+        version: 1,
+        runs,
+      },
+      null,
+      2,
+    ),
+    'utf-8',
+  );
+
+  return previous;
+}
+
+function loadSnapshotRuns(outPath: string): SnapshotRun[] {
+  if (!existsSync(outPath)) return [];
+  try {
+    const current = JSON.parse(readFileSync(outPath, 'utf-8'));
+    if (Array.isArray(current?.runs)) {
+      return current.runs as SnapshotRun[];
+    }
+  } catch {
+    return [];
+  }
+  return [];
+}
+
+function computeMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  return sorted[mid];
+}
+
+function buildLatestScorecard(
+  runs: SnapshotRun[],
+  model: string,
+): {
+  datasetCount: number;
+  floorReductionPct: number;
+  medianReductionPct: number;
+} {
+  const latestByInput = new Map<string, SnapshotRun>();
+
+  for (const run of runs) {
+    if (run.command !== 'analyze' || run.model !== model) continue;
+
+    const current = latestByInput.get(run.inputPath);
+    if (!current || Date.parse(run.timestamp) >= Date.parse(current.timestamp)) {
+      latestByInput.set(run.inputPath, run);
+    }
+  }
+
+  const reductions = [...latestByInput.values()]
+    .map((run) => Number(run.metrics.tokenReductionPct ?? 0))
+    .filter((value) => Number.isFinite(value));
+
+  if (reductions.length === 0) {
+    return { datasetCount: 0, floorReductionPct: 0, medianReductionPct: 0 };
+  }
+
+  return {
+    datasetCount: reductions.length,
+    floorReductionPct: Math.min(...reductions),
+    medianReductionPct: computeMedian(reductions),
+  };
+}
+
+function buildLatestAnalyzeRunsByInput(runs: SnapshotRun[], model: string): SnapshotRun[] {
+  const latestByInput = new Map<string, SnapshotRun>();
+
+  for (const run of runs) {
+    if (run.command !== 'analyze' || run.model !== model) continue;
+
+    const current = latestByInput.get(run.inputPath);
+    if (!current || Date.parse(run.timestamp) >= Date.parse(current.timestamp)) {
+      latestByInput.set(run.inputPath, run);
+    }
+  }
+
+  return [...latestByInput.values()].sort((a, b) => a.inputPath.localeCompare(b.inputPath));
+}
+
+function formatDelta(current: number, previous: number): string {
+  const delta = current - previous;
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(1)}`;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeStrategyName(strategy: string): StrategyName {
+  if (strategy === 'tens') return 'contex';
+  if (strategy === 'csv' || strategy === 'toon' || strategy === 'markdown' || strategy === 'auto') {
+    return strategy;
+  }
+  return 'contex';
+}
+
+function computeAutoStrategyConfidence(params: {
+  selectedStrategy: StrategyName;
+  selectedTokens: number;
+  allCandidates: StrategyCandidate[];
+  structureScore: number;
+  matchesStructureRecommendation: boolean;
+}): AutoStrategyConfidence {
+  const { selectedStrategy, selectedTokens, allCandidates, structureScore, matchesStructureRecommendation } = params;
+
+  const sorted = [...allCandidates].sort((a, b) => a.tokens - b.tokens);
+  const second = sorted.length > 1 ? sorted[1] : sorted[0];
+  const marginPct = second && selectedTokens > 0
+    ? ((second.tokens - selectedTokens) / selectedTokens) * 100
+    : 0;
+
+  let score = 40;
+  score += clamp(marginPct, 0, 20) * 1.4;
+
+  if (selectedStrategy === 'contex') {
+    score += clamp(structureScore * 0.25, 0, 25);
+  } else {
+    score += clamp((100 - structureScore) * 0.2, 0, 20);
+  }
+
+  score += matchesStructureRecommendation ? 12 : -10;
+  const scorePct = Math.round(clamp(score, 0, 100));
+
+  const level: AutoStrategyConfidence['level'] =
+    scorePct >= 75 ? 'high' : scorePct >= 55 ? 'medium' : 'low';
+
+  return { scorePct, level, marginPct: Number(marginPct.toFixed(2)) };
+}
+
+function resolveTokenCap(
+  provider: 'openai' | 'anthropic',
+  modelId: string,
+  explicitCap: number | undefined,
+): { cap?: number; source: 'flag' | 'preset' | 'derived' | 'none' } {
+  if (explicitCap && explicitCap > 0) {
+    return { cap: explicitCap, source: 'flag' };
+  }
+
+  if (TOKEN_CAP_PRESETS[modelId]) {
+    return { cap: TOKEN_CAP_PRESETS[modelId], source: 'preset' };
+  }
+
+  const spec = MODEL_REGISTRY[modelId];
+  if (!spec?.contextWindow) {
+    return { source: 'none' };
+  }
+
+  const ratio = provider === 'anthropic' ? 0.4 : 0.45;
+  return { cap: Math.floor(spec.contextWindow * ratio), source: 'derived' };
+}
+
+function classifyCacheTaxonomy(params: {
+  localCacheHit?: boolean;
+  providerCachedTokens?: number;
+  selectedStrategy: StrategyName;
+}): CacheTaxonomy {
+  const { localCacheHit, providerCachedTokens, selectedStrategy } = params;
+
+  if (selectedStrategy !== 'contex') {
+    return {
+      status: 'miss',
+      reason: 'request_variance',
+      detail: 'Non-Contex strategy path does not use canonical prefix injection.',
+    };
+  }
+
+  if (typeof providerCachedTokens === 'number') {
+    if (providerCachedTokens > 0) {
+      return {
+        status: 'hit',
+        reason: 'cache_hit',
+        detail: `Provider reported cached tokens/read tokens = ${providerCachedTokens}.`,
+      };
+    }
+
+    if (localCacheHit === false) {
+      return {
+        status: 'miss',
+        reason: 'prefix_drift',
+        detail: 'Local canonical text cache missed; prefix likely changed or first-run for this hash/model.',
+      };
+    }
+
+    if (localCacheHit === true) {
+      return {
+        status: 'miss',
+        reason: 'provider_behavior',
+        detail: 'Local cache hit but provider reported zero cached tokens/read tokens.',
+      };
+    }
+  }
+
+  if (localCacheHit === false) {
+    return {
+      status: 'miss',
+      reason: 'prefix_drift',
+      detail: 'Local canonical text cache missed and provider cache signals are unavailable.',
+    };
+  }
+
+  if (localCacheHit === true) {
+    return {
+      status: 'unknown',
+      reason: 'unknown',
+      detail: 'Local cache hit but provider cache usage fields are unavailable.',
+    };
+  }
+
+  return {
+    status: 'unknown',
+    reason: 'unknown',
+    detail: 'Insufficient telemetry to attribute cache outcome.',
+  };
+}
+
+interface SemanticGuardResult {
+  pass: boolean;
+  reason: string;
+  rowCountOriginal: number;
+  rowCountDecoded: number;
+  fieldPathCoveragePct: number;
+  rowSignatureMatchPct: number;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function collectFieldPaths(value: unknown, prefix = '', out = new Set<string>()): Set<string> {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectFieldPaths(item, `${prefix}[]`, out);
+    }
+    return out;
+  }
+
+  if (!isPlainRecord(value)) {
+    if (prefix) out.add(prefix);
+    return out;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    collectFieldPaths(child, path, out);
+  }
+  return out;
+}
+
+function collectLeafPairs(value: unknown, prefix = '', out = new Set<string>()): Set<string> {
+  if (Array.isArray(value)) {
+    const arrayPrefix = `${prefix}[]`;
+    for (const item of value) {
+      collectLeafPairs(item, arrayPrefix, out);
+    }
+    return out;
+  }
+
+  if (!isPlainRecord(value)) {
+    if (prefix) {
+      const serialized = value === null ? 'null' : String(value);
+      out.add(`${prefix}=${serialized}`);
+    }
+    return out;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    collectLeafPairs(child, path, out);
+  }
+  return out;
+}
+
+function getRowAnchor(row: unknown): string | undefined {
+  if (!isPlainRecord(row)) return undefined;
+  const anchorFields = ['id', 'number', 'url', 'node_id', 'title'];
+  for (const field of anchorFields) {
+    const value = (row as Record<string, unknown>)[field];
+    if (value !== undefined && value !== null) {
+      return `${field}:${String(value)}`;
+    }
+  }
+  return undefined;
+}
+
+function rowOverlapPct(originalRow: unknown, canonicalRow: unknown): number {
+  const originalPairs = new Set(collectLeafPairs(originalRow));
+  if (originalPairs.size === 0) return 100;
+  const canonicalPairs = new Set(collectLeafPairs(canonicalRow));
+  let shared = 0;
+  for (const pair of originalPairs) {
+    if (canonicalPairs.has(pair)) shared++;
+  }
+  return (shared / originalPairs.size) * 100;
+}
+
+function runSemanticRelationGuard(
+  data: object[],
+  _encoding: TokenizerEncoding = 'cl100k_base',
+): SemanticGuardResult {
+  let canonicalRows: object[] = [];
+  let stableHash = false;
+
+  try {
+    const ir1 = encodeIR(data as object[]);
+    const ir2 = encodeIR(data as object[]);
+    canonicalRows = ir1.data as object[];
+    stableHash = ir1.hash === ir2.hash;
+  } catch {
+    return {
+      pass: false,
+      reason: 'Canonical IR encode failed',
+      rowCountOriginal: data.length,
+      rowCountDecoded: 0,
+      fieldPathCoveragePct: 0,
+      rowSignatureMatchPct: 0,
+    };
+  }
+
+  const originalFieldPaths = new Set<string>();
+  const decodedFieldPaths = new Set<string>();
+  for (const row of data) {
+    collectFieldPaths(row, '', originalFieldPaths);
+  }
+  for (const row of canonicalRows) {
+    collectFieldPaths(row, '', decodedFieldPaths);
+  }
+
+  const sharedFieldPaths = [...originalFieldPaths].filter((path) =>
+    decodedFieldPaths.has(path),
+  ).length;
+  const fieldPathCoveragePct =
+    originalFieldPaths.size === 0 ? 100 : (sharedFieldPaths / originalFieldPaths.size) * 100;
+
+  const canonicalByAnchor = new Map<string, object[]>();
+  for (const row of canonicalRows) {
+    const anchor = getRowAnchor(row);
+    if (!anchor) continue;
+    const list = canonicalByAnchor.get(anchor) ?? [];
+    list.push(row);
+    canonicalByAnchor.set(anchor, list);
+  }
+
+  const fingerprint = (row: unknown): string => [...collectLeafPairs(row)].sort().join('|');
+  const canonicalFingerprintCounts = new Map<string, number>();
+  for (const row of canonicalRows) {
+    const key = fingerprint(row);
+    canonicalFingerprintCounts.set(key, (canonicalFingerprintCounts.get(key) ?? 0) + 1);
+  }
+
+  let matchedRows = 0;
+  for (const row of data) {
+    let matched = false;
+    const anchor = getRowAnchor(row);
+    if (anchor) {
+      const candidates = canonicalByAnchor.get(anchor) ?? [];
+      let bestIndex = -1;
+      let bestScore = 0;
+      for (let i = 0; i < candidates.length; i++) {
+        const score = rowOverlapPct(row, candidates[i]);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = i;
+        }
+      }
+      if (bestIndex >= 0 && bestScore >= 95) {
+        candidates.splice(bestIndex, 1);
+        matched = true;
+      }
+    }
+
+    if (!matched) {
+      const key = fingerprint(row);
+      const count = canonicalFingerprintCounts.get(key) ?? 0;
+      if (count > 0) {
+        canonicalFingerprintCounts.set(key, count - 1);
+        matched = true;
+      }
+    }
+
+    if (matched) matchedRows++;
+  }
+
+  const rowSignatureMatchPct = data.length === 0 ? 100 : (matchedRows / data.length) * 100;
+
+  const rowCountPass = canonicalRows.length === data.length;
+  const fieldPass = fieldPathCoveragePct >= 95;
+  const rowPass = rowSignatureMatchPct >= 95;
+  const pass = rowCountPass && fieldPass && rowPass && stableHash;
+
+  let reason = 'Semantic relation integrity preserved';
+  if (!rowCountPass) {
+    reason = `Row count mismatch (${canonicalRows.length}/${data.length})`;
+  } else if (!fieldPass) {
+    reason = `Field-path coverage too low (${fieldPathCoveragePct.toFixed(1)}%)`;
+  } else if (!rowPass) {
+    reason = `Row relation match too low (${rowSignatureMatchPct.toFixed(1)}%)`;
+  } else if (!stableHash) {
+    reason = 'Canonical hash instability detected';
+  }
+
+  return {
+    pass,
+    reason,
+    rowCountOriginal: data.length,
+    rowCountDecoded: canonicalRows.length,
+    fieldPathCoveragePct,
+    rowSignatureMatchPct,
+  };
 }
 
 function printUsage(): void {
   console.log(`
   ${doubleLine}
-  contex CLI v3 — Context-window-optimized data engine
+  Contex CLI v3 — Context-window-optimized data engine
   ${doubleLine}
 
   Usage:
-    contex encode   <input.json> [--encoding cl100k_base]   Encode to TENS binary
-    contex decode   <input.tens>                            Decode TENS to JSON
-    contex stats    <input.json> [--encoding cl100k_base]   Show TENS stats
-    contex formats  <input.json>                            Compare all formats
-    contex convert  <input.json>                            Export to ALL formats
-    contex validate <input.json>                            Roundtrip integrity test
-    contex savings  <input.json> [--model gpt-4o]           💰 Dollar-cost savings report
+    contex encode       <input.json> [--encoding cl100k_base]   Encode to TENS binary
+    contex decode       <input.tens>                            Decode TENS to JSON
+    contex stats        <input.json> [--encoding cl100k_base]   Show TENS stats
+    contex formats      <input.json>                            Compare all formats
+    contex convert      <input.json>                            Export to ALL formats
+    contex validate     <input.json>                            Roundtrip integrity test
+    contex guard        <input.json>                            Semantic relation diagnostics (triage)
+    contex savings      <input.json> [--model gpt-4o] [--out report.json]
+                                 💰 Dollar-cost savings report + snapshot export
+    contex analyze      <input.json> [--reality-gate] [--strict-gate]
+             [--strategy contex,csv,toon,markdown,auto] [--contex-only]
+             [--target-floor 35] [--target-median 60]
+             [--auto-confidence-floor 55] [--strict-auto-gate] [--out report.json]
+                                 Analysis + gates + strategy comparison + target tracking + delta
+    contex scorecard    [--in .contex/analyze_report.json] [--out .contex/scorecard_report.json]
+         [--model gpt-4o-mini] [--target-floor 35] [--target-median 60] [--min-datasets 3] [--strict-gate]
+                   Reproducible scorecard gate from latest analyze runs
+    contex status       [--url http://127.0.0.1:3000] [--timeout-ms 3000] [--json]
+                   Check server + provider readiness from /health
     contex bench                                            Full benchmark suite
 
+  Cache Commands:
+    contex cache-diagnose <input.json> --model <model>       Show cache readiness diagnostics
+    contex cache-warm     <input.json> --models gpt-4o,claude-3-5-sonnet,gemini-2-5-flash
+                                 Pre-materialize for multiple models
+    contex cache-stats                                       Show aggregate cache telemetry
+
   Canonical IR (v3):
-    contex ir-encode      <input.json>                      Encode to Canonical IR, store in .contex/
-    contex ir-inspect     <hash>                            Inspect stored IR metadata
-    contex ir-materialize <hash> --model <model>            Materialize IR for a model
-    contex materialize    <file.json> --model <model>       Encode + Materialize (One-step)
-    contex compose        <config.json>                     Compose from config file
-    contex compose        <f1> [f2] --model <m>             Compose from args
-    contex inject         <file.json> --provider <p>        Run real API call with context injection
+    contex ir-encode    <input.json>                      Encode to Canonical IR, store in .contex/
+    contex ir-inspect   <hash>                            Inspect stored IR metadata
+    contex ir-materialize <hash> --model <model>          Materialize IR for a model
+    contex materialize  <file.json> --model <model>       Encode + Materialize (One-step)
+    contex compose      <config.json>                     Compose from config file
+    contex compose      <f1> [f2] --model <m>             Compose from args
+    contex inject       <file.json> --provider <p>        Run API call (supports --contex-only policy)
 
   Examples:
     npx contex savings my_data.json               Show cost savings
     npx contex savings my_data.json --model gpt-5 Savings for specific model
     npx contex convert my_data.json
+    npx contex guard my_data.json
     npx contex ir-encode my_data.json             Encode and store Canonical IR
+    npx contex cache-diagnose my_data.json --model gpt-4o  Check cache readiness
+    npx contex cache-warm my_data.json --models gpt-4o,claude-3-5-sonnet  Warm cache for models
   `);
+}
+
+function scorecardReport(): void {
+  const inPath = getFlag('in') ?? ANALYZE_DEFAULT_OUT;
+  const outPath = getFlag('out') ?? SCORECARD_DEFAULT_OUT;
+  const model = getFlag('model') ?? 'gpt-4o-mini';
+  const strictGate = hasFlag('strict-gate');
+
+  const targetFloor = Number(getFlag('target-floor') ?? 35);
+  const targetMedian = Number(getFlag('target-median') ?? 60);
+  const minDatasets = Number(getFlag('min-datasets') ?? 3);
+
+  if (
+    !Number.isFinite(targetFloor) ||
+    !Number.isFinite(targetMedian) ||
+    !Number.isFinite(minDatasets)
+  ) {
+    console.error('Error: --target-floor, --target-median, and --min-datasets must be numeric values.');
+    process.exit(1);
+  }
+
+  const allRuns = loadSnapshotRuns(inPath);
+  const latestRuns = buildLatestAnalyzeRunsByInput(allRuns, model);
+  const scorecard = buildLatestScorecard(allRuns, model);
+
+  const floorPass = scorecard.floorReductionPct >= targetFloor;
+  const medianPass = scorecard.medianReductionPct >= targetMedian;
+  const datasetPass = scorecard.datasetCount >= minDatasets;
+  const gatePass = floorPass && medianPass && datasetPass;
+
+  const scorecardPayload = {
+    timestamp: new Date().toISOString(),
+    source: path.resolve(inPath),
+    model,
+    targets: {
+      floorPct: targetFloor,
+      medianPct: targetMedian,
+      minDatasets,
+    },
+    observed: {
+      datasetCount: scorecard.datasetCount,
+      floorReductionPct: Number(scorecard.floorReductionPct.toFixed(2)),
+      medianReductionPct: Number(scorecard.medianReductionPct.toFixed(2)),
+    },
+    gate: {
+      pass: gatePass,
+      checks: {
+        floorPass,
+        medianPass,
+        datasetPass,
+      },
+    },
+    datasets: latestRuns.map((run) => ({
+      inputPath: run.inputPath,
+      timestamp: run.timestamp,
+      tokenReductionPct: Number(run.metrics.tokenReductionPct ?? 0),
+      bestStrategy: String(run.metrics.bestStrategy ?? 'unknown'),
+      bestTokens: Number(run.metrics.bestTokens ?? 0),
+      contexTokens: Number(run.metrics.contexTokens ?? 0),
+      jsonTokens: Number(run.metrics.jsonTokens ?? 0),
+    })),
+  };
+
+  const outDir = path.dirname(outPath);
+  if (!existsSync(outDir)) {
+    mkdirSync(outDir, { recursive: true });
+  }
+  writeFileSync(outPath, JSON.stringify(scorecardPayload, null, 2), 'utf-8');
+
+  const boxWidth = 74;
+  const lines = [
+    `Input snapshot: ${inPath}`,
+    `Model:          ${model}`,
+    `Datasets:       ${scorecard.datasetCount} (${datasetPass ? 'PASS' : 'FAIL'}, target >= ${minDatasets})`,
+    `Floor:          ${scorecard.floorReductionPct.toFixed(2)}% (${floorPass ? 'PASS' : 'FAIL'}, target >= ${targetFloor}%)`,
+    `Median:         ${scorecard.medianReductionPct.toFixed(2)}% (${medianPass ? 'PASS' : 'FAIL'}, target >= ${targetMedian}%)`,
+    `Gate:           ${gatePass ? 'PASS' : 'FAIL'}`,
+  ];
+  console.log('\n');
+  console.log(drawBox('Scorecard Gate', boxWidth, lines));
+  console.log(`\n  Report: ${outPath}\n`);
+
+  if (strictGate && !gatePass) {
+    console.error('  Strict Gate: FAIL (scorecard gate failed).');
+    process.exit(2);
+  }
 }
 
 // ============================================================================
@@ -146,7 +945,7 @@ function decodeFile(): void {
 
   const binary = new Uint8Array(readFileSync(inputPath));
   const decoder = new TokenStreamDecoder();
-  const json = decoder.decode(binary) as any;
+  const json = decoder.decode(binary);
 
   console.log(JSON.stringify(json, null, 2));
   decoder.dispose();
@@ -251,7 +1050,7 @@ function convertFile(): void {
   const md = formatOutput(data, 'markdown');
   outputs.push({ name: 'markdown', ext: '.md', content: md, isBinary: false });
 
-  // 4. TOON (tab-optimized)
+  // 4. TOON (Token-Oriented Object Notation)
   const toon = formatOutput(data, 'toon');
   outputs.push({ name: 'toon', ext: '.toon', content: toon, isBinary: false });
 
@@ -298,13 +1097,13 @@ function convertFile(): void {
     }
 
     console.log(
-      `  ${padR(out.name, 14)} ${padL(formatBytes(bytes), 10)} ${padL(String(tokens), 10)} ${padL(reduction + '%', 10)} ${padL(path.basename(outFile), 25)}`,
+      `  ${padR(out.name, 14)} ${padL(formatBytes(bytes), 10)} ${padL(String(tokens), 10)} ${padL(`${reduction}%`, 10)} ${padL(path.basename(outFile), 25)}`,
     );
   }
 
   // Print previews of text formats
   console.log(`\n  ${doubleLine}`);
-  console.log(`  Format Previews (first 5 lines each)`);
+  console.log('  Format Previews (first 5 lines each)');
   console.log(`  ${doubleLine}`);
 
   for (const out of outputs) {
@@ -315,7 +1114,7 @@ function convertFile(): void {
         .join(' ');
       console.log(`\n  ┌─ ${out.name} (binary, ${formatBytes(bin.length)}) ─────────────`);
       console.log(`  │ ${hexPreview} ...`);
-      console.log(`  └─────────────────────────────────────`);
+      console.log('  └─────────────────────────────────────');
     } else {
       const text = out.content as string;
       const lines = text.split('\n').slice(0, 5);
@@ -327,7 +1126,7 @@ function convertFile(): void {
       if (totalLines > 5) {
         console.log(`  │ ... (${totalLines - 5} more lines)`);
       }
-      console.log(`  └─────────────────────────────────────`);
+      console.log('  └─────────────────────────────────────');
     }
   }
 
@@ -369,13 +1168,15 @@ function validateFile(): void {
   }
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex validate — Roundtrip Integrity Test`);
+  console.log('  contex validate — Roundtrip Integrity Test');
   console.log(`  Input: ${inputPath} (${data.length} rows)`);
   console.log(`  ${doubleLine}\n`);
 
   let passed = 0;
   let failed = 0;
   let skipped = 0;
+  const semanticGuardEnabled = hasFlag('semantic-guard');
+  let semanticGuardFailed = false;
   const results: { format: string; status: string; detail: string }[] = [];
 
   // --- TENS Binary Roundtrip ---
@@ -406,18 +1207,18 @@ function validateFile(): void {
       }
       results.push({
         format: 'TENS Binary',
-        status: matchCount > 0 ? '⚠️ PARTIAL' : '❌ FAIL',
+        status: '❌ FAIL',
         detail: `${decArr.length} rows decoded, ${matchCount}/${data.length} exact match (nested objects may flatten)`,
       });
-      passed++;
+      failed++;
     }
     encoder.dispose();
     decoder.dispose();
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'TENS Binary',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
   }
@@ -428,7 +1229,7 @@ function validateFile(): void {
     const ttDecoder = new TensTextDecoder();
     const encoded = ttEncoder.encode(data);
     const decoded = ttDecoder.decode(encoded);
-    const decArr = Array.isArray(decoded) ? decoded : ((decoded as any)?.rows ?? []);
+    const decArr = extractRowsFromDecoded(decoded);
     const decLen = decArr.length;
 
     const origKeys = Object.keys(data[0] || {}).sort();
@@ -457,11 +1258,11 @@ function validateFile(): void {
       });
       skipped++;
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'TENS-Text',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
   }
@@ -477,11 +1278,11 @@ function validateFile(): void {
       detail: 'Native JSON.parse roundtrip',
     });
     match ? passed++ : failed++;
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'JSON',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
   }
@@ -498,11 +1299,11 @@ function validateFile(): void {
       detail: `${rowCount} rows, ${headerCount} columns (nested objects flattened)`,
     });
     skipped++;
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'CSV',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
   }
@@ -519,11 +1320,11 @@ function validateFile(): void {
       detail: `${rowCount} rows, ${headerCount} columns (tab-separated)`,
     });
     skipped++;
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'TOON',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
   }
@@ -539,13 +1340,28 @@ function validateFile(): void {
       detail: `${rowCount} rows (table format, no decoder)`,
     });
     skipped++;
-  } catch (e: any) {
+  } catch (e: unknown) {
     results.push({
       format: 'Markdown',
       status: '❌ FAIL',
-      detail: e.message?.slice(0, 80) || 'Unknown error',
+      detail: errorMessage(e).slice(0, 80),
     });
     failed++;
+  }
+
+  // --- Semantic Relation Guard ---
+  if (semanticGuardEnabled) {
+    const semantic = runSemanticRelationGuard(data);
+    results.push({
+      format: 'Semantic Guard',
+      status: semantic.pass ? '✅ PASS' : '❌ FAIL',
+      detail: `${semantic.reason}; rows ${semantic.rowCountDecoded}/${semantic.rowCountOriginal}, fields ${semantic.fieldPathCoveragePct.toFixed(1)}%, row-match ${semantic.rowSignatureMatchPct.toFixed(1)}%`,
+    });
+    if (semantic.pass) passed++;
+    else {
+      failed++;
+      semanticGuardFailed = true;
+    }
   }
 
   // Print results
@@ -559,11 +1375,55 @@ function validateFile(): void {
   console.log(`  Results: ${passed} passed, ${failed} failed, ${skipped} encode-only`);
 
   if (failed === 0) {
-    console.log(`  ✅ All roundtrip formats passed integrity check!`);
+    console.log('  ✅ All roundtrip formats passed integrity check!');
   } else {
     console.log(`  ❌ ${failed} format(s) failed roundtrip validation.`);
   }
+
+  if (semanticGuardEnabled && semanticGuardFailed) {
+    process.exit(2);
+  }
   console.log('');
+}
+
+// ============================================================================
+// guard — Semantic relation diagnostics only (triage-first)
+// ============================================================================
+function guardFile(): void {
+  const inputPath = args[1];
+  if (!inputPath) {
+    console.error('Error: missing input file');
+    process.exit(1);
+  }
+
+  const data = JSON.parse(readFileSync(inputPath, 'utf-8'));
+  if (!Array.isArray(data)) {
+    console.error('Error: Input file must contain a JSON array of objects.');
+    process.exit(1);
+  }
+
+  const modelId = getFlag('model') ?? 'gpt-4o-mini';
+  const modelSpec = MODEL_REGISTRY[modelId] ?? MODEL_REGISTRY['gpt-4o-mini'];
+  const encoding = modelSpec.encoding as TokenizerEncoding;
+
+  const semantic = runSemanticRelationGuard(data, encoding);
+
+  const guardLines = [
+    `Input:    ${path.basename(inputPath)}`,
+    `Model:    ${modelSpec.name}`,
+    `Status:   ${semantic.pass ? 'PASS' : 'FAIL'} (${semantic.reason})`,
+    `Rows:     ${semantic.rowCountDecoded}/${semantic.rowCountOriginal}`,
+    `Fields:   ${semantic.fieldPathCoveragePct.toFixed(1)}% (target >= 95%)`,
+    `RowMatch: ${semantic.rowSignatureMatchPct.toFixed(1)}% (target >= 95%)`,
+  ];
+
+  console.log('\n');
+  console.log(drawBox('Semantic Relation Guard', 72, guardLines));
+  console.log('');
+
+  if (!semantic.pass) {
+    process.exit(2);
+  }
 }
 
 // ============================================================================
@@ -584,6 +1444,7 @@ function showSavings(): void {
 
   const fields = data.length > 0 ? Object.keys(data[0]).length : 0;
   const primaryModel = getFlag('model') ?? 'gpt-4o';
+  const outPath = getFlag('out') ?? SAVINGS_DEFAULT_OUT;
 
   const tokenizer = new TokenizerManager();
 
@@ -596,7 +1457,7 @@ function showSavings(): void {
   }
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  💰 Contex Savings Report`);
+  console.log('  💰 Contex Savings Report');
   console.log(`  ${doubleLine}`);
   console.log(`  File:   ${inputPath}`);
   console.log(`  Rows:   ${data.length.toLocaleString()}`);
@@ -618,6 +1479,13 @@ function showSavings(): void {
   if (!modelsToTest.includes('gemini-2-5-flash')) modelsToTest.push('gemini-2-5-flash');
   // Deduplicate
   const uniqueModels = [...new Set(modelsToTest)];
+  const modelSummaries: Array<{
+    model: string;
+    bestFormat: string;
+    baselineTokens: number;
+    bestTokens: number;
+    annualSavings: number;
+  }> = [];
 
   for (const modelId of uniqueModels) {
     const spec = MODEL_REGISTRY[modelId];
@@ -658,11 +1526,18 @@ function showSavings(): void {
 
       const marker = tokens <= bestTokens ? ' ✦' : '';
       console.log(
-        `  ${padR(fmt.name, 22)} ${padL(tokens.toLocaleString(), 10)} ${padL('$' + costPer1K.toFixed(4), 12)} ${padL('$' + annual.toFixed(2), 14)} ${padL(savings, 10)}${marker}`,
+        `  ${padR(fmt.name, 22)} ${padL(tokens.toLocaleString(), 10)} ${padL(`$${costPer1K.toFixed(4)}`, 12)} ${padL(`$${annual.toFixed(2)}`, 14)} ${padL(savings, 10)}${marker}`,
       );
     }
 
     const annualSaved = baselineAnnual - bestAnnual;
+    modelSummaries.push({
+      model: modelId,
+      bestFormat,
+      baselineTokens,
+      bestTokens,
+      annualSavings: annualSaved,
+    });
     console.log(
       `\n  ✅ Best: ${bestFormat} → saves $${annualSaved.toFixed(2)}/year at 10K calls/day`,
     );
@@ -680,13 +1555,31 @@ function showSavings(): void {
 
   // Summary box
   console.log(`  ${doubleLine}`);
-  console.log(`  💡 Quick Start:`);
-  console.log(``);
+  console.log('  💡 Quick Start:');
+  console.log('');
   console.log(`     import { quick } from '@contex/engine';`);
   console.log(`     const result = quick(yourData, '${primaryModel}');`);
-  console.log(`     // result.output is ready for your LLM`);
+  console.log('     // result.output is ready for your LLM');
   console.log(`  ${doubleLine}\n`);
-  console.log(`  * Annual estimate: 10,000 API calls/day × 365 days\n`);
+  console.log('  * Annual estimate: 10,000 API calls/day × 365 days\n');
+
+  const primarySummary = modelSummaries.find((s) => s.model === primaryModel) ?? modelSummaries[0];
+  const snapshot: SnapshotRun = {
+    timestamp: new Date().toISOString(),
+    command: 'savings',
+    inputPath: path.resolve(inputPath),
+    model: primaryModel,
+    metrics: {
+      rows: data.length,
+      fields,
+      bestFormat: primarySummary?.bestFormat ?? 'n/a',
+      baselineTokens: primarySummary?.baselineTokens ?? 0,
+      bestTokens: primarySummary?.bestTokens ?? 0,
+      annualSavings: Number((primarySummary?.annualSavings ?? 0).toFixed(2)),
+    },
+  };
+  appendSnapshot(outPath, snapshot);
+  console.log(`  Snapshot: ${outPath}\n`);
 
   tokenizer.dispose();
 }
@@ -713,7 +1606,7 @@ function irEncode(): void {
   const result = memory.store(data);
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex ir-encode — Canonical IR`);
+  console.log('  contex ir-encode — Canonical IR');
   console.log(`  ${doubleLine}`);
   console.log(`  Input:  ${inputPath} (${data.length} rows)`);
   console.log(`  Hash:   ${result.hash}`);
@@ -723,7 +1616,7 @@ function irEncode(): void {
   console.log('');
 
   if (result.isNew) {
-    console.log(`  Use this hash to inspect or materialize:`);
+    console.log('  Use this hash to inspect or materialize:');
     console.log(`    contex ir-inspect ${result.hash}`);
     console.log(`    contex ir-materialize ${result.hash} --model gpt-4o`);
   }
@@ -751,7 +1644,7 @@ function irInspect(): void {
 
     const all = memory.list();
     if (all.length > 0) {
-      console.error(`\n  Available hashes:`);
+      console.error('\n  Available hashes:');
       for (const item of all) {
         console.error(`    ${item.hash} (${item.rowCount} rows, ${formatBytes(item.irByteSize)})`);
       }
@@ -760,11 +1653,16 @@ function irInspect(): void {
     process.exit(1);
   }
 
-  const meta = memory.getMeta(hash)!;
+  const meta = memory.getMeta(hash);
+  if (!meta) {
+    console.error(`Error: metadata not found for hash ${hash}`);
+    memory.dispose();
+    process.exit(1);
+  }
   const cachedModels = memory.getCachedModels(hash);
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex ir-inspect`);
+  console.log('  contex ir-inspect');
   console.log(`  ${doubleLine}`);
   console.log(`  Hash:       ${meta.hash}`);
   console.log(`  Rows:       ${meta.rowCount}`);
@@ -831,7 +1729,7 @@ function irMaterialize(): void {
   const ms = (performance.now() - start).toFixed(1);
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex ir-materialize`);
+  console.log('  contex ir-materialize');
   console.log(`  ${doubleLine}`);
   console.log(`  Hash:        ${hash}`);
   console.log(`  Model:       ${modelId}`);
@@ -906,7 +1804,7 @@ function composePrompt(): void {
 
   // Add system prompt if provided
   const systemPrompt = getFlag('system');
-  const allBlocks: any[] = [];
+  const allBlocks: ComposeBlock[] = [];
   if (systemPrompt) {
     allBlocks.push({ name: 'system', type: 'text', content: systemPrompt, priority: 'required' });
   }
@@ -921,7 +1819,7 @@ function composePrompt(): void {
   const ms = (performance.now() - start).toFixed(1);
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex compose`);
+  console.log('  contex compose');
   console.log(`  ${doubleLine}`);
   console.log(`  Model:          ${result.model}`);
   console.log(`  Encoding:       ${result.encoding}`);
@@ -991,7 +1889,7 @@ function materializeFile(): void {
   const ms = (performance.now() - start).toFixed(1);
 
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex materialize`);
+  console.log('  contex materialize');
   console.log(`  ${doubleLine}`);
   console.log(`  Input:       ${file}`);
   console.log(`  IR Hash:     ${irResult.hash}`);
@@ -1014,7 +1912,7 @@ async function injectFile() {
   const file = args[1];
   if (!file) {
     console.error(
-      'Error: missing input file. Usage: contex inject <file.json> --provider openai|anthropic',
+      'Error: missing input file. Usage: contex inject <file.json> --provider openai|anthropic [--strategy contex|csv|toon|markdown|auto] [--max-input-tokens N] [--dry-run]',
     );
     process.exit(1);
   }
@@ -1027,100 +1925,290 @@ async function injectFile() {
 
   const modelId =
     getFlag('model') ?? (provider === 'openai' ? 'gpt-4o' : 'claude-3-5-sonnet-20240620');
+  const dryRun = hasFlag('dry-run');
+  const maxInputTokensStr = getFlag('max-input-tokens');
+  const maxInputTokens = maxInputTokensStr ? Number.parseInt(maxInputTokensStr, 10) : undefined;
+
+  if (maxInputTokensStr && (!Number.isFinite(maxInputTokens) || (maxInputTokens ?? 0) <= 0)) {
+    console.error('Error: --max-input-tokens must be a positive integer.');
+    process.exit(1);
+  }
+
+  const strategyInput = parseStrategies(getFlag('strategy'), ['contex'])[0];
+  const contexOnly = hasFlag('contex-only') || hasFlag('must-use-contex');
+  const semanticGuardEnabled = hasFlag('semantic-guard');
 
   // Read data
   const raw = readFileSync(file, 'utf-8');
   const data = JSON.parse(raw);
   const collectionName = path.basename(file, path.extname(file)).replace(/[^a-zA-Z0-9_]/g, '_');
 
+  const modelSpec = MODEL_REGISTRY[modelId];
+  if (!modelSpec) {
+    console.error(
+      `Error: unknown model "${modelId}". Try one of: ${Object.keys(MODEL_REGISTRY).slice(0, 8).join(', ')}...`,
+    );
+    process.exit(1);
+  }
+  const modelEncoding = modelSpec.encoding as TokenizerEncoding;
+
+  let selectedStrategy: StrategyName = strategyInput;
+  let payloadText: string | undefined;
+  let selectedTokens = 0;
+
+  const tokenizer = new TokenizerManager();
+  const candidateTokenCounts = buildStrategyCandidates(data, modelEncoding, tokenizer);
+
+  if (semanticGuardEnabled) {
+    const semantic = runSemanticRelationGuard(data, modelEncoding);
+    if (!semantic.pass) {
+      console.error(
+        `Error: semantic relation guard failed: ${semantic.reason} (rows ${semantic.rowCountDecoded}/${semantic.rowCountOriginal}, field coverage ${semantic.fieldPathCoveragePct.toFixed(1)}%, row-match ${semantic.rowSignatureMatchPct.toFixed(1)}%).`,
+      );
+      tokenizer.dispose();
+      process.exit(1);
+    }
+  }
+
+  if (contexOnly) {
+    selectedStrategy = 'contex';
+  } else if (strategyInput === 'auto') {
+    // Use smart strategy selection based on structure analysis
+    const tokenCountMap = new Map<string, number>();
+    for (const candidate of candidateTokenCounts) {
+      tokenCountMap.set(candidate.name, candidate.tokens);
+    }
+    const smartSelection = selectOptimalStrategy(data, tokenCountMap);
+    selectedStrategy = smartSelection.strategy as StrategyName;
+  }
+
+  selectedTokens =
+    candidateTokenCounts.find((c) => c.name === selectedStrategy)?.tokens ??
+    candidateTokenCounts[0].tokens;
+
+  payloadText = candidateTokenCounts.find((c) => c.name === selectedStrategy)?.text;
+
+  const bestCandidate = candidateTokenCounts.reduce((best, cur) =>
+    cur.tokens < best.tokens ? cur : best,
+  );
+
+  const capInfo = resolveTokenCap(provider as 'openai' | 'anthropic', modelId, maxInputTokens);
+  const effectiveTokenCap = capInfo.cap;
+
+  if (effectiveTokenCap && selectedTokens > effectiveTokenCap) {
+    console.error(
+      `Error: selected strategy "${selectedStrategy}" is ${selectedTokens.toLocaleString()} tokens, exceeding token cap=${effectiveTokenCap.toLocaleString()}.`,
+    );
+    console.error(
+      `Hint: best available strategy is "${bestCandidate.name}" at ${bestCandidate.tokens.toLocaleString()} tokens.`,
+    );
+    tokenizer.dispose();
+    process.exit(1);
+  }
+
   console.log(`\n  ${doubleLine}`);
-  console.log(`  contex inject`);
+  console.log('  contex inject');
   console.log(`  ${doubleLine}`);
   console.log(`  Provider:    ${provider}`);
   console.log(`  Model:       ${modelId}`);
-  console.log(`  Input:       ${file} (as {{CONTEX:${collectionName}}})`);
+  console.log(
+    `  Strategy:    ${selectedStrategy}${selectedTokens > 0 ? ` (${selectedTokens.toLocaleString()} tokens est)` : ''}`,
+  );
+  if (contexOnly) {
+    console.log('  Policy:      Contex-only (user traffic pinned to canonical Contex path)');
+  }
+  console.log(
+    `  Best Found:  ${bestCandidate.name} (${bestCandidate.tokens.toLocaleString()} tokens)`,
+  );
+  if (effectiveTokenCap) {
+    const sourceLabel =
+      capInfo.source === 'flag'
+        ? 'flag'
+        : capInfo.source === 'preset'
+          ? 'preset'
+          : capInfo.source === 'derived'
+            ? 'derived'
+            : 'none';
+    console.log(`  Token Cap:   ${effectiveTokenCap.toLocaleString()} tokens (${sourceLabel})`);
+  }
+  if (selectedStrategy === 'contex') {
+    console.log(`  Input:       ${file} (as {{CONTEX:${collectionName}}})`);
+  } else {
+    console.log(`  Input:       ${file} (formatted as ${selectedStrategy})`);
+  }
+  if (semanticGuardEnabled) {
+    console.log('  Semantic:    guard enabled (strict)');
+  }
 
   const preferTokens = hasFlag('prefer-tokens');
   if (preferTokens) {
-    console.log(`  Mode:        Prefer Tokens (if supported)`);
+    console.log('  Mode:        Prefer Tokens (if supported)');
     process.env.CONTEXT_ENABLE_TOKEN_INJECT = 'true';
   }
 
+  if (dryRun) {
+    console.log('  Dry Run:     YES (no provider API call)');
+    console.log('');
+    tokenizer.dispose();
+    return;
+  }
+
   try {
+    let latestLocalCacheHit: boolean | undefined;
+
     if (provider === 'openai') {
       if (!process.env.OPENAI_API_KEY) {
         console.error('Error: OPENAI_API_KEY environment variable not set.');
         process.exit(1);
       }
 
-      const client = createContexOpenAI(new OpenAI({ apiKey: process.env.OPENAI_API_KEY }), {
-        data: { [collectionName]: data },
-        onInject: (info) => {
-          console.log(
-            `  Injection:   ✅ Injected ${info.tokenCount} tokens for '${info.collection}'`,
-          );
-          console.log(
-            `               Using cache: ${info.cacheHit ? 'YES (Prefix Hit)' : 'NO (New Materialization)'}`,
-          );
-        },
-      });
-
-      const start = performance.now();
-      const response = await client.chat.completions.create({
-        model: modelId,
-        messages: [
+      if (selectedStrategy === 'contex') {
+        const rawClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const client = createContexOpenAI(
+          rawClient as unknown as Parameters<typeof createContexOpenAI>[0],
           {
-            role: 'user',
-            content: `Here is the data: {{CONTEX:${collectionName}}}. Summarize it in 1 sentence.`,
+            data: { [collectionName]: data },
+            onInject: (info) => {
+              latestLocalCacheHit = info.cacheHit;
+              console.log(
+                `  Injection:   ✅ Injected ${info.tokenCount} tokens for '${info.collection}'`,
+              );
+              console.log(
+                `               Using cache: ${info.cacheHit ? 'YES (Prefix Hit)' : 'NO (New Materialization)'}`,
+              );
+            },
           },
-        ],
-        max_tokens: 100,
-      });
-      const ms = (performance.now() - start).toFixed(1);
+        );
 
-      console.log(`  Time:        ${ms}ms`);
-      console.log(`  Response:    ${response.choices[0].message.content}`);
+        const start = performance.now();
+        const response = await client.chat.completions.create({
+          model: modelId,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is the data: {{CONTEX:${collectionName}}}. Summarize it in 1 sentence.`,
+            },
+          ],
+          max_tokens: 100,
+        });
+        const ms = (performance.now() - start).toFixed(1);
+
+        console.log(`  Time:        ${ms}ms`);
+        const providerCachedTokens = Number(
+          (response as unknown as { usage?: { prompt_tokens_details?: { cached_tokens?: number } } })
+            .usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        );
+        const taxonomy = classifyCacheTaxonomy({
+          localCacheHit: latestLocalCacheHit,
+          providerCachedTokens,
+          selectedStrategy,
+        });
+        console.log(
+          `  Cache:       ${taxonomy.status.toUpperCase()} (${taxonomy.reason})${providerCachedTokens > 0 ? ` [provider cached tokens: ${providerCachedTokens}]` : ''}`,
+        );
+        console.log(`               ${taxonomy.detail}`);
+        console.log(`  Response:    ${response.choices[0].message.content}`);
+      } else {
+        const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const start = performance.now();
+        const response = await client.chat.completions.create({
+          model: modelId,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is the dataset in ${selectedStrategy} format:\n\n${payloadText}\n\nSummarize it in 1 sentence.`,
+            },
+          ],
+          max_tokens: 100,
+        });
+        const ms = (performance.now() - start).toFixed(1);
+
+        console.log(`  Time:        ${ms}ms`);
+        const taxonomy = classifyCacheTaxonomy({
+          selectedStrategy,
+        });
+        console.log(`  Cache:       ${taxonomy.status.toUpperCase()} (${taxonomy.reason})`);
+        console.log(`               ${taxonomy.detail}`);
+        console.log(`  Response:    ${response.choices[0].message.content}`);
+      }
     } else if (provider === 'anthropic') {
       if (!process.env.ANTHROPIC_API_KEY) {
         console.error('Error: ANTHROPIC_API_KEY environment variable not set.');
         process.exit(1);
       }
 
-      const client = createContexAnthropic(
-        new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as any,
-        {
-          data: { [collectionName]: data },
-          onInject: (info) => {
-            console.log(
-              `  Injection:   ✅ Injected ${info.tokenCount} tokens for '${info.collection}'`,
-            );
-            console.log(
-              `               Using cache: ${info.cacheHit ? 'YES (Prefix Hit)' : 'NO (New Materialization)'}`,
-            );
-          },
-        },
-      );
-
-      const start = performance.now();
-      const response = await client.messages.create({
-        model: modelId,
-        messages: [
+      if (selectedStrategy === 'contex') {
+        const client = createContexAnthropic(
+          new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }),
           {
-            role: 'user',
-            content: `Here is the data: {{CONTEX:${collectionName}}}. Summarize it in 1 sentence.`,
+            data: { [collectionName]: data },
+            onInject: (info) => {
+              latestLocalCacheHit = info.cacheHit;
+              console.log(
+                `  Injection:   ✅ Injected ${info.tokenCount} tokens for '${info.collection}'`,
+              );
+              console.log(
+                `               Using cache: ${info.cacheHit ? 'YES (Prefix Hit)' : 'NO (New Materialization)'}`,
+              );
+            },
           },
-        ],
-        max_tokens: 100,
-      });
-      const ms = (performance.now() - start).toFixed(1);
+        );
 
-      console.log(`  Time:        ${ms}ms`);
-      console.log(`  Response:    ${(response.content[0] as any).text}`);
+        const start = performance.now();
+        const response = await client.messages.create({
+          model: modelId,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is the data: {{CONTEX:${collectionName}}}. Summarize it in 1 sentence.`,
+            },
+          ],
+          max_tokens: 100,
+        });
+        const ms = (performance.now() - start).toFixed(1);
+
+        console.log(`  Time:        ${ms}ms`);
+        const providerCachedTokens = Number(response.usage?.cache_read_input_tokens ?? 0);
+        const taxonomy = classifyCacheTaxonomy({
+          localCacheHit: latestLocalCacheHit,
+          providerCachedTokens,
+          selectedStrategy,
+        });
+        console.log(
+          `  Cache:       ${taxonomy.status.toUpperCase()} (${taxonomy.reason})${providerCachedTokens > 0 ? ` [provider cache read tokens: ${providerCachedTokens}]` : ''}`,
+        );
+        console.log(`               ${taxonomy.detail}`);
+        console.log(`  Response:    ${extractAnthropicText(response)}`);
+      } else {
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        const start = performance.now();
+        const response = await client.messages.create({
+          model: modelId,
+          messages: [
+            {
+              role: 'user',
+              content: `Here is the dataset in ${selectedStrategy} format:\n\n${payloadText}\n\nSummarize it in 1 sentence.`,
+            },
+          ],
+          max_tokens: 100,
+        });
+        const ms = (performance.now() - start).toFixed(1);
+
+        console.log(`  Time:        ${ms}ms`);
+        const taxonomy = classifyCacheTaxonomy({
+          selectedStrategy,
+        });
+        console.log(`  Cache:       ${taxonomy.status.toUpperCase()} (${taxonomy.reason})`);
+        console.log(`               ${taxonomy.detail}`);
+        console.log(`  Response:    ${extractAnthropicText(response)}`);
+      }
     }
-  } catch (err: any) {
-    console.error(`\nError calling API: ${err.message}`);
+  } catch (err: unknown) {
+    console.error(`\nError calling API: ${errorMessage(err)}`);
+    tokenizer.dispose();
     process.exit(1);
   }
+  tokenizer.dispose();
   console.log('');
 }
 
@@ -1135,22 +2223,21 @@ function composeFromConfig(): void {
   }
 
   const raw = readFileSync(configFile, 'utf-8');
-  let config: any;
+  let config: ComposeConfig;
   try {
-    config = JSON.parse(raw);
+    config = JSON.parse(raw) as ComposeConfig;
   } catch (e) {
-    console.error(`Error: Failed to parse config file: ${(e as Error).message}`);
+    console.error(`Error: Failed to parse config file: ${errorMessage(e)}`);
     process.exit(1);
   }
 
   const modelId = getFlag('model') ?? config.model ?? 'gpt-4o';
+  const reserveFlag = getFlag('reserve');
   const reserveForResponse =
-    (getFlag('reserve') ? Number.parseInt(getFlag('reserve')!, 10) : undefined) ??
-    config.reserve ??
-    4096;
+    (reserveFlag ? Number.parseInt(reserveFlag, 10) : undefined) ?? config.reserve ?? 4096;
 
   // Parse blocks
-  const blocks: any[] = [];
+  const blocks: ComposeBlock[] = [];
 
   // System prompt (from config or flag)
   const systemPrompt = getFlag('system') ?? config.system;
@@ -1224,57 +2311,856 @@ function composeFromConfig(): void {
   console.log('');
 }
 
-switch (command) {
-  case 'encode':
-    encodeFile();
-    break;
-  case 'decode':
-    decodeFile();
-    break;
-  case 'stats':
-    showStats();
-    break;
-  case 'formats':
-    showFormats();
-    break;
-  case 'convert':
-    convertFile();
-    break;
-  case 'validate':
-    validateFile();
-    break;
-  case 'savings':
-    showSavings();
-    break;
-  case 'ir-encode':
-    irEncode();
-    break;
-  case 'ir-inspect':
-  case 'inspect': // Alias
-    irInspect();
-    break;
-  case 'ir-materialize':
-    irMaterialize();
-    break;
-  case 'materialize':
-    materializeFile();
-    break;
-  case 'compose':
-    if (args[1] && args[1].endsWith('.json') && !args[2]) {
-      // Heuristic: if only 1 arg and it's json, try config mode (or fallback to prompt mode if it's data)
-      // For now, simpler to just use composePrompt which handles files
-      composePrompt();
-    } else {
-      composePrompt();
+// ============================================================================
+// analyze — Beautiful analysis report with box formatting (P1-2: CLI Polish)
+// ============================================================================
+function analyzeFile(): void {
+  const inputPath = args[1];
+  if (!inputPath) {
+    console.error('Error: missing input file');
+    process.exit(1);
+  }
+
+  const data = JSON.parse(readFileSync(inputPath, 'utf-8'));
+  if (!Array.isArray(data)) {
+    console.error('Error: Input file must contain a JSON array of objects.');
+    process.exit(1);
+  }
+
+  const fields = data.length > 0 ? Object.keys(data[0]).length : 0;
+  const tokenizer = new TokenizerManager();
+
+  const primaryModel = getFlag('model') ?? 'gpt-4o-mini';
+  const primarySpec = MODEL_REGISTRY[primaryModel] ?? MODEL_REGISTRY['gpt-4o-mini'];
+  const primaryEncoding = primarySpec.encoding as TokenizerEncoding;
+  const contexOnly = hasFlag('contex-only') || hasFlag('must-use-contex');
+  const semanticGuardEnabled = hasFlag('semantic-guard');
+  const selectedStrategiesRaw = parseStrategies(getFlag('strategy'), [
+    'contex',
+    'csv',
+    'toon',
+    'markdown',
+    'auto',
+  ]);
+  const selectedStrategies = contexOnly
+    ? (['contex', 'auto'] as StrategyName[])
+    : selectedStrategiesRaw;
+
+  const targetFloor = Number(getFlag('target-floor') ?? 35);
+  const targetMedian = Number(getFlag('target-median') ?? 60);
+  const autoConfidenceFloor = Number(getFlag('auto-confidence-floor') ?? 55);
+  const strictAutoGate = hasFlag('strict-auto-gate') || hasFlag('fail-low-confidence');
+
+  if (
+    !Number.isFinite(targetFloor) ||
+    !Number.isFinite(targetMedian) ||
+    !Number.isFinite(autoConfidenceFloor)
+  ) {
+    console.error(
+      'Error: --target-floor, --target-median, and --auto-confidence-floor must be numeric values.',
+    );
+    process.exit(1);
+  }
+  const outPath = getFlag('out') ?? ANALYZE_DEFAULT_OUT;
+
+  // Get JSON token count (primary model encoding)
+  const jsonText = JSON.stringify(data);
+  const jsonBytes = Buffer.byteLength(jsonText);
+  const jsonTokens = tokenizer.countTokens(jsonText, primaryEncoding);
+
+  // Get Contex token count (TokenStream path - same basis as stats)
+  const streamEncoder = new TokenStreamEncoder(primaryEncoding);
+  const streamStats = streamEncoder.getStats(data);
+  const tensBytes = streamStats.byteSize;
+  const tensTokens = streamStats.totalTokenCount;
+
+  // Breakthrough candidates (same model encoding, alternative representations)
+  const strategyCandidates = buildStrategyCandidates(data, primaryEncoding, tokenizer);
+  const csvTokens = strategyCandidates.find((s) => s.name === 'csv')?.tokens ?? 0;
+  const toonTokens = strategyCandidates.find((s) => s.name === 'toon')?.tokens ?? 0;
+  const markdownTokens = strategyCandidates.find((s) => s.name === 'markdown')?.tokens ?? 0;
+
+  // Calculate savings
+  const safeJsonTokens = Math.max(1, jsonTokens);
+  const safeJsonBytes = Math.max(1, jsonBytes);
+  const tokenReductionPct = (1 - tensTokens / safeJsonTokens) * 100;
+  const tokenReduction = tokenReductionPct.toFixed(1);
+  const bytesReductionPct = (1 - tensBytes / safeJsonBytes) * 100;
+
+  const candidateRows: Array<{ name: string; tokens: number }> = [
+    {
+      name: 'Contex',
+      tokens: strategyCandidates.find((s) => s.name === 'contex')?.tokens ?? tensTokens,
+    },
+    { name: 'CSV', tokens: csvTokens },
+    { name: 'TOON', tokens: toonTokens },
+    { name: 'Markdown', tokens: markdownTokens },
+  ];
+  const bestCandidate = candidateRows.reduce((best, cur) =>
+    cur.tokens < best.tokens ? cur : best,
+  );
+
+  const tokenCountMap = new Map<string, number>();
+  for (const candidate of strategyCandidates) {
+    tokenCountMap.set(candidate.name, candidate.tokens);
+  }
+  tokenCountMap.set('tens', tensTokens);
+  tokenCountMap.set('contex', tensTokens);
+
+  const autoRecommendation = selectOptimalStrategy(data, tokenCountMap);
+  const autoPickedStrategy = normalizeStrategyName(String(autoRecommendation.strategy));
+  const autoPickedTokens = tokenCountMap.get(String(autoRecommendation.strategy)) ?? bestCandidate.tokens;
+  const autoConfidence = computeAutoStrategyConfidence({
+    selectedStrategy: autoPickedStrategy,
+    selectedTokens: autoPickedTokens,
+    allCandidates: strategyCandidates,
+    structureScore: autoRecommendation.structure.contextoBenefitScore,
+    matchesStructureRecommendation:
+      normalizeStrategyName(String(autoRecommendation.strategy)) ===
+      normalizeStrategyName(String(autoRecommendation.structure.recommendedStrategy)),
+  });
+
+  const breakthroughReductionPct = (1 - bestCandidate.tokens / safeJsonTokens) * 100;
+  const upliftVsContexPct = (1 - bestCandidate.tokens / Math.max(1, tensTokens)) * 100;
+
+  const strategyRows = selectedStrategies.map((strategy) => {
+    if (strategy === 'auto') {
+      return [
+        'auto',
+        `${autoPickedTokens.toLocaleString()}`,
+        `${((1 - autoPickedTokens / safeJsonTokens) * 100).toFixed(1)}%`,
+        autoPickedStrategy,
+      ];
     }
-    break;
-  case 'inject':
-    injectFile();
-    break;
-  case 'bench':
-    import('./benchmark.js');
-    break;
-  default:
-    printUsage();
-    break;
+    const tok = strategyCandidates.find((s) => s.name === strategy)?.tokens ?? 0;
+    const pct = ((1 - tok / safeJsonTokens) * 100).toFixed(1);
+    return [strategy, tok.toLocaleString(), `${pct}%`, '-'];
+  });
+
+  // Get model-specific savings
+  const models = ['gpt-4o-mini', 'claude-3-5-sonnet', 'gemini-2-5-flash'];
+  const modelRows: string[][] = [];
+
+  for (const modelId of models) {
+    const spec = MODEL_REGISTRY[modelId];
+    if (!spec) continue;
+
+    const jsonModelTokens = tokenizer.countTokens(jsonText, spec.encoding);
+    const modelStreamEncoder = new TokenStreamEncoder(spec.encoding as TokenizerEncoding);
+    const tensModelTokens = modelStreamEncoder.encodeToTokenStream(data).length;
+    modelStreamEncoder.dispose();
+    const savingsPct = ((1 - tensModelTokens / Math.max(1, jsonModelTokens)) * 100).toFixed(1);
+
+    // Cost per 1K calls (assuming 10K calls/day)
+    const costPer1K = (tensModelTokens / 1_000_000) * spec.inputPricePer1M * 1000;
+
+    modelRows.push([spec.name, `${savingsPct}% saved`, `$${costPer1K.toFixed(2)}/1K calls`]);
+  }
+
+  // Calculate dollar savings (assuming 10K requests/day)
+  const gpt4oSpec = MODEL_REGISTRY['gpt-4o-mini'];
+  const jsonDailyCost =
+    (tokenizer.countTokens(jsonText, gpt4oSpec.encoding) / 1_000_000) *
+    gpt4oSpec.inputPricePer1M *
+    10000;
+  const tensDailyCost = (tensTokens / 1_000_000) * gpt4oSpec.inputPricePer1M * 10000;
+  const dailySavings = jsonDailyCost - tensDailyCost;
+  const annualSavings = dailySavings * 365;
+
+  // Build the beautiful box output
+  const boxWidth = 60;
+
+  console.log('\n');
+
+  // Main analysis box
+  const analysisLines: string[] = [
+    `Input:        ${path.basename(inputPath)}`,
+    `Rows:         ${data.length.toLocaleString()}`,
+    `Fields:       ${fields}`,
+    `Model:        ${primarySpec.name}`,
+    `JSON Tokens:  ${jsonTokens.toLocaleString()}`,
+    `Contex Tokens: ${tensTokens.toLocaleString()} ${'█'.repeat(Math.floor((Number.parseFloat(tokenReduction) / 100) * 10))}${'░'.repeat(10 - Math.floor((Number.parseFloat(tokenReduction) / 100) * 10))} ${tokenReduction}%`,
+    `Savings:      $${annualSavings.toFixed(2)}/year @10k req/day`,
+  ];
+
+  console.log(drawBox('CONTEXT ANALYSIS', boxWidth, analysisLines));
+
+  console.log('\n');
+
+  // Models comparison table
+  console.log(drawComparisonTable('Models', ['Model', 'Savings', 'Cost'], modelRows));
+
+  console.log('\n');
+
+  console.log(
+    drawComparisonTable(
+      'Strategies',
+      ['Strategy', 'Tokens', 'Reduction', 'Auto Pick'],
+      strategyRows,
+    ),
+  );
+
+  console.log('\n');
+
+  // Quick stats
+  const statsBox = [
+    `JSON:    ${jsonBytes} bytes / ${jsonTokens} tokens`,
+    `Contex:  ${tensBytes} bytes / ${tensTokens} tokens`,
+    `Bytes:   ${bytesReductionPct >= 0 ? '-' : '+'}${Math.abs(bytesReductionPct).toFixed(1)}%`,
+    `Tokens:  -${tokenReduction}%`,
+  ];
+  console.log(drawBox('Token Reduction', boxWidth - 20, statsBox));
+
+  console.log('\n');
+  const breakthroughLines = [
+    `Best now:     ${bestCandidate.name} (${bestCandidate.tokens.toLocaleString()} tokens)`,
+    `Reduction:    ${breakthroughReductionPct.toFixed(1)}% vs JSON`,
+    `Uplift:       ${upliftVsContexPct > 0 ? '+' : ''}${upliftVsContexPct.toFixed(1)} points vs Contex`,
+    `Action:       ${contexOnly ? 'Contex-only policy active for user traffic' : `Use ${bestCandidate.name} for this workload when semantics allow`}`,
+  ];
+  console.log(drawBox('Breakthrough Potential', boxWidth + 8, breakthroughLines));
+
+  const autoLines = [
+    `Auto pick:    ${autoPickedStrategy} (${autoPickedTokens.toLocaleString()} tokens)`,
+    `Confidence:   ${autoConfidence.scorePct}% (${autoConfidence.level})`,
+    `Token margin: ${autoConfidence.marginPct.toFixed(2)}% vs runner-up`,
+    `Reason:       ${autoRecommendation.reason}`,
+  ];
+  console.log('\n');
+  console.log(drawBox('Auto Strategy Confidence', boxWidth + 14, autoLines));
+
+  let semanticPass = true;
+  if (semanticGuardEnabled) {
+    const semantic = runSemanticRelationGuard(data, primaryEncoding);
+    semanticPass = semantic.pass;
+    const semanticLines = [
+      `Status:   ${semantic.pass ? 'PASS' : 'FAIL'} (${semantic.reason})`,
+      `Rows:     ${semantic.rowCountDecoded}/${semantic.rowCountOriginal}`,
+      `Fields:   ${semantic.fieldPathCoveragePct.toFixed(1)}% (target >= 95%)`,
+      `RowMatch: ${semantic.rowSignatureMatchPct.toFixed(1)}% (target >= 95%)`,
+    ];
+    console.log('\n');
+    console.log(drawBox('Semantic Relation Guard', boxWidth + 14, semanticLines));
+  }
+
+  const shouldEvaluateGate = hasFlag('reality-gate') || hasFlag('strict-gate');
+  const strictGate = hasFlag('strict-gate');
+  let strictGateFailed = false;
+
+  const autoSelected = selectedStrategies.includes('auto');
+  const autoConfidencePass = autoConfidence.scorePct >= autoConfidenceFloor;
+  const enforceAutoGate = strictAutoGate || (strictGate && autoSelected);
+
+  if (autoSelected) {
+    const autoGateLines = [
+      `Enabled:     ${enforceAutoGate ? 'yes' : 'no'} (${strictAutoGate ? 'explicit' : strictGate ? 'strict-gate + auto strategy' : 'informational'})`,
+      `Confidence:  ${autoConfidence.scorePct}% (${autoConfidence.level})`,
+      `Threshold:   ${autoConfidenceFloor}% (${autoConfidencePass ? 'PASS' : 'FAIL'})`,
+      `Decision:    ${autoPickedStrategy} (${autoPickedTokens.toLocaleString()} tokens)`,
+    ];
+    console.log('\n');
+    console.log(drawBox('Auto Confidence Gate', boxWidth + 16, autoGateLines));
+
+    if (enforceAutoGate && !autoConfidencePass) {
+      strictGateFailed = true;
+    }
+  }
+
+  if (shouldEvaluateGate) {
+    // Improved Dynamic Gate: Use smarter shape consistency calculation
+    // Instead of exact match, use field overlap percentage
+    const firstRowKeys = new Set(Object.keys(data[0] || {}));
+
+    let totalOverlapScore = 0;
+    for (const row of data) {
+      const rowKeys = new Set(Object.keys(row || {}));
+      
+      // Calculate intersection size
+      let intersection = 0;
+      for (const key of firstRowKeys) {
+        if (rowKeys.has(key)) intersection++;
+      }
+      
+      // Calculate Jaccard-like similarity: intersection / union
+      const union = new Set([...firstRowKeys, ...rowKeys]).size;
+      const overlapScore = union > 0 ? intersection / union : 0;
+      totalOverlapScore += overlapScore;
+    }
+    
+    const shapeConsistencyPct = data.length > 0 ? (totalOverlapScore / data.length) * 100 : 0;
+
+    let deterministicOk = false;
+    let irSize = 0;
+    let stableHash = false;
+
+    try {
+      const ir1 = encodeIR(data as object[]);
+      const ir2 = encodeIR(data as object[]);
+      irSize = ir1.ir.length;
+      stableHash = ir1.hash === ir2.hash;
+      deterministicOk = stableHash && irSize > 0;
+    } catch {
+      deterministicOk = false;
+    }
+
+    const dynamicPass = shapeConsistencyPct >= 90;
+    const neededPass = tokenReductionPct >= 15;
+    const correctPass = deterministicOk;
+    const semanticGatePass = semanticGuardEnabled ? semanticPass : true;
+    const realPass = dynamicPass && neededPass && correctPass && semanticGatePass;
+
+    const gateLines = [
+      `Dynamic: ${dynamicPass ? 'PASS' : 'FAIL'} (${shapeConsistencyPct.toFixed(1)}% stable, target >= 90%)`,
+      `Needed:  ${neededPass ? 'PASS' : 'FAIL'} (${tokenReductionPct.toFixed(1)}% reduction, target >= 15%)`,
+      `Correct: ${correctPass ? 'PASS' : 'FAIL'} (hash stable: ${stableHash ? 'yes' : 'no'}, ir bytes: ${irSize})`,
+      `Semantic:${semanticGatePass ? 'PASS' : 'FAIL'} (${semanticGuardEnabled ? 'guard enforced' : 'not enabled'})`,
+      `Real:    ${realPass ? 'PASS' : 'FAIL'} (${realPass ? 'all gates green' : 'requires Dynamic + Needed + Correct'})`,
+    ];
+
+    console.log('\n');
+    console.log(drawBox('Reality Gate', boxWidth + 18, gateLines));
+
+    if (strictGate && !realPass) {
+      strictGateFailed = true;
+    }
+  }
+
+  const currentRun: SnapshotRun = {
+    timestamp: new Date().toISOString(),
+    command: 'analyze',
+    inputPath: path.resolve(inputPath),
+    model: primaryModel,
+    metrics: {
+      jsonTokens,
+      contexTokens: tensTokens,
+      bestStrategy: bestCandidate.name,
+      bestTokens: bestCandidate.tokens,
+      autoStrategy: autoPickedStrategy,
+      autoConfidencePct: autoConfidence.scorePct,
+      tokenReductionPct: Number(tokenReductionPct.toFixed(2)),
+      breakthroughReductionPct: Number(breakthroughReductionPct.toFixed(2)),
+    },
+  };
+
+  const previousRun = appendSnapshot(outPath, currentRun);
+  if (previousRun) {
+    const prevContex = Number(previousRun.metrics.contexTokens ?? 0);
+    const prevReduction = Number(previousRun.metrics.tokenReductionPct ?? 0);
+    const prevBest = Number(previousRun.metrics.bestTokens ?? 0);
+
+    const deltaLines = [
+      `Contex tokens: ${tensTokens.toLocaleString()} (${formatDelta(tensTokens, prevContex)})`,
+      `Reduction:     ${tokenReductionPct.toFixed(1)}% (${formatDelta(tokenReductionPct, prevReduction)} pts)`,
+      `Best tokens:   ${bestCandidate.tokens.toLocaleString()} (${formatDelta(bestCandidate.tokens, prevBest)})`,
+    ];
+    console.log('\n');
+    console.log(drawBox('Delta vs Last Run', boxWidth + 10, deltaLines));
+  }
+
+  const allRuns = loadSnapshotRuns(outPath);
+  const scorecard = buildLatestScorecard(allRuns, primaryModel);
+
+  if (scorecard.datasetCount > 0) {
+    const floorPass = scorecard.floorReductionPct >= targetFloor;
+    const medianPass = scorecard.medianReductionPct >= targetMedian;
+    const targetGatePass = floorPass && medianPass;
+
+    const targetLines = [
+      `Datasets: ${scorecard.datasetCount} (latest per input path)`,
+      `Floor:    ${scorecard.floorReductionPct.toFixed(2)}% (${floorPass ? 'PASS' : 'FAIL'}, target >= ${targetFloor}%)`,
+      `Median:   ${scorecard.medianReductionPct.toFixed(2)}% (${medianPass ? 'PASS' : 'FAIL'}, target >= ${targetMedian}%)`,
+      `Policy:   ${contexOnly ? 'Contex-only enabled' : 'Mixed strategy allowed'}`,
+    ];
+
+    console.log('\n');
+    console.log(drawBox('Hard Target Gate', boxWidth + 14, targetLines));
+
+    if (strictGate && !targetGatePass) {
+      strictGateFailed = true;
+    }
+  }
+
+  console.log(`\n  Snapshot: ${outPath}`);
+
+  console.log('\n');
+
+  streamEncoder.dispose();
+  tokenizer.dispose();
+
+  if ((strictGate || strictAutoGate) && strictGateFailed) {
+    console.error('  Strict Gate: FAIL (real gate failed).');
+    process.exit(2);
+  }
 }
+
+// ============================================================================
+// cache-diagnose — Show cache readiness diagnostics
+// ============================================================================
+function cacheDiagnose(): void {
+  const inputPath = args[1];
+  if (!inputPath) {
+    console.error('Error: missing input file');
+    console.error('Usage: contex cache-diagnose <file.json> --model <model>');
+    process.exit(1);
+  }
+
+  const modelId = getFlag('model') ?? 'gpt-4o-mini';
+  const storeDir = getFlag('store') ?? '.contex';
+
+  const modelSpec = MODEL_REGISTRY[modelId];
+  if (!modelSpec) {
+    console.error(`Error: Unknown model "${modelId}".`);
+    process.exit(1);
+  }
+
+  // Read and encode data
+  const raw = readFileSync(inputPath, 'utf-8');
+  let data: Record<string, unknown>[];
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    console.error('Error: Invalid JSON file');
+    process.exit(1);
+  }
+  if (!Array.isArray(data)) {
+    console.error('Error: Input file must contain a JSON array.');
+    process.exit(1);
+  }
+
+  const memory = new TokenMemory(storeDir);
+  const start = performance.now();
+
+  // Store IR
+  const storeResult = memory.store(data);
+  const encodeMs = (performance.now() - start).toFixed(1);
+
+  // Check if materialization is cached
+  const cachedModels = memory.getCachedModels(storeResult.hash);
+  const isMaterialized = cachedModels.includes(modelId);
+
+  // Get metadata
+  const meta = memory.getMeta(storeResult.hash);
+
+  // Estimate first-run latency
+  let estimatedFirstRunMs = 'N/A';
+  if (!isMaterialized) {
+    const estimateStart = performance.now();
+    try {
+      memory.materializeAndCache(storeResult.hash, modelId);
+      estimatedFirstRunMs = (performance.now() - estimateStart).toFixed(1);
+    } catch {
+      estimatedFirstRunMs = 'error';
+    }
+  }
+
+  memory.dispose();
+
+  // Determine readiness
+  const isReady = isMaterialized;
+  const readiness = isReady ? '✅ READY' : '⚠️  NOT READY';
+  const recommendation = isReady
+    ? 'Cache is warm, subsequent requests will be fast.'
+    : 'Run `contex materialize` or make a request to warm the cache.';
+
+  // Build output
+  const boxWidth = 58;
+  const lines = [
+    `Input:       ${path.basename(inputPath)}`,
+    `Rows:        ${data.length.toLocaleString()}`,
+    `IR Hash:     ${storeResult.hash.slice(0, 12)}...`,
+    `Encode time:  ${encodeMs}ms`,
+    ``,
+    `Model:       ${modelSpec.name}`,
+    `Encoding:    ${modelSpec.encoding}`,
+    `Materialized: ${isMaterialized ? '✅ Yes' : '❌ No'}`,
+    `Cached for:  ${cachedModels.length > 0 ? cachedModels.join(', ') : '(none)'}`,
+    ``,
+    `IR status:       ✅ Stored`,
+    `Disk cache:      ${isMaterialized ? '✅ HIT' : '❌ MISS'}`,
+    `1st run latency: ~${estimatedFirstRunMs}ms`,
+    ``,
+    `Readiness:   ${readiness}`,
+    `Recommendation: ${recommendation}`,
+  ];
+
+  console.log('\n');
+  console.log(drawBox('Cache Diagnostics', boxWidth, lines));
+  console.log('');
+}
+
+// ============================================================================
+// cache-warm — Pre-materialize for multiple models
+// ============================================================================
+function cacheWarm(): void {
+  const inputPath = args[1];
+  if (!inputPath) {
+    console.error('Error: missing input file');
+    console.error('Usage: contex cache-warm <file.json> --models gpt-4o,claude-3-5-sonnet,gemini-2-5-flash');
+    process.exit(1);
+  }
+
+  const modelsArg = getFlag('models');
+  if (!modelsArg) {
+    console.error('Error: missing --models flag');
+    console.error('Usage: contex cache-warm <file.json> --models gpt-4o,claude-3-5-sonnet');
+    process.exit(1);
+  }
+
+  const models = modelsArg.split(',').map((m) => m.trim());
+  const storeDir = getFlag('store') ?? '.contex';
+
+  // Read and encode data
+  const raw = readFileSync(inputPath, 'utf-8');
+  let data: Record<string, unknown>[];
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    console.error('Error: Invalid JSON file');
+    process.exit(1);
+  }
+  if (!Array.isArray(data)) {
+    console.error('Error: Input file must contain a JSON array.');
+    process.exit(1);
+  }
+
+  console.log(`\n  ${doubleLine}`);
+  console.log('  Cache Warm — Pre-materialize');
+  console.log(`  ${doubleLine}`);
+  console.log(`  Input:  ${inputPath}`);
+  console.log(`  Models: ${models.join(', ')}`);
+  console.log(`  ${line}\n`);
+
+  const memory = new TokenMemory(storeDir);
+  const storeResult = memory.store(data);
+
+  console.log(`  IR Hash: ${storeResult.hash.slice(0, 12)}...`);
+  console.log('');
+
+  for (const modelId of models) {
+    const modelSpec = MODEL_REGISTRY[modelId];
+    if (!modelSpec) {
+      console.log(`  ⚠️  ${modelId}: Unknown model, skipping`);
+      continue;
+    }
+
+    const start = performance.now();
+    try {
+      const result = memory.materializeAndCache(storeResult.hash, modelId);
+      const ms = (performance.now() - start).toFixed(1);
+      console.log(`  ✅ ${modelId}: ${result.tokenCount.toLocaleString()} tokens in ${ms}ms`);
+    } catch (error) {
+      console.log(`  ❌ ${modelId}: ${errorMessage(error)}`);
+    }
+  }
+
+  memory.dispose();
+  console.log(`\n  ${doubleLine}\n`);
+}
+
+// ============================================================================
+// cache-stats — Show aggregate cache telemetry
+// ============================================================================
+function cacheStats(): void {
+  const diagnostics = getGlobalDiagnostics();
+  const telemetry = diagnostics.getTelemetry();
+
+  const boxWidth = 52;
+  const lines = [
+    `Total requests: ${telemetry.totalRequests.toLocaleString()}`,
+    `Hits:          ${telemetry.hits.toLocaleString()}`,
+    `Misses:        ${telemetry.misses.toLocaleString()}`,
+    `Hit rate:      ${telemetry.hitRate.toFixed(1)}%`,
+    ``,
+    `Latency (ms):`,
+    `  p50:  ${telemetry.latencyPercentiles.p50.toFixed(2)}`,
+    `  p95:  ${telemetry.latencyPercentiles.p95.toFixed(2)}`,
+    `  p99:  ${telemetry.latencyPercentiles.p99.toFixed(2)}`,
+    `  avg:  ${telemetry.latencyPercentiles.avg.toFixed(2)}`,
+    ``,
+    `Since: ${telemetry.since.slice(0, 19).replace('T', ' ')}`,
+  ];
+
+  console.log('\n');
+  console.log(drawBox('Cache Telemetry', boxWidth, lines));
+  console.log('');
+
+  // Show miss reasons if any
+  const missReasons = Object.entries(telemetry.missesByReason).filter(([, count]) => count > 0);
+  if (missReasons.length > 0) {
+    console.log('  Miss reasons:');
+    for (const [reason, count] of missReasons) {
+      const pct = ((count as number) / telemetry.misses * 100).toFixed(1);
+      console.log(`    ${reason}: ${count} (${pct}%)`);
+    }
+    console.log('');
+  }
+}
+
+type StatusProviderGateway = {
+  middlewareConnected?: boolean;
+  openaiConfigured?: boolean;
+  anthropicConfigured?: boolean;
+  geminiConfigured?: boolean;
+};
+
+type StatusHealthResponse = {
+  status?: string;
+  service?: string;
+  version?: string;
+  providerGateway?: StatusProviderGateway;
+};
+
+function requestJson(url: string, timeoutMs: number): Promise<{ statusCode: number; json: unknown }> {
+  return new Promise((resolve, reject) => {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      reject(new Error(`Invalid URL: ${url}`));
+      return;
+    }
+
+    const requestFn = parsedUrl.protocol === 'https:' ? httpsRequest : httpRequest;
+
+    const req = requestFn(
+      {
+        protocol: parsedUrl.protocol,
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: `${parsedUrl.pathname}${parsedUrl.search}`,
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+        },
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        });
+
+        res.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf-8').trim();
+          if (!body) {
+            resolve({ statusCode: res.statusCode ?? 0, json: {} });
+            return;
+          }
+
+          try {
+            resolve({ statusCode: res.statusCode ?? 0, json: JSON.parse(body) as unknown });
+          } catch {
+            reject(new Error('Health endpoint did not return valid JSON'));
+          }
+        });
+      },
+    );
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error(`Request timed out after ${timeoutMs}ms`));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function statusCommand(): Promise<void> {
+  const jsonMode = hasFlag('json');
+
+  function failStatus(message: string, details?: unknown): never {
+    if (jsonMode) {
+      const payload = {
+        ok: false,
+        error: message,
+        ...(details !== undefined ? { details } : {}),
+      };
+      console.error(JSON.stringify(payload, null, 2));
+    } else {
+      console.error(message);
+      if (details !== undefined) {
+        console.error(String(details));
+      }
+    }
+    process.exit(1);
+  }
+
+  const baseUrl = getFlag('url') ?? process.env.CONTEX_API_URL ?? 'http://127.0.0.1:3000';
+  const timeoutMs = Number(getFlag('timeout-ms') ?? 3000);
+
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    failStatus('Error: --timeout-ms must be a positive number.');
+  }
+
+  let parsedBaseUrl: URL;
+  try {
+    parsedBaseUrl = new URL(baseUrl);
+  } catch {
+    failStatus(`Error: invalid --url value "${baseUrl}".`);
+  }
+
+  const basePath = parsedBaseUrl.pathname.endsWith('/')
+    ? parsedBaseUrl.pathname.slice(0, -1)
+    : parsedBaseUrl.pathname;
+  const healthPath = /\/health$/i.test(basePath) ? basePath : `${basePath}/health`;
+  const healthUrl = `${parsedBaseUrl.protocol}//${parsedBaseUrl.host}${healthPath}${parsedBaseUrl.search}`;
+
+  let statusCode = 0;
+  let payload: StatusHealthResponse;
+
+  try {
+    const response = await requestJson(healthUrl, timeoutMs);
+    statusCode = response.statusCode;
+    payload = response.json as StatusHealthResponse;
+  } catch (error: unknown) {
+    failStatus(`Error: unable to reach Contex API at ${healthUrl}`, `Reason: ${errorMessage(error)}`);
+  }
+
+  if (statusCode !== 200) {
+    failStatus(`Error: health endpoint responded with HTTP ${statusCode}`);
+  }
+
+  const gateway = payload.providerGateway ?? {};
+  const middlewareConnected = gateway.middlewareConnected === true;
+  const openaiConfigured = gateway.openaiConfigured === true;
+  const anthropicConfigured = gateway.anthropicConfigured === true;
+  const geminiConfigured = gateway.geminiConfigured === true;
+
+  const lines = [
+    `URL:        ${healthUrl}`,
+    `Service:    ${payload.service ?? 'unknown'}`,
+    `Version:    ${payload.version ?? 'unknown'}`,
+    `Status:     ${payload.status === 'ok' ? 'OK' : String(payload.status ?? 'unknown')}`,
+    '',
+    `Gateway:    ${middlewareConnected ? 'Connected' : 'Disconnected'}`,
+    `OpenAI:     ${openaiConfigured ? 'Configured' : 'Missing OPENAI_API_KEY'}`,
+    `Anthropic:  ${anthropicConfigured ? 'Configured' : 'Missing ANTHROPIC_API_KEY'}`,
+    `Gemini:     ${geminiConfigured ? 'Configured' : 'Missing GOOGLE_API_KEY'}`,
+  ];
+
+  const missingProviders: string[] = [];
+  if (!openaiConfigured) missingProviders.push('OPENAI_API_KEY');
+  if (!anthropicConfigured) missingProviders.push('ANTHROPIC_API_KEY');
+  if (!geminiConfigured) missingProviders.push('GOOGLE_API_KEY');
+
+  const ok =
+    payload.status === 'ok' &&
+    middlewareConnected &&
+    missingProviders.length === 0;
+
+  if (jsonMode) {
+    const statusPayload = {
+      ok,
+      url: healthUrl,
+      statusCode,
+      service: payload.service ?? 'unknown',
+      version: payload.version ?? 'unknown',
+      status: payload.status ?? 'unknown',
+      providerGateway: {
+        middlewareConnected,
+        openaiConfigured,
+        anthropicConfigured,
+        geminiConfigured,
+      },
+      missingProviders,
+    };
+    console.log(JSON.stringify(statusPayload, null, 2));
+    if (!ok) {
+      process.exit(1);
+    }
+    return;
+  }
+
+  console.log('\n');
+  console.log(drawBox('Server Status', 74, lines));
+
+  if (missingProviders.length > 0) {
+    console.log('');
+    console.log('  Missing provider keys:');
+    for (const envVar of missingProviders) {
+      console.log(`    - ${envVar}`);
+    }
+    console.log('  Configure them in the server environment to enable provider routes.');
+  }
+
+  console.log('');
+}
+
+async function runCommand(): Promise<void> {
+  switch (command) {
+    case 'analyze':
+      analyzeFile();
+      break;
+    case 'scorecard':
+      scorecardReport();
+      break;
+    case 'status':
+      await statusCommand();
+      break;
+    case 'cache-diagnose':
+      cacheDiagnose();
+      break;
+    case 'cache-warm':
+      cacheWarm();
+      break;
+    case 'cache-stats':
+      cacheStats();
+      break;
+    case 'encode':
+      encodeFile();
+      break;
+    case 'decode':
+      decodeFile();
+      break;
+    case 'stats':
+      showStats();
+      break;
+    case 'formats':
+      showFormats();
+      break;
+    case 'convert':
+      convertFile();
+      break;
+    case 'validate':
+      validateFile();
+      break;
+    case 'guard':
+      guardFile();
+      break;
+    case 'savings':
+      showSavings();
+      break;
+    case 'ir-encode':
+      irEncode();
+      break;
+    case 'ir-inspect':
+    case 'inspect': // Alias
+      irInspect();
+      break;
+    case 'ir-materialize':
+      irMaterialize();
+      break;
+    case 'materialize':
+      materializeFile();
+      break;
+    case 'compose':
+      if (args[1]?.endsWith('.json') && !args[2]) {
+        composeFromConfig();
+      } else {
+        composePrompt();
+      }
+      break;
+    case 'inject':
+      injectFile();
+      break;
+    case 'bench':
+      await import('./benchmark.js');
+      break;
+    default:
+      printUsage();
+      break;
+  }
+}
+
+runCommand().catch((error: unknown) => {
+  console.error(`Error: ${errorMessage(error)}`);
+  process.exit(1);
+});

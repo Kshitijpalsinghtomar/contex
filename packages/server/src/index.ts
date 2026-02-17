@@ -1,11 +1,7 @@
-import {
-  type OutputFormat,
-  TokenStreamDecoder,
-  TokenStreamEncoder,
-  type TokenizerEncoding,
-  formatOutput,
-} from '@contex/core';
+import { TokenMemory, encodeIR } from '@contex/core';
 import { Contex as contex } from '@contex/engine';
+import { createContexAnthropic, createContexGemini, createContexOpenAI } from '@contex/middleware';
+import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
@@ -19,7 +15,12 @@ import { z } from 'zod';
 // Singleton engine instance, proper validation, CORS, structured errors.
 // ============================================================================
 
-const app = new Hono();
+export const app = new Hono();
+const memory = new TokenMemory('.contex');
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Unknown error';
+}
 
 // --- Singleton Engine ---
 const engine = new contex('o200k_base');
@@ -51,14 +52,10 @@ app.onError((err, c) => {
 // --- Schemas ---
 const encodeSchema = z.object({
   data: z.union([z.array(z.record(z.unknown())).max(50000), z.record(z.unknown())]),
-  encoding: z
-    .enum(['cl100k_base', 'o200k_base', 'p50k_base', 'r50k_base'])
-    .optional()
-    .default('cl100k_base'),
 });
 
 const decodeSchema = z.object({
-  tens: z.string().max(50_000_000), // ~50MB base64 limit
+  hash: z.string().min(1).max(128),
 });
 
 const contextSchema = z.object({
@@ -78,6 +75,28 @@ const querySchema = z.object({
   pql: z.string().min(1).max(1000),
 });
 
+const providerDataSchema = z.record(z.array(z.record(z.unknown())).max(50000)).optional();
+
+const openaiChatSchema = z.object({
+  model: z.string().min(1).max(100),
+  messages: z.array(z.record(z.unknown())).min(1),
+  data: providerDataSchema,
+});
+
+const anthropicMessagesSchema = z.object({
+  model: z.string().min(1).max(100),
+  messages: z.array(z.record(z.unknown())).min(1),
+  max_tokens: z.number().int().min(1).max(1_000_000).optional().default(1024),
+  system: z.union([z.string(), z.array(z.record(z.unknown()))]).optional(),
+  data: providerDataSchema,
+});
+
+const geminiGenerateSchema = z.object({
+  model: z.string().min(1).max(100),
+  prompt: z.string().min(1),
+  data: providerDataSchema,
+});
+
 // --- Routes ---
 
 app.get('/health', (c) =>
@@ -86,50 +105,60 @@ app.get('/health', (c) =>
     service: 'contex-api',
     version: '0.1.0',
     collections: engine.listCollections(),
+    providerGateway: {
+      middlewareConnected: true,
+      openaiConfigured: Boolean(process.env.OPENAI_API_KEY),
+      anthropicConfigured: Boolean(process.env.ANTHROPIC_API_KEY),
+      geminiConfigured: Boolean(process.env.GOOGLE_API_KEY),
+    },
   }),
 );
 
 app.post('/v1/encode', zValidator('json', encodeSchema), async (c) => {
-  const { data, encoding } = c.req.valid('json');
-
-  const encoder = new TokenStreamEncoder(encoding as TokenizerEncoding);
+  const { data } = c.req.valid('json');
   try {
     const input = Array.isArray(data) ? data : [data];
-    const binary = encoder.encode(input);
-    const base64 = Buffer.from(binary).toString('base64');
-    const stats = encoder.getStats(input);
+    const ir = encodeIR(input);
+    const stored = memory.storeIR(ir);
 
-    return c.json({ tens: base64, stats });
-  } catch (err: any) {
+    return c.json({
+      hash: ir.hash,
+      ir: Buffer.from(ir.ir).toString('base64'),
+      rowCount: ir.data.length,
+      irByteSize: ir.ir.byteLength,
+      isNew: stored.isNew,
+      irVersion: ir.irVersion,
+      canonicalizationVersion: ir.canonicalizationVersion,
+    });
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'ENCODE_ERROR', message: err.message },
+        error: { code: 'ENCODE_ERROR', message: errorMessage(err) },
       },
       422,
     );
-  } finally {
-    encoder.dispose();
   }
 });
 
 app.post('/v1/decode', zValidator('json', decodeSchema), async (c) => {
-  const { tens } = c.req.valid('json');
-
-  const decoder = new TokenStreamDecoder();
+  const { hash } = c.req.valid('json');
   try {
-    const binary = new Uint8Array(Buffer.from(tens, 'base64'));
-    const data = decoder.decode(binary);
+    const ir = memory.load(hash);
 
-    return c.json({ data });
-  } catch (err: any) {
+    return c.json({
+      hash: ir.hash,
+      data: ir.data,
+      rowCount: ir.data.length,
+      irVersion: ir.irVersion,
+      canonicalizationVersion: ir.canonicalizationVersion,
+    });
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'DECODE_ERROR', message: err.message },
+        error: { code: 'DECODE_ERROR', message: errorMessage(err) },
       },
       422,
     );
-  } finally {
-    decoder.dispose();
   }
 });
 
@@ -157,10 +186,10 @@ app.post('/v1/optimize', zValidator('json', contextSchema), async (c) => {
       context: result.output,
       usedRows: result.usedRows,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'OPTIMIZE_ERROR', message: err.message },
+        error: { code: 'OPTIMIZE_ERROR', message: errorMessage(err) },
       },
       422,
     );
@@ -184,10 +213,10 @@ app.post('/v1/collections/:name', zValidator('json', insertSchema), async (c) =>
       inserted: data.length,
       total: engine.listCollections().includes(name) ? data.length : 0,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'INSERT_ERROR', message: err.message },
+        error: { code: 'INSERT_ERROR', message: errorMessage(err) },
       },
       422,
     );
@@ -205,10 +234,10 @@ app.post('/v1/query', zValidator('json', querySchema), async (c) => {
       output: result.output,
       count: result.count,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'QUERY_ERROR', message: err.message },
+        error: { code: 'QUERY_ERROR', message: errorMessage(err) },
       },
       422,
     );
@@ -221,10 +250,139 @@ app.get('/v1/formats/:collection', async (c) => {
   try {
     const analyses = engine.analyzeFormats(collection);
     return c.json({ collection, formats: analyses });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return c.json(
       {
-        error: { code: 'ANALYZE_ERROR', message: err.message },
+        error: { code: 'ANALYZE_ERROR', message: errorMessage(err) },
+      },
+      422,
+    );
+  }
+});
+
+// --- Provider gateway routes (middleware-connected) ---
+
+app.post('/v1/providers/openai/chat', zValidator('json', openaiChatSchema), async (c) => {
+  const { model, messages, data } = c.req.valid('json');
+
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return c.json(
+        {
+          error: {
+            code: 'PROVIDER_CONFIG_ERROR',
+            message: 'OPENAI_API_KEY is not configured',
+          },
+        },
+        400,
+      );
+    }
+
+    const { default: OpenAI } = await import('openai');
+    const rawClient = new OpenAI({ apiKey });
+    const client = createContexOpenAI(rawClient, { data });
+
+    const response = await client.chat.completions.create({
+      model,
+      messages,
+      stream: false,
+    } as any);
+
+    return c.json({
+      provider: 'openai',
+      model,
+      response,
+    });
+  } catch (err: unknown) {
+    return c.json(
+      {
+        error: { code: 'OPENAI_ROUTE_ERROR', message: errorMessage(err) },
+      },
+      422,
+    );
+  }
+});
+
+app.post('/v1/providers/anthropic/messages', zValidator('json', anthropicMessagesSchema), async (c) => {
+  const { model, messages, max_tokens, system, data } = c.req.valid('json');
+
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return c.json(
+        {
+          error: {
+            code: 'PROVIDER_CONFIG_ERROR',
+            message: 'ANTHROPIC_API_KEY is not configured',
+          },
+        },
+        400,
+      );
+    }
+
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const rawClient = new Anthropic({ apiKey });
+    const client = createContexAnthropic(rawClient, { data });
+
+    const response = await client.messages.create({
+      model,
+      max_tokens,
+      system,
+      messages,
+    } as any);
+
+    return c.json({
+      provider: 'anthropic',
+      model,
+      response,
+    });
+  } catch (err: unknown) {
+    return c.json(
+      {
+        error: { code: 'ANTHROPIC_ROUTE_ERROR', message: errorMessage(err) },
+      },
+      422,
+    );
+  }
+});
+
+app.post('/v1/providers/gemini/generate', zValidator('json', geminiGenerateSchema), async (c) => {
+  const { model, prompt, data } = c.req.valid('json');
+
+  try {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return c.json(
+        {
+          error: {
+            code: 'PROVIDER_CONFIG_ERROR',
+            message: 'GOOGLE_API_KEY is not configured',
+          },
+        },
+        400,
+      );
+    }
+
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const rawModel = genAI.getGenerativeModel({ model });
+    const wrappedModel = createContexGemini(rawModel as any, model, { data });
+
+    const response = await wrappedModel.generateContent(prompt);
+    const text = response && typeof response === 'object' && 'response' in response
+      ? (response.response as { text?: () => string }).text?.()
+      : undefined;
+
+    return c.json({
+      provider: 'gemini',
+      model,
+      text,
+    });
+  } catch (err: unknown) {
+    return c.json(
+      {
+        error: { code: 'GEMINI_ROUTE_ERROR', message: errorMessage(err) },
       },
       422,
     );
@@ -232,13 +390,16 @@ app.get('/v1/formats/:collection', async (c) => {
 });
 
 // --- Start ---
-const port = Number(process.env.PORT ?? 3000);
-console.log(`[contex-api] Server starting on port ${port}`);
+export function startServer(port = Number(process.env.PORT ?? 3000)) {
+  console.log(`[contex-api] Server starting on port ${port}`);
+  serve({
+    fetch: app.fetch,
+    port,
+  });
 
-const server = serve({
-  fetch: app.fetch,
-  port,
-});
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
 
 // Graceful shutdown
 function shutdown() {
@@ -247,5 +408,10 @@ function shutdown() {
   process.exit(0);
 }
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+const isDirectExecution = process.argv[1]
+  ? fileURLToPath(import.meta.url) === process.argv[1]
+  : false;
+
+if (isDirectExecution) {
+  startServer();
+}

@@ -27,7 +27,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CANONICALIZATION_VERSION, IR_VERSION, encodeIR } from './ir_encoder.js';
+import { encodeIR } from './ir_encoder.js';
 import {
   type Materializer,
   TOKENIZER_VERSION,
@@ -35,6 +35,7 @@ import {
   resolveEncoding,
 } from './materialize.js';
 import type { MaterializedTokens, TensIR, TensSchema, TokenizerEncoding } from './types.js';
+import { CacheMissReason, getGlobalDiagnostics, type CacheDiagnostics } from './cache_metrics.js';
 
 /** Metadata stored alongside each IR blob */
 export interface IRMeta {
@@ -229,6 +230,14 @@ export class TokenMemory {
     const start = performance.now();
     const encoding = resolveEncoding(modelId);
     const cacheSubDir = this.tokenCacheDir(hash, modelId, encoding);
+    
+    // Try to get global diagnostics (optional)
+    let diagnostics: CacheDiagnostics | undefined;
+    try {
+      diagnostics = getGlobalDiagnostics();
+    } catch {
+      // Diagnostics not initialized
+    }
 
     // Check disk cache
     const metaPath = join(cacheSubDir, 'meta.json');
@@ -246,6 +255,11 @@ export class TokenMemory {
           new Int32Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 4),
         );
 
+        // Record hit
+        if (diagnostics) {
+          diagnostics.recordHit('materialize', hash, modelId, encoding, performance.now() - start, tokens.length);
+        }
+        
         return {
           tokens,
           modelId: cacheMeta.modelId,
@@ -256,7 +270,36 @@ export class TokenMemory {
           tokenizerFingerprint: cacheMeta.tokenizerFingerprint,
         };
       }
-      // Fingerprint mismatch — drift detected, re-materialize below
+      
+      // Fingerprint mismatch — drift detected
+      if (diagnostics) {
+        diagnostics.recordMiss(
+          'materialize',
+          hash,
+          CacheMissReason.ENCODING_DRIFT,
+          modelId,
+          encoding,
+          performance.now() - start,
+          undefined,
+          { 
+            cachedFingerprint: cacheMeta.tokenizerFingerprint,
+            currentFingerprint,
+          },
+        );
+      }
+      // Re-materialize below
+    } else {
+      // No cache entry exists
+      if (diagnostics) {
+        diagnostics.recordMiss(
+          'materialize',
+          hash,
+          CacheMissReason.MODEL_NEVER_MATERIALIZED,
+          modelId,
+          encoding,
+          performance.now() - start,
+        );
+      }
     }
 
     // Load IR and materialize

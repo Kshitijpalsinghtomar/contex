@@ -15,6 +15,19 @@ if (!process.env.ANTHROPIC_API_KEY) {
 const MODEL = 'claude-3-5-sonnet-20240620';
 const STORE_DIR = '.contex';
 
+type AnthropicUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+};
+
+function getAnthropicText(content: unknown): string {
+  if (!Array.isArray(content) || content.length === 0) return '';
+  const first = content[0] as { text?: unknown };
+  return typeof first?.text === 'string' ? first.text : '';
+}
+
 async function main() {
   console.log('═'.repeat(60));
   console.log('  Contex v3 — End-to-End Cache Demo (Anthropic)');
@@ -52,7 +65,9 @@ async function main() {
   console.log(`   [Contex] TENS Hash: ${tensTickets.hash.slice(0, 12)}...`);
 
   const client = createContexAnthropic(
-    new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as any,
+    new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as unknown as Parameters<
+      typeof createContexAnthropic
+    >[0],
     {
       data: {
         // Context Middleware now accepts raw TENS objects directly!
@@ -82,12 +97,12 @@ async function main() {
   });
   const time1 = performance.now() - start1;
 
-  const usage1 = msg1.usage;
-  console.log(`   Response: "${(msg1.content[0] as any).text}"`);
+  const usage1 = msg1.usage as AnthropicUsage;
+  console.log(`   Response: "${getAnthropicText(msg1.content)}"`);
   console.log(`   Time: ${time1.toFixed(0)}ms`);
   console.log(`   Usage: Input ${usage1.input_tokens}, Output ${usage1.output_tokens}`);
-  console.log(`   Cache Creation: ${(usage1 as any).cache_creation_input_tokens || 0} tokens`);
-  console.log(`   Cache Read:     ${(usage1 as any).cache_read_input_tokens || 0} tokens`);
+  console.log(`   Cache Creation: ${usage1.cache_creation_input_tokens || 0} tokens`);
+  console.log(`   Cache Read:     ${usage1.cache_read_input_tokens || 0} tokens`);
 
   // 4. Second Call (Warm Cache on Provider)
   // To hit the cache, we send the exact same prefix. The system prompt or first user message must be identical.
@@ -128,12 +143,12 @@ async function main() {
   });
   const time2 = performance.now() - start2;
 
-  const usage2 = msg2.usage;
-  console.log(`   Response: "${(msg2.content[0] as any).text}"`);
+  const usage2 = msg2.usage as AnthropicUsage;
+  console.log(`   Response: "${getAnthropicText(msg2.content)}"`);
   console.log(`   Time: ${time2.toFixed(0)}ms`);
   console.log(`   Usage: Input ${usage2.input_tokens}, Output ${usage2.output_tokens}`);
-  console.log(`   Cache Creation: ${(usage2 as any).cache_creation_input_tokens || 0} tokens`);
-  console.log(`   Cache Read:     ${(usage2 as any).cache_read_input_tokens || 0} tokens`);
+  console.log(`   Cache Creation: ${usage2.cache_creation_input_tokens || 0} tokens`);
+  console.log(`   Cache Read:     ${usage2.cache_read_input_tokens || 0} tokens`);
 
   // 5. Result Analysis
   const savings = ((usage1.input_tokens - usage2.input_tokens) / usage1.input_tokens) * 100;
@@ -144,10 +159,10 @@ async function main() {
   console.log('\n═'.repeat(60));
   console.log('  RESULTS');
   console.log('═'.repeat(60));
-  if ((usage2 as any).cache_read_input_tokens > 0) {
+  if ((usage2.cache_read_input_tokens || 0) > 0) {
     console.log('  ✅ SUCCESS: Anthropic Cache Hit!');
-    console.log(`  Read ${Number((usage2 as any).cache_read_input_tokens)} tokens from cache.`);
-    console.log(`  Cost savings: ~90% on input tokens.`);
+    console.log(`  Read ${Number(usage2.cache_read_input_tokens || 0)} tokens from cache.`);
+    console.log('  Cost savings: ~90% on input tokens.');
   } else {
     console.log('  ⚠️ WARNING: No cache hit detected.');
     console.log('  (Ensure dataset > 1024 tokens and Ephemeral (5min) TTL is active)');

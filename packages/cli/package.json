@@ -20,8 +20,19 @@
         "dist",
         "README.md"
     ],
+    "keywords": [
+        "contex",
+        "cli",
+        "llm",
+        "token",
+        "benchmark",
+        "ai"
+    ],
     "scripts": {
         "build": "tsc",
+        "prepublishOnly": "pnpm build",
+        "pretest": "pnpm --filter @contex/core build",
+        "test": "node --import tsx --test \"tests/**/*.test.ts\"",
         "benchmark": "tsx src/benchmark.ts",
         "clean": "rimraf dist"
     },

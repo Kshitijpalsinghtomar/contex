@@ -1,4 +1,36 @@
+
+<div align="center">
+
 # Getting Started with Contex
+
+> **Get up and running with Contex in 5 minutes.**
+
+</div>
+
+---
+
+
+## 🚀 Quick Start
+
+```bash
+# Install CLI and SDK
+pnpm add -g @contex/cli
+pnpm add @contex/core @contex/engine @contex/middleware
+```
+
+
+---
+
+## Table of Contents
+
+1. [Installation](#installation)
+2. [The V3 Workflow](#the-v3-workflow)
+3. [CLI: Analyze & Materialize](#1-cli-analyze--materialize)
+4. [SDK: Inject & Execute](#2-sdk-inject--execute)
+5. [Advanced: Programmatic API](#advanced-programmatic-api)
+6. [Next Steps](#next-steps)
+
+---
 
 ## Installation
 
@@ -19,6 +51,16 @@ Contex v3 focuses on a **Build → Inject** workflow:
 1.  **Materialize**: Compile data into cached tokens during build/ingest.
 2.  **Inject**: Use the SDK middleware to inject cached tokens into prompts.
 
+### Default Newcomer Flow (Recommended)
+
+Follow this exact path first:
+
+1. `contex analyze data.json --model gpt-4o-mini`
+2. `contex materialize data.json --model gpt-4o-mini`
+3. Inject with middleware using `data: { key: <rawData or Tens> }` and `{{CONTEX:key}}`
+
+Then move to advanced options only after this flow is green.
+
 ---
 
 ## 1. CLI: Analyze & Materialize
@@ -26,6 +68,7 @@ Contex v3 focuses on a **Build → Inject** workflow:
 Use the CLI to prepare your data.
 
 ### Check Savings
+
 See how much you can save before writing code.
 
 ```bash
@@ -34,6 +77,7 @@ contex savings data.json
 ```
 
 ### Materialize Tokens
+
 Compile your data into model-specific token arrays. This creates a `.contex/` cache folder.
 
 ```bash
@@ -101,6 +145,8 @@ const msg = await client.messages.create({
 
 ## Advanced: Programmatic API
 
+This section is optional and intended for advanced/custom pipelines.
+
 For dynamic data or custom pipelines, use the Engine API directly.
 
 ### One-Shot `quick()`
@@ -127,5 +173,8 @@ const tokens = memory.materializeAndCache(hash, 'gpt-4o');
 
 ## Next Steps
 
+- [Quickstart Guide](./quickstart.md) — ⭐ New: 3-line workflow in under 10 minutes
+- [Migration Guide](./migration-from-json.md) — Coming from JSON? Start here
 - [CLI Reference](../reference/cli.md) — Full command list
 - [Benchmarks](./benchmarks.md) — Performance methodology
+- [Examples](./examples.md) — Real-world use cases

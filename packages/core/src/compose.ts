@@ -289,8 +289,7 @@ export class Composer {
     const contextWindow = request.contextWindow ?? MODEL_CONTEXT_WINDOWS[model];
     if (!contextWindow) {
       throw new Error(
-        `Unknown model context window: "${model}". ` +
-          `Provide contextWindow in the request or register with registerModelContextWindow().`,
+        `Unknown model context window: "${model}". Provide contextWindow in the request or register with registerModelContextWindow().`,
       );
     }
 
@@ -419,7 +418,7 @@ export class Composer {
       case 'tokens':
         return [...block.tokens]; // Copy to avoid mutation
       default:
-        throw new Error(`Unknown block type: ${(block as any).type}`);
+        throw new Error(`Unknown block type: ${(block as { type?: unknown }).type}`);
     }
   }
 

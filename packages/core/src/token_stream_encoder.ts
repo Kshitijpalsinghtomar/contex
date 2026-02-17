@@ -2,7 +2,7 @@
 // TENS Encoder (v2) — Multi-tokenizer, retains raw values for format output
 // ============================================================================
 
-import { SchemaRegistry, flattenObject, inferType } from './schema.js';
+import { SchemaRegistry, flattenObject } from './schema.js';
 import { TokenizerManager } from './tokenizer.js';
 import {
   ARRAY_LEN_BASE,
@@ -13,7 +13,7 @@ import {
   TENS_MAGIC,
   TENS_VERSION,
 } from './types.js';
-import type { TensDocument, TensStats, TensType, TokenStream, TokenizerEncoding } from './types.js';
+import type { TensDocument, TensStats, TokenStream, TokenizerEncoding } from './types.js';
 
 /**
  * TENS Token Stream Encoder.
@@ -108,7 +108,7 @@ export class TokenStreamEncoder {
           // Access value or undefined (which becomes null)
           const value = flat[field];
           rawValues.push(value);
-          values.push(this.tokenizeValue(value, inferType(value), encoding));
+          values.push(this.tokenizeValue(value, encoding));
         }
         return { schemaId: unifiedSchema.id, values, rawValues };
       });
@@ -122,7 +122,7 @@ export class TokenStreamEncoder {
           const field = schema.fields[i];
           const value = flat[field];
           rawValues.push(value);
-          values.push(this.tokenizeValue(value, inferType(value), encoding));
+          values.push(this.tokenizeValue(value, encoding));
         }
         return { schemaId: schema.id, values, rawValues };
       });
@@ -131,7 +131,7 @@ export class TokenStreamEncoder {
     // 4. Value Dictionary Optimization
     // Scan all tokenized values to find repetitive strings and replace them with single-token references.
     // Heuristic: (freq * len) > (len + freq)
-    const dict = new ValueDictionary(this.tokenizer, encoding);
+    const dict = new ValueDictionary();
 
     // Pass 1: Count frequencies
     for (const row of rows) {
@@ -209,7 +209,7 @@ export class TokenStreamEncoder {
     this.schema.clear();
   }
 
-  private tokenizeValue(value: unknown, type: TensType, encoding?: TokenizerEncoding): TokenStream {
+  private tokenizeValue(value: unknown, encoding?: TokenizerEncoding): TokenStream {
     if (value === null || value === undefined) return [CTRL.NULL_VAL];
     if (typeof value === 'boolean') return [value ? CTRL.BOOL_TRUE : CTRL.BOOL_FALSE];
     // Numbers and strings handled by tokenizer
@@ -226,10 +226,10 @@ export class TokenStreamEncoder {
           const flat = flattenObject(elem as Record<string, unknown>);
           const keys = Object.keys(flat).sort();
           for (const k of keys) {
-            stream.push(...this.tokenizeValue(flat[k], inferType(flat[k]), encoding));
+            stream.push(...this.tokenizeValue(flat[k], encoding));
           }
         } else {
-          stream.push(...this.tokenizeValue(elem, inferType(elem), encoding));
+          stream.push(...this.tokenizeValue(elem, encoding));
         }
         if (i < value.length - 1) stream.push(CTRL.SEPARATOR); // Separator between array elements
       }
@@ -366,13 +366,6 @@ class ValueDictionary {
   private counts = new Map<string, number>();
   private tokens = new Map<string, TokenStream>();
   private ids = new Map<string, number>();
-  private tokenizer: TokenizerManager;
-  private encoding?: TokenizerEncoding;
-
-  constructor(tokenizer: TokenizerManager, encoding?: TokenizerEncoding) {
-    this.tokenizer = tokenizer;
-    this.encoding = encoding;
-  }
 
   add(value: string, stream: TokenStream) {
     const count = this.counts.get(value) || 0;
@@ -383,7 +376,10 @@ class ValueDictionary {
   build(): { id: number; value: string }[] {
     const eligible: { val: string; count: number }[] = [];
     for (const [val, count] of this.counts) {
-      const stream = this.tokens.get(val)!;
+      const stream = this.tokens.get(val);
+      if (!stream) {
+        continue;
+      }
       const len = stream.length;
       // Cost heuristic: (freq * len) > (len + freq)
       // Save if total tokens used normally is greater than total tokens used with dictionary

@@ -144,7 +144,10 @@ export function createPreTokenizedBlock(
   const textEncoder = new TextEncoder();
 
   for (const field of fields) {
-    const toks = fieldTokens.get(field)!;
+    const toks = fieldTokens.get(field);
+    if (!toks) {
+      throw new Error(`Missing token stream for field: ${field}`);
+    }
     fieldIndex.push({
       fieldName: field,
       startOffset: totalTokens,
@@ -194,7 +197,10 @@ export function createPreTokenizedBlock(
 
   // Token Data — all fields concatenated
   for (const field of fields) {
-    const toks = fieldTokens.get(field)!;
+    const toks = fieldTokens.get(field);
+    if (!toks) {
+      throw new Error(`Missing token stream for field: ${field}`);
+    }
     for (const tok of toks) {
       view.setUint32(offset, tok, true);
       offset += 4;

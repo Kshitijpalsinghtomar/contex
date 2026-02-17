@@ -1,4 +1,4 @@
-import { Tens, TokenMemory } from '@contex/core';
+import { Tens } from '@contex/core';
 import { providerSupportsTokens } from './config.js';
 
 export type TensReference = { tensHash: string };
@@ -27,7 +27,7 @@ export type TensOrRef = Tens | TensReference;
  * ```
  */
 export async function injectContexContent<ClientType, ReturnType>(
-  client: ClientType,
+  _client: ClientType,
   modelId: string,
   tensOrRef: TensOrRef,
   executionCallback: (payload: { text?: string; tokens?: number[] }) => Promise<ReturnType>,
@@ -73,7 +73,7 @@ export async function injectContexContent<ClientType, ReturnType>(
       // The `executionCallback` must handle `{ tokens: number[] }`.
       return executionCallback({ tokens });
     } catch (e) {
-      console.warn(`[Contex] Token materialization failed, falling back to text.`, e);
+      console.warn('[Contex] Token materialization failed, falling back to text.', e);
       // Fallback to text
     }
   }

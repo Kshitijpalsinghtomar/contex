@@ -28,12 +28,7 @@ async function main() {
   const data = Array.from({ length: 500 }, (_, i) => ({
     id: i,
     title: `Ticket #${i} - Critical System Failure in Module ${i % 10}`,
-    description:
-      `Detailed description of the issue encountered in module ${i % 10}. ` +
-      `The system exhibited unexpected behavior during the load test phase. ` +
-      `Error logs indicate a potential memory leak or race condition. ` +
-      `Customer impact is rated as ${i % 3 === 0 ? 'High' : 'Medium'}. ` +
-      `Please investigate immediately. `.repeat(2),
+    description: `Detailed description of the issue encountered in module ${i % 10}. The system exhibited unexpected behavior during the load test phase. Error logs indicate a potential memory leak or race condition. Customer impact is rated as ${i % 3 === 0 ? 'High' : 'Medium'}. ${'Please investigate immediately. '.repeat(2)}`,
     status: i % 2 === 0 ? 'OPEN' : 'CLOSED',
     priority: i % 3 === 0 ? 'P0' : 'P1',
     tags: ['bug', 'backend', 'urgent', `v${i % 5}.0`],
@@ -86,7 +81,11 @@ async function main() {
       // I will inject the text and manually add the cache breakpoint to the system prompt
       // to ensure caching happens.
 
-      const systemBlock: any = {
+      const systemBlock: {
+        type: 'text';
+        text: string;
+        cache_control: { type: 'ephemeral' };
+      } = {
         type: 'text',
         text: payload.text ? `Here is the data context:\n${payload.text}` : '',
         cache_control: { type: 'ephemeral' }, // Explicitly enable caching
@@ -101,7 +100,12 @@ async function main() {
 
       // Log Usage
       // Anthropic usage response: { input_tokens: 123, output_tokens: 123, cache_creation_input_tokens: ..., cache_read_input_tokens: ... }
-      const usage = response.usage as any;
+      const usage = response.usage as {
+        input_tokens: number;
+        output_tokens: number;
+        cache_creation_input_tokens?: number;
+        cache_read_input_tokens?: number;
+      };
       console.log(`   Input Tokens: ${usage.input_tokens}`);
       console.log(`   Output Tokens: ${usage.output_tokens}`);
       console.log(`   Cache Creation: ${usage.cache_creation_input_tokens || 0}`);

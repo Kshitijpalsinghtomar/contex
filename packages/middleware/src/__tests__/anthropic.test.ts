@@ -1,8 +1,41 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import type { Anthropic } from '@anthropic-ai/sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createContexAnthropic } from '../anthropic.js';
+
+type AnthropicContentBlock = {
+  type?: string;
+  text?: string;
+  [key: string]: unknown;
+};
+
+type AnthropicMessageInput = {
+  role: string;
+  content: string | AnthropicContentBlock[];
+};
+
+type AnthropicCreateBody = {
+  model: string;
+  system?: string;
+  messages: AnthropicMessageInput[];
+  max_tokens: number;
+};
+
+type MockAnthropicClient = {
+  messages: {
+    create: ReturnType<typeof vi.fn>;
+  };
+  _mockCreate: ReturnType<typeof vi.fn>;
+};
+
+function invokeCreate(client: Anthropic, body: AnthropicCreateBody): Promise<unknown> {
+  const create = client.messages.create as unknown as (
+    body: AnthropicCreateBody,
+  ) => Promise<unknown>;
+  return create(body);
+}
 
 // =============================================================================
 // Mock Anthropic client
@@ -12,10 +45,11 @@ function createMockAnthropicClient() {
     id: 'mock-message',
     content: [{ type: 'text', text: 'ok' }],
   });
-  return {
+  const client: MockAnthropicClient = {
     messages: { create: createFn },
     _mockCreate: createFn,
   };
+  return client;
 }
 
 const TEST_DATA = [
@@ -36,16 +70,16 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
 
   it('passes through calls with no placeholders', async () => {
     const mock = createMockAnthropicClient();
-    const wrapped = createContexAnthropic(mock as any, {
+    const wrapped = createContexAnthropic(mock as unknown as Anthropic, {
       storeDir: tmpDir,
       data: { tickets: TEST_DATA },
     });
 
-    await wrapped.messages.create({
+    await invokeCreate(wrapped, {
       model: 'claude-3-5-sonnet',
       messages: [{ role: 'user', content: 'Hello' }],
       max_tokens: 1024,
-    } as any);
+    });
 
     expect(mock._mockCreate).toHaveBeenCalledTimes(1);
     expect(mock._mockCreate.mock.calls[0][0].messages[0].content).toBe('Hello');
@@ -53,16 +87,16 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
 
   it('replaces message placeholders with canonical JSON', async () => {
     const mock = createMockAnthropicClient();
-    const wrapped = createContexAnthropic(mock as any, {
+    const wrapped = createContexAnthropic(mock as unknown as Anthropic, {
       storeDir: tmpDir,
       data: { tickets: TEST_DATA },
     });
 
-    await wrapped.messages.create({
+    await invokeCreate(wrapped, {
       model: 'claude-3-5-sonnet',
       messages: [{ role: 'user', content: 'Analyze: {{CONTEX:tickets}}' }],
       max_tokens: 1024,
-    } as any);
+    });
 
     const content = mock._mockCreate.mock.calls[0][0].messages[0].content;
     expect(content).not.toContain('{{CONTEX:');
@@ -71,17 +105,17 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
 
   it('replaces placeholders in Anthropic system field', async () => {
     const mock = createMockAnthropicClient();
-    const wrapped = createContexAnthropic(mock as any, {
+    const wrapped = createContexAnthropic(mock as unknown as Anthropic, {
       storeDir: tmpDir,
       data: { context: [{ policy: 'Be helpful', version: 1 }] },
     });
 
-    await wrapped.messages.create({
+    await invokeCreate(wrapped, {
       model: 'claude-3-5-sonnet',
       system: 'System context: {{CONTEX:context}}',
       messages: [{ role: 'user', content: 'Hello' }],
       max_tokens: 1024,
-    } as any);
+    });
 
     const body = mock._mockCreate.mock.calls[0][0];
     expect(body.system).not.toContain('{{CONTEX:');
@@ -90,12 +124,12 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
 
   it('handles content blocks array format', async () => {
     const mock = createMockAnthropicClient();
-    const wrapped = createContexAnthropic(mock as any, {
+    const wrapped = createContexAnthropic(mock as unknown as Anthropic, {
       storeDir: tmpDir,
       data: { tickets: TEST_DATA },
     });
 
-    await wrapped.messages.create({
+    await invokeCreate(wrapped, {
       model: 'claude-3-5-sonnet',
       messages: [
         {
@@ -104,7 +138,7 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
         },
       ],
       max_tokens: 1024,
-    } as any);
+    });
 
     const content = mock._mockCreate.mock.calls[0][0].messages[0].content;
     expect(content[0].text).toContain('Login bug');
@@ -114,17 +148,17 @@ describe('@contex/middleware v3 — Anthropic Integration', () => {
   it('calls onInject with injection details', async () => {
     const onInject = vi.fn();
     const mock = createMockAnthropicClient();
-    const wrapped = createContexAnthropic(mock as any, {
+    const wrapped = createContexAnthropic(mock as unknown as Anthropic, {
       storeDir: tmpDir,
       data: { tickets: TEST_DATA },
       onInject,
     });
 
-    await wrapped.messages.create({
+    await invokeCreate(wrapped, {
       model: 'claude-3-5-sonnet',
       messages: [{ role: 'user', content: '{{CONTEX:tickets}}' }],
       max_tokens: 1024,
-    } as any);
+    });
 
     expect(onInject).toHaveBeenCalledTimes(1);
     expect(onInject.mock.calls[0][0].collection).toBe('tickets');

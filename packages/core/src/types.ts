@@ -154,7 +154,7 @@ export interface TensStats {
 }
 
 /** Supported output formats for `formatOutput()`. */
-export type OutputFormat = 'json' | 'csv' | 'markdown' | 'toon' | 'tens' | 'tens-text' | 'tokens';
+export type OutputFormat = 'json' | 'csv' | 'markdown' | 'toon' | 'tens' | 'tens-text' | 'tokens' | 'contex';
 
 /** Server configuration options. */
 export interface ServeOptions {

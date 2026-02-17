@@ -66,7 +66,7 @@ describe('validateInput', () => {
 
   describe('circular references', () => {
     it('detects simple circular reference', () => {
-      const obj: any = { id: 1 };
+      const obj: { id: number; self?: unknown } = { id: 1 };
       obj.self = obj;
       expect(() => validateInput([obj])).toThrow(TensValidationError);
       expect(() => validateInput([obj])).toThrow(/Circular/);

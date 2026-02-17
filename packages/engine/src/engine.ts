@@ -24,7 +24,7 @@ import {
   formatOutput,
 } from '@contex/core';
 
-import { type BudgetRequest, type BudgetResult, calculateBudget } from './budget.js';
+import { type BudgetResult, calculateBudget } from './budget.js';
 import { formatPrefixAware } from './prefix.js';
 import { applyFilter, applyLimit, parsePql } from './query.js';
 import { ContextStorage } from './storage.js';

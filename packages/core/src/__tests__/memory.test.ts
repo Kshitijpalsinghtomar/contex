@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CANONICALIZATION_VERSION, IR_VERSION, encodeIR } from '../ir_encoder.js';
@@ -59,7 +59,11 @@ describe('Token Memory v2', () => {
   describe('IR versioning', () => {
     it('stores irVersion and canonicalizationVersion in meta', () => {
       const result = memory.store(SAMPLE_DATA);
-      const meta = memory.getMeta(result.hash)!;
+      const meta = memory.getMeta(result.hash);
+      expect(meta).toBeDefined();
+      if (!meta) {
+        throw new Error('Expected metadata to exist');
+      }
       expect(meta.irVersion).toBe(IR_VERSION);
       expect(meta.canonicalizationVersion).toBe(CANONICALIZATION_VERSION);
     });
@@ -217,7 +221,7 @@ describe('Token Memory v2', () => {
       const original = memory.materializeAndCache(r.hash, 'gpt-4o');
       const loaded = memory.loadMaterialized(r.hash, 'gpt-4o');
       expect(loaded).not.toBeNull();
-      expect(loaded!.tokens).toEqual(original.tokens);
+      expect(loaded?.tokens).toEqual(original.tokens);
     });
   });
 

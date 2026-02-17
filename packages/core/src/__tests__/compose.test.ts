@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compose, createComposer } from '../compose.js';
-import type { ComposeRequest, TokenBlock } from '../compose.js';
+import type { TokenBlock } from '../compose.js';
 import { encodeIR } from '../ir_encoder.js';
 
 // ============================================================================

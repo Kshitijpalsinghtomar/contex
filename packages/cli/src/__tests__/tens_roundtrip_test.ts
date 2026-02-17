@@ -1,7 +1,7 @@
 import { TokenStreamDecoder, TokenStreamEncoder, flattenObject } from '@contex/core';
 
 // --- Fuzzy Equality Helper ---
-function fuzzyDeepEqual(a: any, b: any, path = ''): boolean {
+function fuzzyDeepEqual(a: unknown, b: unknown, path = ''): boolean {
   if (a === b) return true;
   if (a === null && b === undefined) return true; // Treat null/undefined as similar (TENS uses null for missing)
   if (a === undefined && b === null) return true;
@@ -83,13 +83,21 @@ function generateMixed(count: number) {
 
 function generateSparse(count: number) {
   return Array.from({ length: count }, (_, i) => {
-    const obj: any = { id: i };
+    const obj: Record<string, unknown> = { id: i };
     if (i % 2 === 0) obj.a = 1;
     if (i % 3 === 0) obj.b = 2;
     if (i % 5 === 0) obj.c = 3;
     if (i % 7 === 0) obj.d = 4;
     return obj;
   });
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getErrorStack(error: unknown): string {
+  return error instanceof Error ? (error.stack ?? '') : '';
 }
 
 function generateRepetitive(count: number) {
@@ -163,9 +171,9 @@ async function run() {
         console.error(`  FAIL: ${mismatches} items mismatched.`);
         failures++;
       }
-    } catch (e: any) {
-      console.error(`  CRASH: ${e.message}`);
-      console.error(e.stack);
+    } catch (error: unknown) {
+      console.error(`  CRASH: ${getErrorMessage(error)}`);
+      console.error(getErrorStack(error));
       failures++;
     }
   }

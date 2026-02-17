@@ -9,17 +9,21 @@ export interface RepetitionStats {
   tokenRepetitionFrequency: number; // ratio of repeated tokens
 }
 
-export function analyzeRepetition(data: any[], tokenizer: TokenizerManager): RepetitionStats {
+export function analyzeRepetition(data: unknown[], tokenizer: TokenizerManager): RepetitionStats {
   const strings: string[] = [];
 
   // Recursive extraction of all string values
-  function extract(obj: any) {
+  function extract(obj: unknown) {
     if (typeof obj === 'string') {
       strings.push(obj);
     } else if (Array.isArray(obj)) {
-      obj.forEach(extract);
+      for (const item of obj) {
+        extract(item);
+      }
     } else if (typeof obj === 'object' && obj !== null) {
-      Object.values(obj).forEach(extract);
+      for (const value of Object.values(obj)) {
+        extract(value);
+      }
     }
   }
 

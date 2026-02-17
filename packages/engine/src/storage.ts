@@ -152,8 +152,12 @@ export class ContextStorage {
         const raw = JSON.parse(json);
         for (const [k, v] of Object.entries(raw)) {
           // Migration for old metadata format if needed
-          if ((v as any).headPageId !== undefined) {
-            this.collections.set(k, { batches: [], count: (v as any).count });
+          const candidate = v as { headPageId?: unknown; count?: unknown };
+          if (candidate.headPageId !== undefined) {
+            this.collections.set(k, {
+              batches: [],
+              count: typeof candidate.count === 'number' ? candidate.count : 0,
+            });
           } else {
             this.collections.set(k, v as CollectionMeta);
           }

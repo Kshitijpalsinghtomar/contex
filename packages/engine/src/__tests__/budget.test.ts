@@ -116,7 +116,7 @@ describe('MODEL_REGISTRY', () => {
   });
 
   it('all models have required fields', () => {
-    for (const [name, spec] of Object.entries(MODEL_REGISTRY)) {
+    for (const [_name, spec] of Object.entries(MODEL_REGISTRY)) {
       expect(spec.contextWindow).toBeGreaterThan(0);
       expect(spec.encoding).toBeDefined();
       expect(spec.provider).toBeDefined();

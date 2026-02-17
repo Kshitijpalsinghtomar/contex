@@ -1,0 +1,90 @@
+name: CLI Reality Gate
+
+on:
+  push:
+    paths:
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/engine/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'scripts/check-claim-evidence.mjs'
+      - 'scripts/generate-ci-scorecard-artifacts.mjs'
+      - '.github/workflows/cli-reality-gate.yml'
+  pull_request:
+    paths:
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/engine/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'scripts/check-claim-evidence.mjs'
+      - 'scripts/generate-ci-scorecard-artifacts.mjs'
+      - '.github/workflows/cli-reality-gate.yml'
+
+jobs:
+  cli-reality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Config parity guard
+        run: pnpm check:config-parity
+
+      - name: Claim evidence guard
+        run: pnpm check:claim-evidence
+
+      - name: Docs snippet guard
+        run: pnpm check:docs-snippets
+
+      - name: Canonical contract guard
+        run: pnpm check:canonical-contract
+
+      - name: Legacy tokenstream guard
+        run: pnpm check:no-legacy-tokenstream
+
+      - name: Legacy surface claims guard
+        run: pnpm check:no-legacy-surface-claims
+
+      - name: Structural integrity guard
+        run: pnpm check:structural-integrity
+
+      - name: Stabilization freeze guard
+        run: pnpm check:stabilization-freeze
+
+      - name: Build
+        run: pnpm build
+
+      - name: CLI regression tests
+        run: pnpm --filter @contex/cli test
+
+      - name: Generate CI scorecard artifact bundle
+        run: pnpm generate:ci-scorecard-artifacts
+
+      - name: Upload scorecard artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-scorecard-artifacts
+          path: artifacts/scorecards/**/ci/**
+          if-no-files-found: error
+
+      - name: Inject dry-run with strategy auto + cap checks
+        run: |
+          pnpm exec tsx packages/cli/src/cli.ts inject packages/cli/fixtures/my_test_data.json --provider openai --strategy auto --contex-only --semantic-guard --dry-run
+          pnpm exec tsx packages/cli/src/cli.ts inject packages/cli/fixtures/my_test_data.json --provider anthropic --strategy auto --contex-only --semantic-guard --max-input-tokens 30000 --dry-run

@@ -34,16 +34,21 @@ function getTensEncoder(): TokenStreamEncoder {
   return _tensEncoder;
 }
 
-function sortKeys(obj: any): any {
+function sortKeys(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     return obj.map(sortKeys);
-  } else if (obj !== null && typeof obj === 'object') {
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const record = obj as Record<string, unknown>;
     return Object.keys(obj)
       .sort()
-      .reduce((acc, key) => {
-        acc[key] = sortKeys(obj[key]);
-        return acc;
-      }, {} as any);
+      .reduce(
+        (acc, key) => {
+          acc[key] = sortKeys(record[key]);
+          return acc;
+        },
+        {} as Record<string, unknown>,
+      );
   }
   return obj;
 }
@@ -55,9 +60,9 @@ function sortKeys(obj: any): any {
  * @param format - Target output format
  * @returns Formatted string (or space-separated token IDs for TENS)
  */
-export function transcode(data: any[], format: SupportedFormat): string | Uint8Array {
+export function transcode(data: unknown[], format: SupportedFormat): string | Uint8Array {
   // Ensure deterministic output by sorting keys
-  const sortedData = sortKeys(data);
+  const sortedData = sortKeys(data) as Record<string, unknown>[];
 
   switch (format) {
     case 'json':
@@ -71,7 +76,7 @@ export function transcode(data: any[], format: SupportedFormat): string | Uint8A
     case 'xml':
       return js2xml({ root: { row: sortedData } }, { compact: true, spaces: 2 });
     case 'ndjson':
-      return sortedData.map((d: any) => JSON.stringify(d)).join('\n');
+      return sortedData.map((d) => JSON.stringify(d)).join('\n');
     case 'csv':
       return formatOutput(sortedData, 'csv');
     case 'markdown':

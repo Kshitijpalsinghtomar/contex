@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-16T18:43:53.268Z",
+  "model": "gpt-4o-mini",
+  "datasets": [
+    {
+      "family": "baseline",
+      "path": "dummy.json",
+      "sha256": "24832c1ea9651fe7c2a00ad060e019f9f8d27907bd88519a41f43330ee8ff5a0"
+    },
+    {
+      "family": "synthetic-small",
+      "path": ".contex/dummy_1000.json",
+      "sha256": "6fe758c54fa241b0181a097b0e128e3bf629b1eb52ada110a0a5fdf0b744d756"
+    },
+    {
+      "family": "synthetic-large",
+      "path": ".contex/dummy_2000.json",
+      "sha256": "b7b0bdb3546eef7ed30bc0931cbe5ab5ce938b7c34cbbcf505949fbf76b81daf"
+    }
+  ]
+}

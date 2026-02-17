@@ -13,7 +13,7 @@ export type MutationType =
   | 'single_field_change';
 
 export function runPrefixSimulation(
-  initialData: any[],
+  initialData: Record<string, unknown>[],
   mutation: MutationType,
   count: number,
   tokenizer: TokenizerManager,

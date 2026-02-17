@@ -12,17 +12,31 @@
     "publishConfig": {
         "access": "public"
     },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "keywords": [
+        "contex",
+        "llm",
+        "context-engine",
+        "budget",
+        "format-selection",
+        "ai"
+    ],
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
             "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         }
     },
     "scripts": {
         "build": "tsc",
+        "prepublishOnly": "pnpm build",
         "test": "vitest run",
         "clean": "rimraf dist"
     },

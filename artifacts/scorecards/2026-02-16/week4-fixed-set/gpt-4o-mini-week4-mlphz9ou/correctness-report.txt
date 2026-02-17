@@ -1,0 +1,24 @@
+Correctness checks
+- validate_exit_code: 0
+- roundtrip_json: PASS
+- semantic_guard: PASS
+
+Validate output (raw):
+════════════════════════════════════════════════════════════
+  contex validate — Roundtrip Integrity Test
+  Input: dummy.json (15840 rows)
+  ════════════════════════════════════════════════════════════
+
+  Format         Status         Detail
+  ────────────────────────────────────────────────────────────
+  TENS Binary    ❌ FAIL         15840 rows decoded, 0/15840 exact match (nested objects may flatten)
+  TENS-Text      ⚠️ ENCODE      Encoder OK (95047 lines), decoder returned empty
+  JSON           ✅ PASS         Native JSON.parse roundtrip
+  CSV            ⚠️ ENCODE      15840 rows, 5 columns (nested objects flattened)
+  TOON           ⚠️ ENCODE      15840 rows, 5 columns (tab-separated)
+  Markdown       ⚠️ ENCODE      15840 rows (table format, no decoder)
+  Semantic Guard ✅ PASS         Semantic relation integrity preserved; rows 15840/15840, fields 100.0%, row-match 100.0%
+
+  ────────────────────────────────────────────────────────────
+  Results: 2 passed, 1 failed, 4 encode-only
+  ❌ 1 format(s) failed roundtrip validation.

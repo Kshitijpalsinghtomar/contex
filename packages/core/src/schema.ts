@@ -74,6 +74,114 @@ export function unflattenObject(obj: Record<string, unknown>): Record<string, un
 }
 
 /**
+ * Compress field names by finding the shortest unique prefix for each field.
+ *
+ * This reduces token usage by shortening long field names like:
+ * - `customer_shipping_address` → `shipping`
+ * - `customer_billing_address` → `billing`
+ * - `customer_email` → `email`
+ *
+ * The compression is context-aware: it only compresses if the shortened
+ * name is unique within the dataset.
+ *
+ * @param fields - Array of field names (should be sorted)
+ * @returns Map of original field name → compressed field name
+ *
+ * @example
+ * ```ts
+ * const fields = ['customer_shipping_address', 'customer_billing_address', 'customer_email'];
+ * const mapping = compressFieldNames(fields);
+ * // mapping: {
+ * //   'customer_shipping_address' → 'shipping',
+ * //   'customer_billing_address' → 'billing',
+ * //   'customer_email' → 'email'
+ * // }
+ * ```
+ */
+export function compressFieldNames(fields: string[]): Map<string, string> {
+  const mapping = new Map<string, string>();
+
+  // If fewer than 2 fields, no compression needed
+  if (fields.length < 2) {
+    for (const field of fields) {
+      mapping.set(field, field);
+    }
+    return mapping;
+  }
+
+  // For each field, find the shortest unique prefix
+  for (let i = 0; i < fields.length; i++) {
+    const fullName = fields[i];
+    const otherFields = fields.filter((_, idx) => idx !== i);
+
+    // Skip if this field is already a prefix of others (can't compress)
+    const isPrefixOfOthers = otherFields.some((f) => f.startsWith(`${fullName}_`));
+    if (isPrefixOfOthers) {
+      mapping.set(fullName, fullName);
+      continue;
+    }
+
+    // Find shortest prefix that's unique
+    let bestPrefix = fullName;
+    for (let prefixLen = 1; prefixLen <= fullName.length; prefixLen++) {
+      const prefix = fullName.substring(0, prefixLen);
+
+      // Check if any other field starts with this prefix
+      const conflicts = otherFields.some((f) => f.startsWith(prefix));
+
+      if (!conflicts) {
+        bestPrefix = prefix;
+        break;
+      }
+    }
+
+    mapping.set(fullName, bestPrefix);
+  }
+
+  // Second pass: ensure all compressed names are actually unique
+  // If there's a collision, fall back to longer names
+  const usedNames = new Set<string>();
+  for (const [original, compressed] of mapping) {
+    if (usedNames.has(compressed)) {
+      // Collision - find a longer unique name
+      let longerName = compressed;
+      for (let len = compressed.length + 1; len <= original.length; len++) {
+        const candidate = original.substring(0, len);
+        if (!usedNames.has(candidate)) {
+          longerName = candidate;
+          break;
+        }
+      }
+      usedNames.add(longerName);
+      mapping.set(original, longerName);
+    } else {
+      usedNames.add(compressed);
+    }
+  }
+
+  return mapping;
+}
+
+/**
+ * Apply field name compression to a schema.
+ *
+ * @param schema - The original schema
+ * @param compression - Map of original → compressed field names
+ * @returns New schema with compressed field names
+ */
+export function applyFieldCompression(
+  schema: TensSchema,
+  compression: Map<string, string>,
+): TensSchema {
+  const compressedFields = schema.fields.map((f) => compression.get(f) || f);
+
+  return {
+    ...schema,
+    fields: compressedFields,
+  };
+}
+
+/**
  * Schema registry for TENS structural deduplication.
  *
  * Registers object shapes (sorted field names + types) and assigns

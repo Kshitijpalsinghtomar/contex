@@ -6,12 +6,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation — Contex</title>
     <meta name="description"
-        content="Contex documentation: installation, quick start, SDK middleware, Budget Engine, TENS IR, API reference, and guides.">
+        content="Contex documentation: installation, formats, pipeline, SDK middleware, TENS IR, API reference, and guides.">
     <link rel="stylesheet" href="./style.css">
     <script>
         const theme = localStorage.getItem('contex-theme') || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
     </script>
+    <style>
+        .format-pipeline {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .format-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .format-card h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .format-card p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        .format-card code {
+            font-size: 0.82rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .tag-default {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .tag-debug {
+            background: #6366f1;
+            color: #fff;
+        }
+
+        .tag-internal {
+            background: #64748b;
+            color: #fff;
+        }
+
+        .docs-content h3 {
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+            font-size: 1.15rem;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 2.5rem 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 700px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .callout {
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .callout.info {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 3px solid #6366f1;
+        }
+
+        .callout.warn {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 3px solid #f59e0b;
+        }
+
+        .callout.tip {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid #10b981;
+        }
+    </style>
 </head>
 
 <body>
@@ -24,11 +132,14 @@
         <ul class="nav-links">
             <li><a href="./">Home</a></li>
             <li><a href="./docs.html" class="active">Docs</a></li>
+            <li><a href="./tens-text.html">TENS-Text</a></li>
             <li><a href="./benchmarks.html">Benchmarks</a></li>
+            <li><a href="./playground.html">Playground</a></li>
+            <li><a href="./vision.html">Vision</a></li>
+            <li><a href="./dashboard.html">Dashboard</a></li>
         </ul>
         <div class="nav-actions">
             <button class="btn btn-ghost btn-sm" id="theme-toggle" aria-label="Toggle theme">
-                <!-- Sun Icon -->
                 <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -41,13 +152,12 @@
                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                 </svg>
-                <!-- Moon Icon -->
                 <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <a href="https://github.com/contex/contex" class="btn btn-ghost btn-sm" target="_blank">
+            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                     <path
@@ -60,763 +170,804 @@
     </nav>
 
     <div class="docs-layout">
-        <aside class="sidebar">
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Table of Contents">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            Table of Contents
+        </button>
+
+        <aside class="sidebar" id="docs-sidebar">
             <div class="sidebar-section">
                 <h4>Getting Started</h4>
                 <a href="#installation" class="active">Installation</a>
                 <a href="#quick-start">Quick Start</a>
-                <a href="#project-structure">Project Structure</a>
+                <a href="#packages">Which Package?</a>
             </div>
             <div class="sidebar-section">
                 <h4>Core Concepts</h4>
-                <a href="#how-it-works">How It Works</a>
-                <a href="#budget-engine">Budget Engine</a>
-                <a href="#tens-ir">TENS Binary IR</a>
-                <a href="#tens-text">TENS-Text Format</a>
-                <a href="#format-selection">Format Auto-Selection</a>
-                <a href="#token-counting">Token Counting</a>
+                <a href="#pipeline">The Pipeline</a>
+                <a href="#format-hierarchy">Format Hierarchy</a>
+                <a href="#contex-compact">Contex Compact</a>
+                <a href="#tens-text-format">TENS-Text</a>
+                <a href="#output-formats">All Output Formats</a>
+                <a href="#determinism">Determinism & Caching</a>
             </div>
             <div class="sidebar-section">
                 <h4>SDK Middleware</h4>
-                <a href="#openai-middleware">OpenAI Integration</a>
-                <a href="#anthropic-middleware">Anthropic Integration</a>
+                <a href="#openai">OpenAI</a>
+                <a href="#anthropic">Anthropic</a>
+                <a href="#gemini">Gemini</a>
                 <a href="#placeholder-syntax">Placeholder Syntax</a>
             </div>
             <div class="sidebar-section">
+                <h4>Adapters</h4>
+                <a href="#langchain">LangChain</a>
+                <a href="#llamaindex">LlamaIndex</a>
+            </div>
+            <div class="sidebar-section">
                 <h4>API Reference</h4>
-                <a href="#contex-class">Contex Class</a>
-                <a href="#model-registry">Model Registry</a>
-                <a href="#context-storage">Context Storage</a>
-                <a href="#tens-encoder">TENS Encoder/Decoder</a>
+                <a href="#tens-api">Tens Class</a>
+                <a href="#format-output">formatOutput()</a>
+                <a href="#token-memory">TokenMemory</a>
+                <a href="#engine">@contex/engine</a>
             </div>
             <div class="sidebar-section">
-                <h4>Advanced</h4>
-                <a href="#prefix-caching">Prefix Caching</a>
-                <a href="#custom-models">Custom Models</a>
-                <a href="#benchmark-suite">Benchmark Suite</a>
-                <a href="#methodology">Methodology</a>
+                <h4>CLI</h4>
+                <a href="#cli-commands">Commands</a>
             </div>
             <div class="sidebar-section">
-                <h4>Moat Features</h4>
-                <a href="#dedup-cache">Cross-Session Dedup</a>
-                <a href="#predictive-packer">Predictive Packer</a>
-                <a href="#pretokenized-blocks">Pre-Tokenized Blocks</a>
+                <h4>Strategy</h4>
+                <a href="#when-to-use">When to Use Contex</a>
+                <a href="#when-not">When NOT to Use</a>
+                <a href="#migration">Migration from JSON</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Results</h4>
+                <a href="#benchmarks">Benchmarks</a>
+                <a href="#architecture">Architecture</a>
             </div>
         </aside>
 
         <main class="docs-content">
             <h1>Contex Documentation</h1>
-            <p>A structured execution engine for LLMs. 59% fewer tokens. 6.8x faster decoding. Zero information loss.
-            </p>
+            <p>Contex is an intelligent context engine for LLMs. It stores structured data as canonical IR (TENS) and
+                serves it in the most token-efficient format — <strong>Contex Compact</strong> — saving
+                <strong>40-94% of context window costs</strong>.</p>
 
-            <!-- Installation -->
+            <!-- ═══════════════ GETTING STARTED ═══════════════ -->
+
             <h2 id="installation">Installation</h2>
 
             <h3>Package Manager</h3>
-            <pre>pnpm add @contex/core @contex/engine</pre>
-            <pre>npm install @contex/core @contex/engine</pre>
-            <pre>yarn add @contex/core @contex/engine</pre>
+            <pre>pnpm add @contex/core @contex/middleware</pre>
 
-            <h3>With SDK Middleware (recommended)</h3>
+            <h3>With Engine (cost analysis, auto-selection)</h3>
             <pre>pnpm add @contex/core @contex/engine @contex/middleware</pre>
 
+            <h3>CLI (Optional)</h3>
+            <pre>pnpm add -g @contex/cli</pre>
+
             <div class="callout info">
-                <strong>Requirements:</strong> Node.js 18+ · TypeScript 5+ (optional but recommended)
+                <strong>Requirements:</strong> Node.js 18+ · TypeScript 5+
             </div>
 
-            <!-- Quick Start -->
-            <h2 id="quick-start">Quick Start</h2>
+            <hr class="divider">
 
-            <h3>1. Analyze with CLI</h3>
-            <pre># Inspect savings potential
-npx contex savings data.json
+            <h2 id="quick-start">Quick Start — 3 Lines</h2>
 
-# Output:
-#   Original:  22,000 tokens
-#   Contex:    14,205 tokens (-35%)</pre>
+            <h3>1. Encode Your Data</h3>
+            <pre>import { Tens } from '@contex/core';
 
-            <h3>2. Materialize Tokens</h3>
-            <pre># Pre-compute tokens for specific model
-npx contex materialize data.json --model gpt-4o</pre>
+const tens = Tens.encode([
+  { id: 1, name: 'Alice', role: 'admin', city: 'New York' },
+  { id: 2, name: 'Bob', role: 'user', city: 'New York' },
+  { id: 3, name: 'Charlie', role: 'admin', city: 'London' },
+]);</pre>
 
-            <h3>3. Inject via Middleware</h3>
+            <h3>2. Get Optimized Output</h3>
+            <pre>// Default: Contex Compact (recommended — best token savings)
+const text = tens.toString();
+// → n	r	c
+//   @f	n=name	r=role	c=city
+//   @d	New York	admin
+//   Alice	@1	@0
+//   Bob	user	@0
+//   Charlie	@1	London
+
+// Or materialize as token IDs for direct injection
+const tokens = tens.materialize('gpt-4o');</pre>
+
+            <h3>3. Use Middleware (Recommended)</h3>
             <pre>import { createContexOpenAI } from '@contex/middleware';
 
-// Wrap your client
 const client = createContexOpenAI(new OpenAI(), {
-  data: { 
-    users: myUserData // Injects as {{CONTEX:users}}
-  }
+  data: { users: myUserData }
 });
 
-// Use in prompt
 await client.chat.completions.create({
   model: 'gpt-4o',
   messages: [{ role: 'user', content: 'Analyze {{CONTEX:users}}' }]
 });</pre>
 
-            <!-- Project Structure -->
-            <h2 id="project-structure">Project Structure</h2>
-            <pre>@contex/
-├── core/           # Format engine: TENS, tokenizer, formatters
-├── engine/         # Context brain: budget, caching, storage
-├── middleware/     # OpenAI + Anthropic SDK interceptors
-├── cli/            # Benchmark suite + CLI tools
-├── server/         # REST API (Hono + Zod)
-└── tens-wasm/      # Rust-based TENS encoder (experimental)</pre>
-
             <div class="callout tip">
-                <strong>Tip:</strong> Most users only need <code>@contex/engine</code> +
-                <code>@contex/middleware</code>. The engine re-exports everything from core.
+                <strong>Result:</strong> 40-94% token reduction, deterministic output (100% cache hit rate), faster responses.
             </div>
 
-            <!-- How It Works -->
-            <h2 id="how-it-works">How It Works</h2>
-            <p>Contex solves the "60% structural waste" problem in LLM context windows. JSON repeats keys, braces, and
-                quotes for every row. At 1,000 rows, this wastes ~35,000 tokens — tokens you're paying for.</p>
+            <hr class="divider">
 
-            <h3>The Pipeline</h3>
-            <ol>
-                <li><strong>Ingest:</strong> Store structured data via <code>ctx.insert(collection, rows)</code></li>
-                <li><strong>Budget:</strong> Calculate available tokens after system prompt, reserves, and response
-                    budget</li>
-                <li><strong>Format Trial:</strong> Serialize data in all candidate formats and count tokens with the
-                    model's actual tokenizer</li>
-                <li><strong>Select:</strong> Pick the format with the fewest tokens that fits the budget</li>
-                <li><strong>Row Fitting:</strong> Binary search for maximum rows that fit</li>
-                <li><strong>Emit:</strong> Return the packed string ready for prompt injection</li>
-            </ol>
+            <h2 id="packages">Which Package Do I Need?</h2>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th>When to Use</th>
+                        <th>Key APIs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>@contex/core</code></td>
+                        <td>Most users — encoding, formatting, tokenization</td>
+                        <td><code>Tens</code>, <code>formatOutput</code>, <code>TokenMemory</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>@contex/engine</code></td>
+                        <td>Budget analysis, auto format selection, multi-model</td>
+                        <td><code>quick()</code>, <code>selectBestFormat()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>@contex/middleware</code></td>
+                        <td>Drop-in SDK integration (OpenAI, Anthropic, Gemini)</td>
+                        <td><code>createContexOpenAI()</code>, <code>createContexAnthropic()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>@contex/cli</code></td>
+                        <td>CLI tools, benchmarking, analysis</td>
+                        <td><code>contex analyze</code>, <code>contex bench</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>@contex/adapters</code></td>
+                        <td>LangChain / LlamaIndex integration</td>
+                        <td><code>ContexCallbackHandler</code>, <code>ContexNodePostprocessor</code></td>
+                    </tr>
+                </tbody>
+            </table>
 
-            <p>The key insight: <strong>token counts vary per tokenizer</strong>. CSV might beat Markdown on GPT-4o but
-                lose on Claude. Contex tests every format against the actual model's tokenizer to find the true optimum.
-            </p>
+            <!-- ═══════════════ CORE CONCEPTS ═══════════════ -->
 
-            <!-- Budget Engine -->
-            <h2 id="budget-engine">Budget Engine</h2>
-            <p>The budget engine calculates the maximum data that fits into a model's context window.</p>
+            <hr class="divider">
 
-            <pre>const budget = ctx.calculateBudget('gpt-4o', {
-  maxContextTokens: 128000,  // Model's max context
-  systemPromptTokens: 800,   // Your system prompt
-  reserveTokens: 2000,       // Response buffer
-  existingContentTokens: 0,  // Already-used context
+            <h2 id="pipeline">The Pipeline</h2>
+            <p>Contex solves two problems: <strong>token waste</strong> (JSON syntax overhead consumes 30-60% of tokens)
+                and <strong>non-deterministic tokenization</strong> (same data producing different tokens, breaking prefix cache).</p>
+
+            <div class="format-pipeline">Your Data (JSON)
+    │
+    ▼
+Tens.encode()  →  TENS Binary (Uint8Array)
+                    │  Canonical IR — model-agnostic
+                    │  SHA-256 content hash for dedup
+                    │  Never sent to LLMs directly
+                    │
+    ┌───────────────┼───────────────────┐
+    ▼               ▼                   ▼
+Contex Compact    TENS-Text (.tens)    Token Array
+tens.toString()   formatOutput(        tens.materialize(
+                    data,'tens-text')    'gpt-4o')
+
+│                 │                     │
+▼                 ▼                     ▼
+SEND TO LLM      DEBUG / INSPECT      DIRECT TOKEN
+@d, @f, tabs     @dict, @schema       INJECTION
+40-94% savings   Human-readable       Raw token IDs</div>
+
+            <div class="callout warn">
+                <strong>Key insight:</strong> TENS, TENS-Text, and Contex Compact are <em>different layers</em> of the same pipeline, not competing formats.
+                TENS Binary is the internal IR. TENS-Text is for human debugging. <strong>Contex Compact is what you send to LLMs.</strong>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="format-hierarchy">Format Hierarchy — Why Three "Formats"?</h2>
+
+            <p>Think of it like a compiler:</p>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Traditional Compiler</th>
+                        <th>Contex Pipeline</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Source code</td>
+                        <td>Your JSON data</td>
+                    </tr>
+                    <tr>
+                        <td>Object files (.o)</td>
+                        <td>TENS Binary (Uint8Array, SHA-256 hash)</td>
+                    </tr>
+                    <tr>
+                        <td>Assembly listing</td>
+                        <td>TENS-Text (.tens) — human-readable IR</td>
+                    </tr>
+                    <tr>
+                        <td>Optimized executable</td>
+                        <td><strong>Contex Compact</strong> — optimized LLM output</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="grid-2">
+                <div class="format-card">
+                    <h4>TENS Binary <span class="tag tag-internal">Internal</span></h4>
+                    <p>Canonical Intermediate Representation. <code>Uint8Array</code> with SHA-256 content hash.</p>
+                    <p>Used for: storage, deduplication, caching. You never see this directly.</p>
+                    <pre>const tens = Tens.encode(data);
+tens.ir;   // Uint8Array
+tens.hash; // "abc123..."</pre>
+                </div>
+                <div class="format-card">
+                    <h4>TENS-Text (.tens) <span class="tag tag-debug">Debug</span></h4>
+                    <p>Human-readable serialization of TENS. Uses <code>@dict</code>, <code>@schema</code>, <code>@version</code>.</p>
+                    <p>Used for: debugging, inspection, version control diffs.</p>
+                    <pre>formatOutput(data, 'tens-text');
+// @version 1
+// @schema row name:str age:num
+// row
+//   name Alice
+//   age 30</pre>
+                </div>
+            </div>
+
+            <div class="format-card">
+                <h4>Contex Compact <span class="tag tag-default">Default — Send to LLMs</span></h4>
+                <p>The ultra-efficient output format. Uses <code>@d</code> (dictionary), <code>@f</code> (field map). Tab-separated, no brackets, no quotes.</p>
+                <p><strong>This is what you send to LLMs.</strong> 40-94% token savings vs JSON.</p>
+                <pre>tens.toString(); // or formatOutput(data, 'contex')
+// n	r	c
+// @f	n=name	r=role	c=city
+// @d	New York	admin
+// Alice	@1	@0
+// Bob	user	@0
+// Charlie	@1	London</pre>
+            </div>
+
+            <div class="callout info">
+                <strong>Why different directive names?</strong> Contex Compact uses short directives (<code>@d</code>, <code>@f</code>) because every character costs tokens in LLM context.
+                TENS-Text uses full names (<code>@dict</code>, <code>@schema</code>) because it's for human reading. Different formats, different audiences.
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="contex-compact">Contex Compact — Deep Dive</h2>
+
+            <p>Contex Compact applies <strong>11 optimizations</strong> to squeeze maximum value from every token:</p>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Optimization</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>Deep flattening</td><td><code>user.address.city</code> → dot-notation keys</td></tr>
+                    <tr><td>2</td><td>Field name compression</td><td><code>customer_shipping_address</code> → <code>c</code></td></tr>
+                    <tr><td>3</td><td>Tab-separated schema</td><td>Schema declared once in header row</td></tr>
+                    <tr><td>4</td><td>Dictionary compression</td><td>Repeated values → <code>@0</code>, <code>@1</code>, ...</td></tr>
+                    <tr><td>5</td><td>Numeric dictionary</td><td>Repeated numbers (3+ chars) → <code>@N</code></td></tr>
+                    <tr><td>6</td><td>Boolean abbreviation</td><td><code>true</code> → <code>T</code>, <code>false</code> → <code>F</code></td></tr>
+                    <tr><td>7</td><td>Null abbreviation</td><td><code>null</code> / empty → <code>_</code></td></tr>
+                    <tr><td>8</td><td>Integer shortening</td><td><code>42.0</code> → <code>42</code></td></tr>
+                    <tr><td>9</td><td>Array compaction</td><td><code>[a, b, c]</code> → <code>a b c</code></td></tr>
+                    <tr><td>10</td><td>Sparse mode</td><td>&gt;50% nulls → only non-null values with indices</td></tr>
+                    <tr><td>11</td><td>No syntax overhead</td><td>No brackets, quotes, colons, or commas</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Before & After</h3>
+            <pre>// JSON (139 tokens)
+[{"id":1,"name":"Alice","role":"admin","city":"New York"},
+ {"id":2,"name":"Bob","role":"user","city":"New York"},
+ {"id":3,"name":"Charlie","role":"admin","city":"London"}]
+
+// Contex Compact (58 tokens — 58% savings)
+i	n	r	c
+@f	i=id	n=name	r=role	c=city
+@d	New York	admin
+1	Alice	@1	@0
+2	Bob	user	@0
+3	Charlie	@1	London</pre>
+
+            <hr class="divider">
+
+            <h2 id="tens-text-format">TENS-Text (.tens)</h2>
+            <p>The human-readable serialization of the TENS binary IR. Lossless 1:1 roundtrip with TENS Binary.</p>
+            <p>Full documentation: <a href="./tens-text.html">TENS-Text Reference →</a></p>
+
+            <pre>import { formatOutput } from '@contex/core';
+
+const tensText = formatOutput(data, 'tens-text');
+// @version 1
+// @encoding o200k_base
+// @schema row name:str age:num city:str
+// @dict New York
+// row
+//   name Alice
+//   age 30
+//   city @0</pre>
+
+            <div class="callout info">
+                <strong>When to use TENS-Text:</strong> Debugging your pipeline, inspecting what the IR contains, storing human-readable snapshots, version control diffs.
+                <strong>Don't send this to LLMs</strong> — use Contex Compact instead.
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="output-formats">All Output Formats</h2>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Format</th>
+                        <th>Code</th>
+                        <th>Best For</th>
+                        <th>Avg Savings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Contex Compact</strong></td>
+                        <td><code>'contex'</code></td>
+                        <td>Everything — best overall for LLMs</td>
+                        <td class="saving">43%</td>
+                    </tr>
+                    <tr>
+                        <td>TOON</td>
+                        <td><code>'toon'</code></td>
+                        <td>Simple tabular (no dictionary)</td>
+                        <td>~25%</td>
+                    </tr>
+                    <tr>
+                        <td>CSV</td>
+                        <td><code>'csv'</code></td>
+                        <td>Flat tabular data</td>
+                        <td>~38%</td>
+                    </tr>
+                    <tr>
+                        <td>Markdown</td>
+                        <td><code>'markdown'</code></td>
+                        <td>Human-readable reports</td>
+                        <td>~6%</td>
+                    </tr>
+                    <tr>
+                        <td>JSON</td>
+                        <td><code>'json'</code></td>
+                        <td>Baseline / compatibility</td>
+                        <td>0%</td>
+                    </tr>
+                    <tr>
+                        <td>TENS-Text</td>
+                        <td><code>'tens-text'</code></td>
+                        <td>Debugging / inspection</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>Tokens</td>
+                        <td><code>'tokens'</code></td>
+                        <td>Direct token injection</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <pre>import { formatOutput } from '@contex/core';
+
+const compact = formatOutput(data, 'contex');   // Best overall
+const csv     = formatOutput(data, 'csv');       // Flat data
+const toon    = formatOutput(data, 'toon');      // Simple tabular
+const md      = formatOutput(data, 'markdown');  // Reports
+const json    = formatOutput(data, 'json');      // Baseline
+
+// Or use Tens for default Contex Compact
+const tens = Tens.encode(data);
+const text = tens.toString(); // Always Contex Compact</pre>
+
+            <hr class="divider">
+
+            <h2 id="determinism">Determinism & Caching</h2>
+            <p>Contex guarantees <strong>deterministic output</strong> — critical for LLM prefix caching (providers like OpenAI and Anthropic cache by token prefix).</p>
+
+            <pre>// Different input key order → same output
+const data1 = [{ b: 1, a: 2 }];
+const data2 = [{ a: 2, b: 1 }];
+
+Tens.encode(data1).toString() === Tens.encode(data2).toString();
+// → true (same hash, same cache key)</pre>
+
+            <p>This means: if you encode the same data twice, you get the same tokens. Prefix caching just works.</p>
+
+            <!-- ═══════════════ SDK MIDDLEWARE ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="openai">OpenAI Middleware</h2>
+            <pre>import OpenAI from 'openai';
+import { createContexOpenAI } from '@contex/middleware';
+
+const client = createContexOpenAI(new OpenAI(), {
+  data: { tickets: ticketData }
 });
 
-// budget.availableTokens → 125,200
-// budget.maxRows → 5,240 (in TENS format)</pre>
+const response = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [
+    { role: 'system', content: 'You are a support agent.' },
+    { role: 'user', content: 'Summarize {{CONTEX:tickets}}' }
+  ]
+});</pre>
 
-            <h3>Model Awareness</h3>
-            <p>The budget engine knows each model's pricing, context window, and tokenizer. It uses this to calculate
-                cost projections and optimal format selection.</p>
+            <h2 id="anthropic">Anthropic Middleware</h2>
+            <p>Contex automatically adds <code>cache_control</code> breakpoints for Anthropic's prompt caching.</p>
+            <pre>import Anthropic from '@anthropic-ai/sdk';
+import { createContexAnthropic } from '@contex/middleware';
 
-            <pre>ctx.getModelInfo('gpt-4o');
-// {
-//   maxContext: 128000,
-//   inputPrice: 2.50,     // per 1M tokens
-//   outputPrice: 10.00,
-//   encoding: 'o200k_base'
-// }</pre>
+const client = createContexAnthropic(new Anthropic(), {
+  data: { context: kbData }
+});
 
-            <!-- TENS IR -->
-            <h2 id="tens-ir">TENS Binary IR</h2>
-            <p><strong>TENS</strong> (Token Encoded Native Structure) is the canonical internal representation. It's not
-                a transport format — it's an LLM-aware structural IR.</p>
+const message = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Answer using {{CONTEX:context}}' }]
+});</pre>
 
-            <h3>Why Not MessagePack / Protobuf / CBOR?</h3>
-            <p>Those are <em>transport</em> formats designed for machine-to-machine communication. They optimize for
-                byte size, not token count. LLMs don't parse bytes — they read tokens. A format that's 50% smaller in
-                bytes might use the <em>same</em> number of tokens.</p>
+            <h2 id="gemini">Gemini Middleware</h2>
+            <pre>import { createContexGemini } from '@contex/middleware';
 
-            <h3>TENS Design Principles</h3>
-            <ul>
-                <li><strong>Schema deduplication:</strong> Column names defined once, not per row</li>
-                <li><strong>Positional values:</strong> Fields identified by position, not by string key</li>
-                <li><strong>Sorted keys:</strong> Deterministic ordering → identical output → KV cache hits</li>
-                <li><strong>Binary IR:</strong> 233K encode, 870K decode ops/sec. Direct memory mapping.</li>
-            </ul>
+const client = createContexGemini(genai, {
+  data: { documents: docsData }
+});
 
-            <h3>Performance</h3>
-            <table class="benchmark-table" style="max-width: 500px;">
+const result = await client.models.generateContent({
+  model: 'gemini-2.5-flash',
+  contents: 'Summarize {{CONTEX:documents}}'
+});</pre>
+
+            <h2 id="placeholder-syntax">Placeholder Syntax</h2>
+            <pre>{{CONTEX:key}}                    // Basic — replaced with Contex Compact output
+{{CONTEX:key:maxRows=100}}       // Limit rows
+{{CONTEX:key:format=csv}}        // Force specific format</pre>
+
+            <div class="callout tip">
+                <strong>How it works:</strong> The middleware intercepts your API call, finds <code>{{CONTEX:...}}</code> placeholders,
+                replaces them with optimized Contex Compact output, then forwards to the provider.
+            </div>
+
+            <!-- ═══════════════ ADAPTERS ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="langchain">LangChain Adapter</h2>
+            <pre>import { ContexCallbackHandler } from '@contex/adapters';
+
+const handler = new ContexCallbackHandler({
+  data: { docs: myDocs },
+  format: 'contex'  // Default
+});
+
+// Use with any LangChain chain
+const chain = new LLMChain({ llm, prompt });
+const result = await chain.call(
+  { input: 'Analyze {{CONTEX:docs}}' },
+  [handler]
+);</pre>
+
+            <h2 id="llamaindex">LlamaIndex Adapter</h2>
+            <pre>import { ContexNodePostprocessor } from '@contex/adapters';
+
+const postprocessor = new ContexNodePostprocessor({
+  format: 'contex'
+});
+
+// Use with LlamaIndex query engine
+const engine = index.asQueryEngine({
+  nodePostprocessors: [postprocessor]
+});</pre>
+
+            <!-- ═══════════════ API REFERENCE ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="tens-api">Tens Class</h2>
+            <pre>import { Tens } from '@contex/core';
+
+// Encode data → TENS Binary
+const tens = Tens.encode(data);
+
+// Get optimized text (Contex Compact)
+const text = tens.toString();
+
+// Materialize as token IDs for a specific model
+const result = tens.materialize('gpt-4o');
+console.log(result.tokenCount);
+
+// Content hash (for caching/dedup)
+const hash = tens.hash; // SHA-256</pre>
+
+            <h2 id="format-output">formatOutput()</h2>
+            <pre>import { formatOutput } from '@contex/core';
+
+// Format to any output format
+const contex   = formatOutput(data, 'contex');    // Contex Compact
+const tensText = formatOutput(data, 'tens-text'); // TENS-Text
+const csv      = formatOutput(data, 'csv');
+const toon     = formatOutput(data, 'toon');
+const md       = formatOutput(data, 'markdown');
+const json     = formatOutput(data, 'json');
+
+// Input validation: handles null, undefined, non-array gracefully
+formatOutput(null, 'contex');    // → ''
+formatOutput([], 'contex');      // → ''</pre>
+
+            <h2 id="token-memory">TokenMemory</h2>
+            <pre>import { TokenMemory } from '@contex/core';
+
+const memory = new TokenMemory('./.contex');
+
+// Store and cache
+const { hash } = memory.store(data);
+const tokens = memory.materializeAndCache(hash, 'gpt-4o');
+
+// Retrieve cached tokens (instant)
+const cached = memory.getCached(hash, 'gpt-4o');</pre>
+
+            <h2 id="engine">@contex/engine</h2>
+            <pre>import { quick, selectBestFormat } from '@contex/engine';
+
+// One-shot encode + materialize
+const result = quick(data, 'gpt-4o');
+console.log(result.tokens);
+console.log(result.asText());
+
+// Auto-select best format for data + model
+const decision = selectBestFormat({ model: 'gpt-4o', data });
+// → { format: 'contex', reason: '...', estimatedSavings: 0.45 }</pre>
+
+            <!-- ═══════════════ CLI ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="cli-commands">CLI Commands</h2>
+            <pre># Analyze savings across formats
+contex analyze data.json --model gpt-4o
+
+# Check estimated token savings
+contex savings data.json
+
+# Materialize tokens (creates .contex/ cache)
+contex materialize data.json --model gpt-4o
+
+# Inject into prompt template
+contex inject template.txt --data data.json
+
+# Run benchmark suite
+contex bench
+
+# Cache diagnostics
+contex cache-diagnose
+contex cache-stats
+contex cache-warm data.json --model gpt-4o</pre>
+
+            <!-- ═══════════════ STRATEGY ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="when-to-use">When to Use Contex</h2>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Contex Savings</th>
+                        <th>Verdict</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Repetitive structured data (DB records, API responses)</td>
+                        <td class="saving">60-94%</td>
+                        <td>Use Contex</td>
+                    </tr>
+                    <tr>
+                        <td>Deeply nested objects</td>
+                        <td class="saving">80-94%</td>
+                        <td>Use Contex (flattening wins big)</td>
+                    </tr>
+                    <tr>
+                        <td>Large datasets (100+ rows)</td>
+                        <td class="saving">50-80%</td>
+                        <td>Use Contex</td>
+                    </tr>
+                    <tr>
+                        <td>Flat tabular with stable columns</td>
+                        <td>~38%</td>
+                        <td>Contex or CSV both work</td>
+                    </tr>
+                    <tr>
+                        <td>Need deterministic cache hits</td>
+                        <td>—</td>
+                        <td>Use Contex (only option with determinism)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 id="when-not">When NOT to Use Contex</h2>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Free-text / unstructured data</td>
+                        <td>Pass as-is (no structure to optimize)</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;5 rows of data</td>
+                        <td>JSON is fine (overhead of headers not worth it)</td>
+                    </tr>
+                    <tr>
+                        <td>&gt;80% sparse (mostly nulls)</td>
+                        <td>JSON may be simpler (Contex sparse mode helps but limited)</td>
+                    </tr>
+                    <tr>
+                        <td>LLM needs to parse structured output</td>
+                        <td>Use JSON (LLMs parse JSON natively)</td>
+                    </tr>
+                    <tr>
+                        <td>All values are unique strings</td>
+                        <td>CSV (no dictionary compression opportunity)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 id="migration">Migration from JSON</h2>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>JSON</th>
+                        <th>Contex</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Token usage</td>
+                        <td>100% (baseline)</td>
+                        <td class="saving">57-60%</td>
+                    </tr>
+                    <tr>
+                        <td>Cache hits</td>
+                        <td>None</td>
+                        <td>100% deterministic</td>
+                    </tr>
+                    <tr>
+                        <td>Cost per 1M tokens</td>
+                        <td>$10</td>
+                        <td>$4-6</td>
+                    </tr>
+                    <tr>
+                        <td>Setup effort</td>
+                        <td>None</td>
+                        <td>3 lines</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <pre>// Before: Raw JSON in prompt
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{
+    role: 'user',
+    content: `Data: ${JSON.stringify(myData)}\n\nAnalyze this.`
+  }]
+});
+
+// After: Contex middleware (3-line change)
+import { createContexOpenAI } from '@contex/middleware';
+
+const client = createContexOpenAI(openai, { data: { context: myData } });
+
+const response = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{
+    role: 'user',
+    content: 'Data: {{CONTEX:context}}\n\nAnalyze this.'
+  }]
+});</pre>
+
+            <!-- ═══════════════ BENCHMARKS ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="benchmarks">Benchmark Results</h2>
+            <p>Benchmark v7 — 15 dataset types, 36/36 tests passing, 20/20 data fidelity.</p>
+
+            <table class="benchmark-table">
                 <thead>
                     <tr>
                         <th>Metric</th>
                         <th>Value</th>
-                        <th>vs JSON</th>
+                        <th>Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Encoding</td>
-                        <td class="mono">233,000 ops/s</td>
-                        <td class="saving">4.2x faster</td>
+                        <td>Avg Pipeline Savings</td>
+                        <td class="saving">43%</td>
+                        <td>Across 15 dataset types</td>
                     </tr>
                     <tr>
-                        <td>Decoding</td>
-                        <td class="mono">870,610 ops/s</td>
-                        <td class="saving">6.8x faster</td>
+                        <td>Best (DeepNested)</td>
+                        <td class="saving">94%</td>
+                        <td>Format-level savings</td>
                     </tr>
                     <tr>
-                        <td>Payload</td>
-                        <td class="mono">59,637 B</td>
-                        <td class="saving">-76.8%</td>
+                        <td>RealWorld Data</td>
+                        <td class="saving">68%</td>
+                        <td>Production-like ticket data</td>
                     </tr>
                     <tr>
-                        <td>Memory</td>
-                        <td class="mono">12 MB</td>
-                        <td class="saving">-74%</td>
+                        <td>Data Fidelity</td>
+                        <td class="saving">20/20</td>
+                        <td>100% roundtrip accuracy</td>
+                    </tr>
+                    <tr>
+                        <td>Edge-Case Tests</td>
+                        <td class="saving">47/47</td>
+                        <td>Nested, unicode, sparse, crash safety</td>
                     </tr>
                 </tbody>
             </table>
 
-            <!-- TENS-Text -->
-            <h2 id="tens-text">TENS-Text Format</h2>
-            <p><strong>TENS-Text</strong> (<code>.tens</code> files) is a lossless, human-readable text format that maps
-                1:1 to TENS binary. Use it for debugging, inspecting data, or any workflow where human readability
-                matters.</p>
+            <p><a href="./benchmarks.html">Full interactive benchmark results →</a></p>
 
-            <h3>Key Properties</h3>
-            <ul>
-                <li><strong>Indentation-based:</strong> 2-space indent for field lines, no brackets or commas</li>
-                <li><strong>Schema dedup:</strong> <code>@schema</code> directive defines fields once — not repeated per
-                    row</li>
-                <li><strong>Dictionary compression:</strong> <code>@dict</code> stores repeated strings, referenced as
-                    <code>@0</code>, <code>@1</code>, etc.
-                </li>
-                <li><strong>Array via repetition:</strong> Same field name repeated = array, no <code>[]</code> syntax
-                    in data</li>
-                <li><strong>Type-directed parsing:</strong> Schema types prevent accidental coercion
-                    (<code>str</code>-typed <code>42</code> stays string)</li>
-                <li><strong>Deterministic:</strong> Same input → identical bytes → prefix cache friendly</li>
-            </ul>
+            <hr class="divider">
 
-            <h3>Example</h3>
-            <pre>@version 1
-@encoding o200k_base
-@schema ticket id:num title:str status:str tag:str[]
-
-@dict open closed
-
-ticket
-  id 1
-  title "Bug in auth"
-  status @0
-  tag security
-  tag backend
-ticket
-  id 2
-  title "UI polish"
-  status @1</pre>
-
-            <h3>Programmatic Usage</h3>
-            <pre>import { TensTextEncoder, TensTextDecoder } from '@contex/core';
-
-// Encode → human-readable text
-const encoder = new TensTextEncoder('o200k_base');
-const text = encoder.encode(data, 'ticket');
-
-// Decode → lossless roundtrip
-const decoder = new TensTextDecoder();
-const { data: restored } = decoder.decode(text);</pre>
+            <h2 id="architecture">Architecture</h2>
+            <pre>@contex/
+├── core/           # Tens encoder, IR, formatters, tokenization
+├── engine/         # Budget engine, quick() API, model registry
+├── middleware/     # OpenAI, Anthropic, Gemini SDK wrappers
+├── cli/            # CLI tools, benchmarks
+├── adapters/       # LangChain & LlamaIndex integration
+├── server/         # REST API server
+└── tens-wasm/      # Rust/WASM encoder (future)</pre>
 
             <div class="callout info">
-                <strong>Specification:</strong> See the full formal grammar (EBNF), type system, error handling
-                behavior, and design rationale in the <a
-                    href="https://github.com/contex/contex/blob/main/docs/tens-specification.md#63-tens-text-language-specification-tens"
-                    style="color: var(--accent-blue);">TENS-Text Language Specification §6.3</a>.
+                <strong>More detailed docs (Markdown):</strong>
+                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/architecture.md">Architecture Deep Dive</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/tens-specification.md">TENS Specification</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/guide/examples.md">Examples</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/guide/migration-from-json.md">Migration Guide</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/reference/formats.md">Format Reference</a>
             </div>
 
-            <!-- Format Selection -->
-            <h2 id="format-selection">Format Auto-Selection</h2>
-            <p>Contex doesn't commit to a single format. It evaluates 10 formats against the target model's tokenizer
-                and picks the winner.</p>
-
-            <h3>Supported Formats</h3>
-            <ul>
-                <li><strong>TENS</strong> — Positional token-stream (usually wins, -59%)</li>
-                <li><strong>CSV</strong> — Good for homogeneous tabular data (-31%)</li>
-                <li><strong>TOON</strong> — Tab-delimited object notation (-32%)</li>
-                <li><strong>Markdown</strong> — Table format (-24%)</li>
-                <li><strong>JSON</strong> — Fallback when structure is irregular</li>
-                <li><strong>NDJSON / JSON-Pretty / XML / YAML</strong> — Never selected (worse than JSON)</li>
-            </ul>
-
-            <!-- Token Counting -->
-            <h2 id="token-counting">Token Counting</h2>
-            <p>Contex uses <code>tiktoken</code> for exact token counting — the same library OpenAI uses.</p>
-
-            <pre>import { TokenizerManager } from '@contex/core';
-
-const tokenizer = new TokenizerManager('o200k_base');
-const count = tokenizer.countTokens('Hello, world!');
-// count → 4</pre>
-
-            <div class="callout warn">
-                <strong>Important:</strong> Token counts differ between encodings. <code>o200k_base</code> (GPT-4o) and
-                <code>cl100k_base</code> (Claude/Gemini) produce different counts for the same text. Contex handles this
-                automatically based on the target model.
-            </div>
-
-            <!-- OpenAI Middleware -->
-            <h2 id="openai-middleware">OpenAI Middleware</h2>
-            <p>Drop-in interceptor that replaces <code>{{CONTEX:collection}}</code> placeholders with budget-optimized
-                data.</p>
-
-            <pre>import OpenAI from 'openai';
-import { Contex } from '@contex/engine';
-import { createOpenAIMiddleware } from '@contex/middleware';
-
-const ctx = new Contex();
-const openai = new OpenAI();
-
-// Store data
-await ctx.insert('tickets', ticketData);
-
-// Create middleware
-const middleware = createOpenAIMiddleware(ctx, openai);
-
-// Use placeholders — middleware replaces them automatically
-const response = await middleware.chat({
-  model: 'gpt-4o',
-  messages: [
-    { role: 'system', content: 'You are a support analyst.' },
-    {
-      role: 'user',
-      content: 'Here are the open tickets:\n{{CONTEX:tickets}}\n\nSummarize the critical ones.',
-    },
-  ],
-});
-
-// Under the hood:
-// 1. Detected model is 'gpt-4o' (128K context, o200k_base encoding)
-// 2. Calculated token budget after system prompt
-// 3. Tried 10 formats, TENS won (-59% vs JSON)
-// 4. Binary-searched for max rows that fit
-// 5. Replaced {{CONTEX:tickets}} with packed TENS output
-// 6. Forwarded to OpenAI API normally</pre>
-
-            <!-- Anthropic Middleware -->
-            <h2 id="anthropic-middleware">Anthropic Middleware</h2>
-            <pre>import Anthropic from '@anthropic-ai/sdk';
-import { Contex } from '@contex/engine';
-import { createAnthropicMiddleware } from '@contex/middleware';
-
-const ctx = new Contex();
-const anthropic = new Anthropic();
-
-await ctx.insert('orders', orderData);
-
-const middleware = createAnthropicMiddleware(ctx, anthropic);
-
-const response = await middleware.messages.create({
-  model: 'claude-4-sonnet',
-  max_tokens: 4096,
-  messages: [
-    {
-      role: 'user',
-      content: 'Analyze these orders:\n{{CONTEX:orders}}\n\nFind anomalies.',
-    },
-  ],
-});
-</pre>
-
-            <!-- Gemini Middleware -->
-            <h2 id="gemini-middleware">Gemini Middleware</h2>
-            <pre>import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Contex } from '@contex/engine';
-import { createContexGemini } from '@contex/middleware';
-
-const ctx = new Contex();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-
-// Create middleware wrapper around specific model
-const model = createContexGemini(
-  genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }),
-  ctx,
-  'gemini-2.0-flash'
-);
-
-// Use placeholders in prompt
-const result = await model.generateContent(
-  'Analyze these tickets: {{CONTEX:tickets}}'
-);</pre>
-            </pre>
-
-            <!-- Placeholder Syntax -->
-            <h2 id="placeholder-syntax">Placeholder Syntax</h2>
-            <pre>{{CONTEX:collection_name}}              // Basic — use all available budget
-{{CONTEX:collection_name:maxRows=100}}   // Limit to 100 rows
-{{CONTEX:collection_name:format=csv}}    // Force CSV format
-{{CONTEX:collection_name:budget=4000}}   // Custom token budget</pre>
-
-            <!-- API Reference -->
-            <h2 id="contex-class">Contex Class</h2>
-            <pre>import { Contex } from '@contex/engine';
-
-const ctx = new Contex(encoding?: string);
-
-// Data operations
-await ctx.insert(collection: string, rows: object[]);
-await ctx.get(collection: string): object[];
-await ctx.clear(collection: string);
-
-// Packing
-await ctx.packForModel(model: string, collection: string, options?: PackOptions);
-
-// Model info
-ctx.getModelInfo(model: string): ModelInfo;
-ctx.listModels(): string[];</pre>
-
-            <h3>PackOptions</h3>
-            <pre>interface PackOptions {
-  maxTokens?: number;      // Token budget for this data
-  reserveTokens?: number;  // Reserve for system prompt / response
-  format?: string;         // Force a specific format (skip auto-selection)
-  maxRows?: number;        // Maximum rows to include
-}</pre>
-
-            <!-- Model Registry -->
-            <h2 id="model-registry">Model Registry</h2>
-            <p>33 production models with verified pricing (Feb 2026), context windows, and tokenizer mappings. See <a
-                    href="https://pricepertoken.com" style="color: var(--accent-blue);">pricepertoken.com</a> for live
-                rates.</p>
-
-            <div style="overflow-x: auto;">
-                <table class="benchmark-table" style="font-size: 13px;">
-                    <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>Context</th>
-                            <th>Input $/1M</th>
-                            <th>Encoding</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>gpt-5</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$1.25</td>
-                            <td class="mono">o200k</td>
-                        </tr>
-                        <tr>
-                            <td>gpt-4o</td>
-                            <td class="mono">128K</td>
-                            <td class="mono">$2.50</td>
-                            <td class="mono">o200k</td>
-                        </tr>
-                        <tr>
-                            <td>gpt-4.1</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$2.00</td>
-                            <td class="mono">o200k</td>
-                        </tr>
-                        <tr>
-                            <td>gpt-4.1-mini</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$0.40</td>
-                            <td class="mono">o200k</td>
-                        </tr>
-                        <tr>
-                            <td>gpt-4.1-nano</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$0.10</td>
-                            <td class="mono">o200k</td>
-                        </tr>
-                        <tr>
-                            <td>claude-4.5-sonnet</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$3.00</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>claude-4.6-opus</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$5.00</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>claude-3.7-sonnet</td>
-                            <td class="mono">200K</td>
-                            <td class="mono">$3.00</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>gemini-2.5-pro</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$1.25</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>gemini-2.5-flash</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$0.30</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>llama-4-maverick</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$0.15</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>llama-4-scout</td>
-                            <td class="mono">1M</td>
-                            <td class="mono">$0.08</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>grok-3</td>
-                            <td class="mono">131K</td>
-                            <td class="mono">$3.00</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>deepseek-v3.2</td>
-                            <td class="mono">128K</td>
-                            <td class="mono">$0.28</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                        <tr>
-                            <td>mistral-large-2</td>
-                            <td class="mono">128K</td>
-                            <td class="mono">$2.00</td>
-                            <td class="mono">cl100k</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="callout tip">
-                <strong>Tip:</strong> Override pricing at runtime:
-                <code>ctx.packForModel('gpt-4o', 'data', { modelOverrides: { inputPrice: 2.00 } })</code>
-            </div>
-
-            <!-- Context Storage -->
-            <h2 id="context-storage">Context Storage</h2>
-            <p>In-memory key-value storage for collections. Designed for ephemeral context injection, not persistence.
-            </p>
-
-            <pre>await ctx.insert('users', data);          // Store
-const users = await ctx.get('users');       // Retrieve
-await ctx.clear('users');                   // Delete
-const collections = ctx.listCollections();  // List all</pre>
-
-            <!-- TENS Encoder -->
-            <h2 id="tens-encoder">TENS Encoder / Decoder</h2>
-            <pre>import { TENSEncoder, TENSDecoder } from '@contex/core';
-
-// Encode
-const encoder = new TENSEncoder();
-const binary = encoder.encode([
-  { id: 1, name: 'Alice', role: 'admin' },
-  { id: 2, name: 'Bob',   role: 'user' },
-]);
-// binary: Uint8Array (compact binary representation)
-
-// Decode
-const decoder = new TENSDecoder();
-const rows = decoder.decode(binary);
-// rows: [{ id: 1, name: 'Alice', role: 'admin' }, ...]</pre>
-
-            <!-- Prefix Caching -->
-            <h2 id="prefix-caching">Prefix Caching</h2>
-            <p>TENS produces <strong>deterministic output</strong> — same input always produces the same string. This
-                enables prefix caching on inference servers.</p>
-
-            <h3>How it works</h3>
-            <ol>
-                <li>TENS sorts keys alphabetically before serialization</li>
-                <li>Values are emitted in canonical positional order</li>
-                <li>Two calls with overlapping data produce identical prefixes</li>
-                <li>The inference server's KV cache recognizes the prefix → skips re-computation</li>
-            </ol>
-
-            <h3>Compatible Servers</h3>
-            <ul>
-                <li><strong>vLLM:</strong> Automatic prefix caching (enable with <code>--enable-prefix-caching</code>)
-                </li>
-                <li><strong>SGLang:</strong> RadixAttention — built-in prefix sharing</li>
-                <li><strong>TensorRT-LLM:</strong> KV cache reuse across requests</li>
-                <li><strong>OpenAI API:</strong> Automatic prefix caching for prompts >1024 tokens</li>
-            </ul>
-
-            <div class="callout info">
-                <strong>Impact:</strong> 40-60% latency reduction on repeated queries with overlapping context data.
-            </div>
-
-            <!-- Custom Models -->
-            <h2 id="custom-models">Custom Models</h2>
-            <p>Register your own models or fine-tunes:</p>
-            <pre>ctx.registerModel('my-fine-tune', {
-  maxContext: 32000,
-  inputPrice: 1.50,       // per 1M tokens
-  outputPrice: 4.00,
-  encoding: 'cl100k_base',
-});</pre>
-
-            <!-- Benchmark Suite -->
-            <h2 id="benchmark-suite">Running Benchmarks</h2>
-            <pre># Run the full benchmark suite
-npx tsx packages/cli/src/benchmark.ts
-
-# This generates:
-# - packages/cli/benchmark_report.html (interactive report)
-# - Terminal output with summary tables</pre>
-
-            <p>The benchmark suite tests 24 datasets across 10 formats at 6 scale tiers. All results are deterministic —
-                seeded PRNG ensures identical output across runs.</p>
-
-            <a href="./benchmarks.html" style="color: var(--accent-blue); text-decoration: none; font-weight: 500;">→
-                View Full Benchmark Results</a>
-
-            <!-- Methodology -->
-            <h2 id="methodology">Methodology</h2>
-            <p>All benchmarks follow research methodology:</p>
-            <ul>
-                <li><strong>Hardware:</strong> Apple M2 Pro / 16 GB RAM / NVMe SSD</li>
-                <li><strong>Runtime:</strong> Node.js v20 LTS (V8, JIT)</li>
-                <li><strong>Warm-up:</strong> 100 iterations discarded before measurement</li>
-                <li><strong>Sample size:</strong> 1,000 iterations, median reported</li>
-                <li><strong>Statistics:</strong> Median ± IQR, outliers >2σ excluded</li>
-                <li><strong>GC:</strong> <code>--expose-gc</code>, forced between runs</li>
-                <li><strong>Datasets:</strong> 24 seeded (PRNG seed: 0xC0FFEE), deterministic</li>
-                <li><strong>Tokenizer:</strong> tiktoken (o200k_base + cl100k_base)</li>
-            </ul>
-
-            <div class="callout tip">
-                <strong>Reproducibility:</strong> Run <code>npx tsx packages/cli/src/benchmark.ts</code> on any machine.
-                Same seed → same results. No cherry-picking.
-            </div>
-
-            <!-- ═══ Moat: Cross-Session Dedup ═══ -->
-            <h2 id="dedup-cache">Cross-Session Structural Dedup</h2>
-            <p>The <code>StructuralDedupCache</code> tracks schemas and dictionary values across multiple encode
-                operations. On subsequent encodes, only new schemas and values are emitted — cutting structural overhead
-                to zero.</p>
-
-            <h3>Basic Usage</h3>
-            <pre>import { StructuralDedupCache } from '@contex/engine';
-
-const cache = new StructuralDedupCache();
-
-// First encode: full schema + dictionary emitted
-const result1 = cache.encode([
-  { id: 1, name: 'Alice', role: 'admin' },
-  { id: 2, name: 'Bob', role: 'admin' }
-]);
-console.log(result1.isIncremental); // false
-
-// Second encode: schema deduped, only new values
-const result2 = cache.encode([
-  { id: 3, name: 'Charlie', role: 'admin' }
-]);
-console.log(result2.isIncremental); // true
-console.log(result2.newDictionaryValues); // ['Charlie']</pre>
-
-            <h3>State Persistence</h3>
-            <pre>// Serialize cache state for cross-session use
-const state = cache.serialize();
-localStorage.setItem('dedup-state', JSON.stringify(state));
-
-// Restore in a new session
-const restored = StructuralDedupCache.deserialize(state);</pre>
-
-            <div class="callout info">
-                <strong>Key benefit:</strong> For repetitive data (e.g., chat logs with the same schema), subsequent
-                encodes produce near-zero structural overhead. Only new field <em>values</em> are transmitted.
-            </div>
-
-            <!-- ═══ Moat: Predictive Packer ═══ -->
-            <h2 id="predictive-packer">Predictive Packer</h2>
-            <p>The <code>packContext()</code> function solves the context packing problem: given a set of heterogeneous
-                context items with different token costs and priorities, select the optimal subset that fits within a
-                token budget.</p>
-
-            <h3>Usage</h3>
-            <pre>import { packContext } from '@contex/engine';
-
-const items = [
-  { id: 'sys', tokens: 200, priority: 10, content: '...' },
-  { id: 'rag-1', tokens: 500, priority: 8, content: '...' },
-  { id: 'rag-2', tokens: 300, priority: 6, content: '...' },
-  { id: 'history', tokens: 800, priority: 4, content: '...' },
-];
-
-const result = packContext(items, {
-  budget: 1000,
-  strategy: 'knapsack' // or 'greedy' or 'density'
-});
-
-console.log(result.selected);   // ['sys', 'rag-1', 'rag-2']
-console.log(result.totalTokens); // 1000
-console.log(result.utilization); // 1.0</pre>
-
-            <h3>Packing Strategies</h3>
-            <table class="benchmark-table">
-                <thead>
-                    <tr>
-                        <th>Strategy</th>
-                        <th>Algorithm</th>
-                        <th>Best For</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>greedy</code></td>
-                        <td>Sort by priority, take top-N</td>
-                        <td>Simple, fast selection</td>
-                    </tr>
-                    <tr>
-                        <td><code>density</code></td>
-                        <td>Sort by priority/token ratio</td>
-                        <td>Maximizing value density</td>
-                    </tr>
-                    <tr>
-                        <td><code>knapsack</code></td>
-                        <td>Dynamic programming (0/1)</td>
-                        <td>Optimal budget utilization</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <!-- ═══ Moat: Pre-Tokenized Blocks ═══ -->
-            <h2 id="pretokenized-blocks">Pre-Tokenized Binary Blocks</h2>
-            <p>PTOK is a binary format that stores structured data with embedded token IDs. Once created, fields can be
-                accessed and served without re-tokenizing — achieving near-zero latency on repeated serves.</p>
-
-            <h3>Creating a Block</h3>
-            <pre>import {
-  createPreTokenizedBlock,
-  readPreTokenizedBlock
-} from '@contex/core';
-
-const data = { id: 1, name: 'Alice', role: 'admin' };
-const block = createPreTokenizedBlock(data, 'o200k_base');
-// block is a Uint8Array in PTOK format</pre>
-
-            <h3>Reading Fields</h3>
-            <pre>const result = readPreTokenizedBlock(block);
-
-// Full data access
-console.log(result.data);       // { id: 1, name: 'Alice', role: 'admin' }
-console.log(result.encoding);   // 'o200k_base'
-
-// Field-level random access (no full decode needed)
-console.log(result.fields.name.tokenIds); // [12345, 67890]
-console.log(result.fields.name.value);    // 'Alice'</pre>
-
-            <div class="callout tip">
-                <strong>Performance:</strong> Pre-tokenized blocks skip the tokenizer entirely on repeated access.
-                For hot data served across multiple requests, this eliminates the tokenization bottleneck.
-            </div>
         </main>
     </div>
 
     <footer class="footer">
-        <p>MIT © <a href="https://github.com/contex">Contex</a> · Built for production LLM pipelines</p>
+        <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM
+            pipelines</p>
     </footer>
 
     <script>
-        // Theme Toggle Logic
         const toggleBtn = document.getElementById('theme-toggle');
         const sunIcon = toggleBtn.querySelector('.sun-icon');
         const moonIcon = toggleBtn.querySelector('.moon-icon');
@@ -827,8 +978,6 @@ console.log(result.fields.name.value);    // 'Alice'</pre>
             moonIcon.style.display = isDark ? 'block' : 'none';
             toggleBtn.style.color = isDark ? 'var(--text-muted)' : 'var(--accent-amber)';
         }
-
-        // Init Icon
         updateIcon();
 
         toggleBtn.addEventListener('click', () => {
@@ -839,19 +988,73 @@ console.log(result.fields.name.value);    // 'Alice'</pre>
             updateIcon();
         });
 
-        // Highlight active sidebar link on scroll
-        const sections = document.querySelectorAll('[id]');
-        const navLinks = document.querySelectorAll('.sidebar-section a');
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    navLinks.forEach(link => link.classList.remove('active'));
-                    const active = document.querySelector(`.sidebar-section a[href="#${entry.target.id}"]`);
-                    if (active) active.classList.add('active');
-                }
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-toggle');
+        const sidebar = document.getElementById('docs-sidebar');
+
+        if (mobileMenuBtn && sidebar) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                mobileMenuBtn.classList.toggle('active');
             });
-        }, { rootMargin: '-80px 0px -70% 0px' });
-        sections.forEach(s => observer.observe(s));
+
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 900) {
+                        sidebar.classList.remove('open');
+                        mobileMenuBtn.classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // Scroll Spy
+        const sections = document.querySelectorAll('h2[id]');
+        const navLinks = document.querySelectorAll('.sidebar-section a');
+
+        const sectionVisibility = new Map();
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                sectionVisibility.set(entry.target.id, entry.isIntersecting);
+            });
+
+            let activeId = null;
+            for (const section of sections) {
+                if (sectionVisibility.get(section.id)) {
+                    activeId = section.id;
+                    break;
+                }
+            }
+
+            if (!activeId) {
+                let minDistance = Infinity;
+                for (const section of sections) {
+                    const rect = section.getBoundingClientRect();
+                    const distance = Math.abs(rect.top);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        activeId = section.id;
+                    }
+                }
+            }
+
+            if (activeId) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${activeId}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        }, {
+            rootMargin: '0px 0px -80% 0px',
+            threshold: 0
+        });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
     </script>
 </body>
 

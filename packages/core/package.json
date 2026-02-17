@@ -12,21 +12,38 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "contex",
+    "llm",
+    "token",
+    "tens",
+    "context-window",
+    "optimization",
+    "tokenizer",
+    "ai"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./vercel": {
       "types": "./dist/vercel.d.ts",
-      "import": "./dist/vercel.js"
+      "import": "./dist/vercel.js",
+      "default": "./dist/vercel.js"
     }
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm build",
     "test": "vitest run",
     "clean": "rimraf dist"
   },

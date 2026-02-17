@@ -185,8 +185,6 @@ function packKnapsack(
   items: (ContextItem & { tokens: number; score: number })[],
   maxTokens: number,
 ): { selected: (ContextItem & { tokens: number; score: number })[]; rejected: RejectedItem[] } {
-  const n = items.length;
-
   // Filter out zero-score items first
   const candidates = items.filter((i) => i.score > 0 && i.tokens > 0);
   const zeroItems = items.filter((i) => i.score === 0 || i.tokens === 0);

@@ -29,8 +29,7 @@ export function generateFlat(count: number, seed = DEFAULT_SEED) {
   }));
 }
 
-export function generateNested(count: number, seed = DEFAULT_SEED) {
-  const rng = seededRandom(seed);
+export function generateNested(count: number, _seed = DEFAULT_SEED) {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
     user: {
@@ -54,10 +53,9 @@ export function generateNested(count: number, seed = DEFAULT_SEED) {
   }));
 }
 
-export function generateSparse(count: number, seed = DEFAULT_SEED) {
-  const rng = seededRandom(seed);
+export function generateSparse(count: number, _seed = DEFAULT_SEED) {
   return Array.from({ length: count }, (_, i) => {
-    const obj: any = { id: i };
+    const obj: Record<string, unknown> = { id: i };
     if (i % 10 === 0) obj.description = `Description for ${i}`;
     if (i % 50 === 0) obj.metadata = { region: 'us-east-1' };
     if (i % 100 === 0) obj.tags = ['sparse', 'data'];
@@ -65,7 +63,7 @@ export function generateSparse(count: number, seed = DEFAULT_SEED) {
   });
 }
 
-export function generateRepetitive(count: number, seed = DEFAULT_SEED) {
+export function generateRepetitive(count: number, _seed = DEFAULT_SEED) {
   const statuses = ['active', 'pending', 'deleted'];
   const types = ['user', 'group', 'org'];
   return Array.from({ length: count }, (_, i) => ({
@@ -77,24 +75,18 @@ export function generateRepetitive(count: number, seed = DEFAULT_SEED) {
   }));
 }
 
-export function generateLongText(count: number, seed = DEFAULT_SEED) {
+export function generateLongText(count: number, _seed = DEFAULT_SEED) {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
     title: `Article ${i}`,
-    content:
-      `SECTION ${i}\n` +
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(20) +
-      'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '.repeat(10) +
-      `END SECTION ${i}`,
+    content: `SECTION ${i}\n${'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(20)}${'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '.repeat(10)}END SECTION ${i}`,
   }));
 }
 
-export function generateRealWorld(count: number, seed = DEFAULT_SEED) {
+export function generateRealWorld(count: number, _seed = DEFAULT_SEED) {
   const statuses = ['open', 'resolved', 'pending', 'escalated'];
   const priorities = ['low', 'medium', 'high', 'critical'];
   const categories = ['billing', 'technical', 'account', 'shipping', 'returns'];
-  const rng = seededRandom(seed);
-
   return Array.from({ length: count }, (_, i) => ({
     id: i + 1,
     customer: `customer_${(i * 7 + 3) % 1000}`,
@@ -104,7 +96,7 @@ export function generateRealWorld(count: number, seed = DEFAULT_SEED) {
     category: categories[i % categories.length],
     created: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
     agent: i % 3 === 0 ? null : `agent_${(i % 5) + 1}`,
-    notes: 'Customer reported issue via email. ' + 'Please investigate. '.repeat(i % 5),
+    notes: `Customer reported issue via email. ${'Please investigate. '.repeat(i % 5)}`,
   }));
 }
 
@@ -149,7 +141,7 @@ export function generateWideSchema(count: number, columns = 40, seed = DEFAULT_S
 export function generateDeepNested(count: number, depth = 5, seed = DEFAULT_SEED) {
   const rng = seededRandom(seed);
 
-  function buildNested(currentDepth: number, index: number): any {
+  function buildNested(currentDepth: number, index: number): Record<string, unknown> {
     if (currentDepth <= 0) {
       return {
         leaf_value: `v_${index}_d${depth - currentDepth}`,
@@ -187,21 +179,20 @@ export function generateMixedNestedTabular(count: number, seed = DEFAULT_SEED) {
         active: rng() > 0.3,
         category: ['A', 'B', 'C'][i % 3],
       };
-    } else {
-      // Nested row
-      return {
-        id: i,
-        name: `nested_user_${i}`,
-        profile: {
-          bio: `Bio text for nested user ${i}`,
-          settings: {
-            theme: rng() > 0.5 ? 'dark' : 'light',
-            lang: ['en', 'es', 'fr', 'de'][i % 4],
-          },
-        },
-        tags: [`tag_${i % 5}`, `tag_${(i + 1) % 5}`],
-      };
     }
+    // Nested row
+    return {
+      id: i,
+      name: `nested_user_${i}`,
+      profile: {
+        bio: `Bio text for nested user ${i}`,
+        settings: {
+          theme: rng() > 0.5 ? 'dark' : 'light',
+          lang: ['en', 'es', 'fr', 'de'][i % 4],
+        },
+      },
+      tags: [`tag_${i % 5}`, `tag_${(i + 1) % 5}`],
+    };
   });
 }
 
@@ -320,13 +311,13 @@ export function generateEcommerce(count: number, seed = DEFAULT_SEED) {
       currency: i % 20 === 0 ? 'EUR' : i % 10 === 0 ? 'GBP' : 'USD',
       inStock: rng() > 0.2,
       condition: conditions[Math.floor(rng() * conditions.length)],
-      variants: Array.from({ length: numVariants }, (_, v) => ({
+      variants: Array.from({ length: numVariants }, () => ({
         size: sizes[Math.floor(rng() * sizes.length)],
         color: colors[Math.floor(rng() * colors.length)],
         additionalPrice: Math.round(rng() * 2000) / 100,
         available: rng() > 0.3,
       })),
-      reviews: Array.from({ length: numReviews }, (_, r) => ({
+      reviews: Array.from({ length: numReviews }, () => ({
         rating: 1 + Math.floor(rng() * 5),
         author: `user_${Math.floor(rng() * 10000)}`,
         text: `Review of product ${i}. ${'Good quality. '.repeat(1 + Math.floor(rng() * 3))}`,
@@ -403,8 +394,7 @@ export function generateHealthcare(count: number, seed = DEFAULT_SEED) {
       admittedDate: `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
       notes:
         rng() > 0.3
-          ? `Patient presenting with ${conditions_list[Math.floor(rng() * (conditions_list.length - 1))]}. ` +
-            'Continue monitoring. '.repeat(Math.floor(rng() * 3))
+          ? `Patient presenting with ${conditions_list[Math.floor(rng() * (conditions_list.length - 1))]}. ${'Continue monitoring. '.repeat(Math.floor(rng() * 3))}`
           : null,
     };
   });
@@ -633,7 +623,7 @@ export function generateChatMessages(count: number, seed = DEFAULT_SEED) {
                 status: 'success',
                 data: { value: Math.floor(rng() * 1000) },
               })
-            : `${'This is a message from the ' + role + '. '}${'Additional context and information. '.repeat(1 + Math.floor(rng() * 5))}`,
+            : `${`This is a message from the ${role}. `}${'Additional context and information. '.repeat(1 + Math.floor(rng() * 5))}`,
       model: role === 'assistant' ? models[Math.floor(rng() * models.length)] : null,
       toolCalls: hasTool
         ? [
@@ -856,10 +846,7 @@ export function generateContentCMS(count: number, seed = DEFAULT_SEED) {
       avatar: `https://avatars.example.com/${Math.floor(rng() * 1000)}.jpg`,
     },
     category: categories[i % categories.length],
-    tags: Array.from(
-      { length: 2 + Math.floor(rng() * 4) },
-      (_, t) => `tag_${Math.floor(rng() * 50)}`,
-    ),
+    tags: Array.from({ length: 2 + Math.floor(rng() * 4) }, () => `tag_${Math.floor(rng() * 50)}`),
     status: statuses[Math.floor(rng() * statuses.length)],
     locale: locales[Math.floor(rng() * locales.length)],
     seo: {
@@ -986,14 +973,14 @@ export function generateMultiLingual(count: number, seed = DEFAULT_SEED) {
     const numLocales = 3 + Math.floor(rng() * (locales.length - 3));
     const selectedLocales = locales.slice(0, numLocales);
     for (const loc of selectedLocales) {
-      translations[loc] = (sampleTexts[loc] || sampleTexts['en'])[keyIndex];
+      translations[loc] = (sampleTexts[loc] || sampleTexts.en)[keyIndex];
     }
     return {
       key: `ui.${['nav', 'auth', 'settings', 'dashboard', 'common'][Math.floor(rng() * 5)]}.${['title', 'label', 'button', 'placeholder', 'tooltip'][Math.floor(rng() * 5)]}_${i}`,
       namespace: ['common', 'auth', 'dashboard', 'settings', 'notifications'][
         Math.floor(rng() * 5)
       ],
-      defaultValue: sampleTexts['en'][keyIndex],
+      defaultValue: sampleTexts.en[keyIndex],
       translations,
       context:
         rng() > 0.6
