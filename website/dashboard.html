@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contex — Observability Dashboard</title>
+  <title>Contex — Platform Dashboard</title>
   <meta name="description"
-    content="Real-time observability dashboard for Contex: token savings, compression ratios, cache hit rates, cost analysis, and per-model performance metrics.">
+    content="Contex platform dashboard: benchmark analytics, structural fingerprinting, anti-copy watermarking, WASM acceleration, predictive packing, storage engine with WAL, 13+ REST endpoints, and 6 framework integrations — all real, all tested.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -24,7 +24,6 @@
        DASHBOARD-SPECIFIC STYLES
        ═══════════════════════════════════════════════════════════ */
 
-    /* ─── Dashboard Hero ─── */
     .dash-hero {
       padding: 120px 32px 60px;
       text-align: center;
@@ -45,11 +44,21 @@
       max-width: 640px;
       margin: 0 auto;
     }
+    .dash-hero .data-badge {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--accent-blue) 12%, transparent);
+      color: var(--accent-blue);
+    }
 
     /* ─── KPI Strip ─── */
     .kpi-strip {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       max-width: var(--max-width);
       margin: 0 auto 48px;
@@ -98,21 +107,10 @@
       letter-spacing: 0.06em;
       margin-top: 6px;
     }
-    .kpi-delta {
-      font-size: 0.72rem;
-      font-weight: 600;
-      margin-top: 8px;
-      padding: 2px 8px;
-      border-radius: var(--radius-full);
-      display: inline-block;
-    }
-    .kpi-delta.up {
-      color: var(--accent-green);
-      background: color-mix(in srgb, var(--accent-green) 10%, transparent);
-    }
-    .kpi-delta.down {
-      color: var(--accent-red);
-      background: color-mix(in srgb, var(--accent-red) 10%, transparent);
+    .kpi-sublabel {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     /* ─── Dashboard Grid ─── */
@@ -123,17 +121,12 @@
       margin: 0 auto;
       padding: 0 32px;
     }
-    .dash-grid.two-col {
-      grid-template-columns: 1fr 1fr;
-    }
-    .dash-grid.three-col {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
+    .dash-grid.two-col { grid-template-columns: 1fr 1fr; }
+    .dash-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+    .dash-grid.full { grid-template-columns: 1fr; }
     @media (max-width: 768px) {
       .dash-grid.two-col,
-      .dash-grid.three-col {
-        grid-template-columns: 1fr;
-      }
+      .dash-grid.three-col { grid-template-columns: 1fr; }
     }
 
     /* ─── Dashboard Panel ─── */
@@ -144,9 +137,7 @@
       padding: 28px;
       transition: border-color var(--transition);
     }
-    .dash-panel:hover {
-      border-color: var(--border-active);
-    }
+    .dash-panel:hover { border-color: var(--border-active); }
     .dash-panel-header {
       display: flex;
       justify-content: space-between;
@@ -168,141 +159,86 @@
       background: color-mix(in srgb, var(--accent-green) 10%, transparent);
       color: var(--accent-green);
     }
-    .dash-panel-badge.warn {
-      background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
-      color: var(--accent-amber);
-    }
 
-    /* ─── Simulated Chart (CSS-only bar chart) ─── */
+    /* ─── Bar Chart ─── */
     .bar-chart {
       display: flex;
       align-items: flex-end;
-      gap: 6px;
-      height: 160px;
+      gap: 4px;
+      height: 200px;
       padding-top: 10px;
     }
     .bar-chart .bar {
       flex: 1;
       border-radius: 4px 4px 0 0;
-      min-width: 18px;
+      min-width: 14px;
       position: relative;
       transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
     }
-    .bar-chart .bar:hover {
-      filter: brightness(1.3);
-    }
+    .bar-chart .bar:hover { filter: brightness(1.3); }
     .bar-chart .bar .bar-label {
       position: absolute;
-      bottom: -20px;
+      bottom: -28px;
       left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.62rem;
+      transform: translateX(-50%) rotate(-45deg);
+      font-size: 0.58rem;
       color: var(--text-muted);
       white-space: nowrap;
+      transform-origin: top left;
     }
     .bar-chart .bar .bar-val {
       position: absolute;
       top: -18px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 600;
       white-space: nowrap;
     }
 
-    /* ─── Sparkline (CSS-only) ─── */
-    .sparkline-row {
+    /* ─── Horizontal Bar ─── */
+    .hbar-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 10px;
     }
-    .sparkline-row:last-child { border-bottom: none; }
-    .sparkline-label {
-      font-size: 0.82rem;
+    .hbar-row:last-child { margin-bottom: 0; }
+    .hbar-label {
+      font-size: 0.78rem;
       color: var(--text-secondary);
-      min-width: 120px;
-    }
-    .sparkline-bars {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 24px;
-      flex: 1;
-    }
-    .sparkline-bars .sp-bar {
-      flex: 1;
-      border-radius: 2px;
-      background: var(--accent-blue);
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-    .sparkline-bars .sp-bar:hover { opacity: 1; }
-    .sparkline-val {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      min-width: 60px;
+      min-width: 110px;
       text-align: right;
     }
-
-    /* ─── Ring / Donut (CSS conic-gradient) ─── */
-    .donut-container {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      flex-wrap: wrap;
-    }
-    .donut {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
+    .hbar-track {
+      flex: 1;
+      height: 22px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
       position: relative;
+    }
+    .hbar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      padding-left: 8px;
     }
-    .donut-inner {
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: var(--bg-card);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+    .hbar-fill span {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
-    .donut-inner .donut-pct {
-      font-size: 1.4rem;
-      font-weight: 800;
+    .hbar-val {
+      font-size: 0.78rem;
+      font-weight: 600;
       color: var(--text-primary);
-    }
-    .donut-inner .donut-sub {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .donut-legend {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .donut-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-    }
-    .donut-legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
+      min-width: 48px;
+      text-align: right;
     }
 
     /* ─── Table Panel ─── */
@@ -327,140 +263,11 @@
       border-bottom: 1px solid var(--border-subtle);
     }
     .dash-table tr:last-child td { border-bottom: none; }
-    .dash-table tr:hover td {
-      background: var(--bg-hover);
-    }
+    .dash-table tr:hover td { background: var(--bg-hover); }
     .dash-table .val-blue { color: var(--accent-blue); font-weight: 600; }
     .dash-table .val-green { color: var(--accent-green); font-weight: 600; }
     .dash-table .val-purple { color: var(--accent-purple); font-weight: 600; }
     .dash-table .val-amber { color: var(--accent-amber); font-weight: 600; }
-
-    /* ─── Status Pill ─── */
-    .status-pill {
-      display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 2px 10px;
-      border-radius: var(--radius-full);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .status-pill.healthy {
-      background: color-mix(in srgb, var(--accent-green) 12%, transparent);
-      color: var(--accent-green);
-    }
-    .status-pill.warn {
-      background: color-mix(in srgb, var(--accent-amber) 12%, transparent);
-      color: var(--accent-amber);
-    }
-    .status-pill.critical {
-      background: color-mix(in srgb, var(--accent-red) 12%, transparent);
-      color: var(--accent-red);
-    }
-
-    /* ─── Live Dot ─── */
-    .live-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      margin-right: 6px;
-      animation: livePulse 2s ease-in-out infinite;
-    }
-    @keyframes livePulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    }
-
-    /* ─── Timeline Feed ─── */
-    .event-feed {
-      max-height: 320px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-subtle) transparent;
-    }
-    .event-item {
-      display: flex;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-subtle);
-      align-items: flex-start;
-    }
-    .event-item:last-child { border-bottom: none; }
-    .event-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 0.7rem;
-    }
-    .event-icon.green { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
-    .event-icon.blue { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
-    .event-icon.amber { background: color-mix(in srgb, var(--accent-amber) 15%, transparent); color: var(--accent-amber); }
-    .event-icon.purple { background: color-mix(in srgb, var(--accent-purple) 15%, transparent); color: var(--accent-purple); }
-    .event-body {
-      flex: 1;
-    }
-    .event-title {
-      font-size: 0.82rem;
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-    .event-meta {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    /* ─── Heatmap Grid ─── */
-    .heatmap {
-      display: grid;
-      grid-template-columns: repeat(24, 1fr);
-      gap: 3px;
-    }
-    .heatmap-cell {
-      aspect-ratio: 1;
-      border-radius: 3px;
-      cursor: pointer;
-      transition: transform 0.15s;
-      position: relative;
-    }
-    .heatmap-cell:hover {
-      transform: scale(1.3);
-      z-index: 2;
-    }
-    .heatmap-cell.l0 { background: var(--bg-elevated); }
-    .heatmap-cell.l1 { background: color-mix(in srgb, var(--accent-green) 25%, var(--bg-elevated)); }
-    .heatmap-cell.l2 { background: color-mix(in srgb, var(--accent-green) 45%, var(--bg-elevated)); }
-    .heatmap-cell.l3 { background: color-mix(in srgb, var(--accent-green) 65%, var(--bg-elevated)); }
-    .heatmap-cell.l4 { background: color-mix(in srgb, var(--accent-green) 85%, var(--bg-elevated)); }
-    .heatmap-cell.l5 { background: var(--accent-green); }
-
-    /* ─── Architecture Diagram (fixed pre rendering) ─── */
-    .arch-diagram {
-      background: var(--bg-code);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 28px 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
-      line-height: 1.55;
-      color: var(--text-secondary);
-      overflow-x: auto;
-      white-space: pre;
-      -moz-tab-size: 4;
-      tab-size: 4;
-    }
-    .arch-diagram .hl-blue { color: var(--accent-blue); }
-    .arch-diagram .hl-green { color: var(--accent-green); }
-    .arch-diagram .hl-purple { color: var(--accent-purple); }
-    .arch-diagram .hl-amber { color: var(--accent-amber); }
-    .arch-diagram .hl-red { color: var(--accent-red); }
-    .arch-diagram .hl-dim { color: var(--text-muted); }
 
     /* ─── Metric Progress Bar ─── */
     .metric-bar {
@@ -499,25 +306,45 @@
       text-align: right;
     }
 
-    /* ─── Section Spacer ─── */
-    .dash-spacer {
-      height: 48px;
+    /* ─── Architecture Diagram ─── */
+    .arch-diagram {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      overflow-x: auto;
+      white-space: pre;
+      -moz-tab-size: 4;
+      tab-size: 4;
+    }
+    .arch-diagram .hl-blue { color: var(--accent-blue); }
+    .arch-diagram .hl-green { color: var(--accent-green); }
+    .arch-diagram .hl-purple { color: var(--accent-purple); }
+    .arch-diagram .hl-amber { color: var(--accent-amber); }
+
+    .dash-spacer { height: 48px; }
+
+    /* ─── Animate-in ─── */
+    .dash-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .dash-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    /* ─── Controls Row ─── */
-    .dash-controls {
-      max-width: var(--max-width);
-      margin: 0 auto 24px;
-      padding: 0 32px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .dash-control-btn {
-      font-size: 0.78rem;
-      font-weight: 500;
-      padding: 6px 16px;
+    /* ─── Scale selector ─── */
+    .scale-tabs { display: flex; gap: 8px; }
+    .scale-tab {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 12px;
       border-radius: var(--radius-full);
       border: 1px solid var(--border-subtle);
       background: transparent;
@@ -525,20 +352,11 @@
       cursor: pointer;
       transition: all var(--transition);
     }
-    .dash-control-btn:hover {
-      border-color: var(--accent-blue);
-      color: var(--accent-blue);
-    }
-    .dash-control-btn.active {
-      background: var(--accent-blue);
-      color: #fff;
-      border-color: var(--accent-blue);
-    }
+    .scale-tab:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .scale-tab.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 
     /* ─── Tooltip ─── */
-    .tooltip {
-      position: relative;
-    }
+    .tooltip { position: relative; }
     .tooltip::after {
       content: attr(data-tip);
       position: absolute;
@@ -555,20 +373,294 @@
       pointer-events: none;
       transition: opacity 0.2s;
       border: 1px solid var(--border-subtle);
+      z-index: 10;
     }
-    .tooltip:hover::after {
-      opacity: 1;
+    .tooltip:hover::after { opacity: 1; }
+
+    .loading-msg {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
-    /* ─── Animate-in ─── */
-    .dash-reveal {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+    /* ─── Section Dividers ─── */
+    .dash-section-header {
+      max-width: var(--max-width);
+      margin: 0 auto 32px;
+      padding: 0 32px;
     }
-    .dash-reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
+    .dash-section-header h2 {
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .dash-section-header.purple h2 {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .dash-section-header.amber h2 {
+      background: linear-gradient(135deg, var(--accent-amber), var(--accent-green));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .dash-section-header.red h2 {
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .dash-section-header.blue h2 {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .dash-section-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      max-width: 720px;
+    }
+
+    /* ─── Feature Cards ─── */
+    .feature-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: var(--max-width);
+      margin: 0 auto 48px;
+      padding: 0 32px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+    }
+    .feature-card:hover {
+      border-color: var(--border-active);
+      box-shadow: var(--glow-subtle);
+      transform: translateY(-2px);
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .feature-card.blue::before { background: var(--accent-blue); }
+    .feature-card.green::before { background: var(--accent-green); }
+    .feature-card.purple::before { background: var(--accent-purple); }
+    .feature-card.amber::before { background: var(--accent-amber); }
+    .feature-card.red::before { background: var(--accent-red); }
+    .feature-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .feature-card-icon.blue { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
+    .feature-card-icon.green { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
+    .feature-card-icon.purple { background: color-mix(in srgb, var(--accent-purple) 15%, transparent); color: var(--accent-purple); }
+    .feature-card-icon.amber { background: color-mix(in srgb, var(--accent-amber) 15%, transparent); color: var(--accent-amber); }
+    .feature-card-icon.red { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+    .feature-card .tech-detail {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 8px 12px;
+      background: var(--bg-code);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      line-height: 1.5;
+    }
+    .feature-card .feature-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      margin-top: 10px;
+      margin-right: 4px;
+    }
+    .feature-tag.tested { background: color-mix(in srgb, var(--accent-green) 12%, transparent); color: var(--accent-green); }
+    .feature-tag.core { background: color-mix(in srgb, var(--accent-blue) 12%, transparent); color: var(--accent-blue); }
+    .feature-tag.engine { background: color-mix(in srgb, var(--accent-purple) 12%, transparent); color: var(--accent-purple); }
+    .feature-tag.wasm { background: color-mix(in srgb, var(--accent-amber) 12%, transparent); color: var(--accent-amber); }
+    .feature-tag.new { background: color-mix(in srgb, var(--accent-red) 12%, transparent); color: var(--accent-red); }
+
+    /* ─── Fingerprint Layers ─── */
+    .fp-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .fp-layer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: border-color var(--transition);
+    }
+    .fp-layer:hover { border-color: var(--border-active); }
+    .fp-layer-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .fp-layer-num.green { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
+    .fp-layer-num.blue { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
+    .fp-layer-num.purple { background: color-mix(in srgb, var(--accent-purple) 15%, transparent); color: var(--accent-purple); }
+    .fp-layer-num.amber { background: color-mix(in srgb, var(--accent-amber) 15%, transparent); color: var(--accent-amber); }
+    .fp-layer-num.red { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
+    .fp-layer-text {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .fp-layer-text strong { color: var(--text-primary); }
+
+    /* ─── Integration Chips ─── */
+    .integration-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .int-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .int-chip:hover { border-color: var(--border-active); box-shadow: var(--glow-subtle); }
+    .int-chip-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .int-chip-icon.blue { background: color-mix(in srgb, var(--accent-blue) 15%, transparent); color: var(--accent-blue); }
+    .int-chip-icon.green { background: color-mix(in srgb, var(--accent-green) 15%, transparent); color: var(--accent-green); }
+    .int-chip-icon.purple { background: color-mix(in srgb, var(--accent-purple) 15%, transparent); color: var(--accent-purple); }
+    .int-chip-icon.amber { background: color-mix(in srgb, var(--accent-amber) 15%, transparent); color: var(--accent-amber); }
+    .int-chip-icon.red { background: color-mix(in srgb, var(--accent-red) 15%, transparent); color: var(--accent-red); }
+    .int-chip-detail {
+      display: flex;
+      flex-direction: column;
+    }
+    .int-chip-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+    }
+    .int-chip-desc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── Miss Reason Grid ─── */
+    .miss-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .miss-item {
+      padding: 8px 12px;
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      transition: border-color var(--transition);
+    }
+    .miss-item:hover { border-color: var(--border-active); }
+    .miss-item .miss-cat {
+      display: block;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    /* ─── Stat Counters ─── */
+    .stat-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--bg-code);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      min-width: 80px;
+    }
+    .stat-num {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .stat-num.blue { color: var(--accent-blue); }
+    .stat-num.green { color: var(--accent-green); }
+    .stat-num.purple { color: var(--accent-purple); }
+    .stat-num.amber { color: var(--accent-amber); }
+    .stat-num.red { color: var(--accent-red); }
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
     }
   </style>
 </head>
@@ -577,12 +669,12 @@
 
   <!-- Navigation -->
   <nav class="nav">
-    <a href="/" class="nav-brand">
+    <a href="./" class="nav-brand">
       <div class="logo-icon">C</div>
       Contex
     </a>
     <ul class="nav-links">
-      <li><a href="/">Home</a></li>
+      <li><a href="./">Home</a></li>
       <li><a href="./docs.html">Docs</a></li>
       <li><a href="./tens-text.html">TENS-Text</a></li>
       <li><a href="./benchmarks.html">Benchmarks</a></li>
@@ -609,12 +701,15 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </button>
-      <a href="https://github.com/kshitij-contex/contex" target="_blank" class="btn btn-ghost btn-sm"
+      <a href="https://github.com/kshitijpalsinghtomar/contex-llm" target="_blank" class="btn btn-ghost btn-sm"
         aria-label="GitHub">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
           <path
-            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+          </path>
         </svg>
+        GitHub
       </a>
     </div>
   </nav>
@@ -624,367 +719,183 @@
   <!--  HERO                                  -->
   <!-- ═══════════════════════════════════════ -->
   <div class="dash-hero">
-    <h1><span class="live-dot"></span>Contex Observability Dashboard</h1>
-    <p>Real-time visibility into token savings, compression ratios, cache performance, and cost analysis across every model and data source.</p>
+    <h1>Contex Platform Dashboard</h1>
+    <p>Everything built, measured, and proven — from real benchmark data (<strong id="hero-datasets">21</strong> datasets, <strong id="hero-formats">4</strong> formats) to security, performance infrastructure, and full-stack integrations.</p>
+    <div class="data-badge" id="hero-badge">Loading benchmark data&hellip;</div>
   </div>
 
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  KPI STRIP (Top-Level Metrics)         -->
+  <!--  KPI STRIP                             -->
   <!-- ═══════════════════════════════════════ -->
-  <div class="kpi-strip dash-reveal">
-
+  <div class="kpi-strip dash-reveal" id="kpi-strip">
     <div class="kpi-card green">
-      <div class="kpi-value" id="kpi-tokens-saved">847,293</div>
-      <div class="kpi-label">Tokens Saved</div>
-      <div class="kpi-delta up">▲ 12.4% vs last week</div>
+      <div class="kpi-value" id="kpi-avg-savings">&mdash;</div>
+      <div class="kpi-label">Avg Token Savings</div>
+      <div class="kpi-sublabel">Contex vs JSON (1K rows)</div>
     </div>
-
     <div class="kpi-card blue">
-      <div class="kpi-value" id="kpi-compression">46.2%</div>
-      <div class="kpi-label">Avg Compression</div>
-      <div class="kpi-delta up">▲ 3.1% improvement</div>
+      <div class="kpi-value" id="kpi-peak-savings">&mdash;</div>
+      <div class="kpi-label">Peak Savings</div>
+      <div class="kpi-sublabel" id="kpi-peak-dataset">&mdash;</div>
     </div>
-
     <div class="kpi-card purple">
-      <div class="kpi-value" id="kpi-cache-hit">91.7%</div>
-      <div class="kpi-label">Cache Hit Rate</div>
-      <div class="kpi-delta up">▲ 2.8% vs yesterday</div>
+      <div class="kpi-value" id="kpi-total-saved">&mdash;</div>
+      <div class="kpi-label">Total Tokens Saved</div>
+      <div class="kpi-sublabel">Across all datasets (1K rows)</div>
     </div>
-
     <div class="kpi-card amber">
-      <div class="kpi-value" id="kpi-cost-saved">$142.38</div>
-      <div class="kpi-label">Cost Saved (30d)</div>
-      <div class="kpi-delta up">▲ $18.50 vs prev month</div>
+      <div class="kpi-value" id="kpi-datasets">&mdash;</div>
+      <div class="kpi-label">Datasets Tested</div>
+      <div class="kpi-sublabel">Real-world + synthetic</div>
     </div>
-
     <div class="kpi-card red">
-      <div class="kpi-value" id="kpi-requests">12,847</div>
-      <div class="kpi-label">Total Requests</div>
-      <div class="kpi-delta up">▲ 340 today</div>
+      <div class="kpi-value" id="kpi-models">&mdash;</div>
+      <div class="kpi-label">Models in Registry</div>
+      <div class="kpi-sublabel">9 providers, Feb 2026 pricing</div>
     </div>
-
   </div>
 
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  CONTROLS                              -->
+  <!--  ROW 1: Per-Dataset Savings            -->
   <!-- ═══════════════════════════════════════ -->
-  <div class="dash-controls">
-    <button class="dash-control-btn active" data-range="1h">1H</button>
-    <button class="dash-control-btn" data-range="6h">6H</button>
-    <button class="dash-control-btn" data-range="24h">24H</button>
-    <button class="dash-control-btn" data-range="7d">7D</button>
-    <button class="dash-control-btn" data-range="30d">30D</button>
-    <span style="flex:1;"></span>
-    <span style="font-size: 0.75rem; color: var(--text-muted);"><span class="live-dot"></span>Live — last updated 2s ago</span>
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Token Savings by Dataset (Contex vs JSON)</span>
+        <div class="scale-tabs">
+          <button class="scale-tab active" data-rows="1000">1,000 rows</button>
+          <button class="scale-tab" data-rows="100">100 rows</button>
+        </div>
+      </div>
+      <div class="bar-chart" id="dataset-chart" style="height: 220px; padding-bottom: 30px;">
+        <div class="loading-msg">Loading&hellip;</div>
+      </div>
+    </div>
   </div>
 
+  <div class="dash-spacer"></div>
+
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 1: Compression + Cache            -->
+  <!--  ROW 2: Format Comparison + Best Wins  -->
   <!-- ═══════════════════════════════════════ -->
   <div class="dash-grid two-col dash-reveal">
 
-    <!-- Token Savings Over Time (Bar Chart) -->
+    <!-- Format Comparison -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Token Savings Over Time</span>
-        <span class="dash-panel-badge">Healthy</span>
+        <span class="dash-panel-title">Format Comparison (Avg Savings at 1K Rows)</span>
+        <span class="dash-panel-badge" id="format-badge">&mdash;</span>
       </div>
-      <div class="bar-chart" id="savings-chart">
-        <div class="bar tooltip" data-tip="Mon: 34,210 saved" style="height: 68%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">34K</span><span class="bar-label">Mon</span></div>
-        <div class="bar tooltip" data-tip="Tue: 41,832 saved" style="height: 83%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">42K</span><span class="bar-label">Tue</span></div>
-        <div class="bar tooltip" data-tip="Wed: 38,910 saved" style="height: 77%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">39K</span><span class="bar-label">Wed</span></div>
-        <div class="bar tooltip" data-tip="Thu: 45,220 saved" style="height: 90%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">45K</span><span class="bar-label">Thu</span></div>
-        <div class="bar tooltip" data-tip="Fri: 50,100 saved" style="height: 100%; background: var(--accent-green);"><span class="bar-val" style="color: var(--accent-green);">50K</span><span class="bar-label">Fri</span></div>
-        <div class="bar tooltip" data-tip="Sat: 28,400 saved" style="height: 56%; background: var(--accent-blue);"><span class="bar-val" style="color: var(--accent-blue);">28K</span><span class="bar-label">Sat</span></div>
-        <div class="bar tooltip" data-tip="Sun: 22,180 saved" style="height: 44%; background: var(--accent-blue);"><span class="bar-val" style="color: var(--accent-blue);">22K</span><span class="bar-label">Sun</span></div>
-      </div>
+      <div id="format-bars"></div>
     </div>
 
-    <!-- Format Distribution Donut -->
+    <!-- Where Contex Wins Most -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Format Distribution</span>
-        <span class="dash-panel-badge">5 Formats Active</span>
+        <span class="dash-panel-title">Where Contex Beats TOON Most</span>
+        <span class="dash-panel-badge">Advantage over #2 format</span>
       </div>
-      <div class="donut-container">
-        <div class="donut" style="background: conic-gradient(
-          var(--accent-blue) 0deg 173deg,
-          var(--accent-green) 173deg 252deg,
-          var(--accent-purple) 252deg 306deg,
-          var(--accent-amber) 306deg 338deg,
-          var(--text-muted) 338deg 360deg
-        );">
-          <div class="donut-inner">
-            <span class="donut-pct">48%</span>
-            <span class="donut-sub">Contex</span>
-          </div>
-        </div>
-        <div class="donut-legend">
-          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-blue);"></div> Contex Compact — 48%</div>
-          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-green);"></div> TENS-Text — 22%</div>
-          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-purple);"></div> TOON — 15%</div>
-          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--accent-amber);"></div> CSV — 9%</div>
-          <div class="donut-legend-item"><div class="donut-legend-dot" style="background: var(--text-muted);"></div> JSON (fallback) — 6%</div>
-        </div>
-      </div>
+      <div id="contex-wins"></div>
     </div>
 
   </div>
 
   <div class="dash-spacer"></div>
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 2: Per-Model + Per-Source         -->
-  <!-- ═══════════════════════════════════════ -->
-  <div class="dash-grid two-col dash-reveal">
 
-    <!-- Per-Model Performance -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 3: Cost Analysis per Model        -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid full dash-reveal">
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Per-Model Performance</span>
-        <span class="dash-panel-badge">4 Models</span>
+        <span class="dash-panel-title">Cost Impact per Model (21 Datasets &times; 1K Rows)</span>
+        <span class="dash-panel-badge">Real Feb 2026 Pricing</span>
       </div>
-      <table class="dash-table">
+      <table class="dash-table" id="cost-table">
         <thead>
           <tr>
             <th>Model</th>
-            <th>Requests</th>
-            <th>Tokens Saved</th>
-            <th>Compression</th>
-            <th>Cache Hit</th>
+            <th>Provider</th>
+            <th>Input $/1M</th>
+            <th>JSON Cost</th>
+            <th>Contex Cost</th>
+            <th>Saved</th>
+            <th>Savings %</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td><strong>gpt-4o</strong></td>
-            <td>5,230</td>
-            <td class="val-green">412,800</td>
-            <td class="val-blue">48.3%</td>
-            <td class="val-purple">94.1%</td>
-          </tr>
-          <tr>
-            <td><strong>claude-3.5-sonnet</strong></td>
-            <td>3,847</td>
-            <td class="val-green">248,100</td>
-            <td class="val-blue">44.7%</td>
-            <td class="val-purple">90.3%</td>
-          </tr>
-          <tr>
-            <td><strong>gpt-4o-mini</strong></td>
-            <td>2,419</td>
-            <td class="val-green">121,900</td>
-            <td class="val-blue">42.1%</td>
-            <td class="val-purple">88.9%</td>
-          </tr>
-          <tr>
-            <td><strong>gemini-1.5-pro</strong></td>
-            <td>1,351</td>
-            <td class="val-green">64,493</td>
-            <td class="val-blue">39.8%</td>
-            <td class="val-purple">92.6%</td>
-          </tr>
+        <tbody id="cost-tbody">
+          <tr><td colspan="7" class="loading-msg">Loading&hellip;</td></tr>
         </tbody>
       </table>
     </div>
-
-    <!-- Per-Source Compression -->
-    <div class="dash-panel">
-      <div class="dash-panel-header">
-        <span class="dash-panel-title">Compression by Data Source</span>
-        <span class="dash-panel-badge">6 Sources</span>
-      </div>
-
-      <div class="metric-bar">
-        <span class="metric-bar-label">User Profiles</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill green" style="width: 62%;"></div></div>
-        <span class="metric-bar-val">62%</span>
-      </div>
-      <div class="metric-bar">
-        <span class="metric-bar-label">Product Catalog</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill blue" style="width: 54%;"></div></div>
-        <span class="metric-bar-val">54%</span>
-      </div>
-      <div class="metric-bar">
-        <span class="metric-bar-label">Order History</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill blue" style="width: 48%;"></div></div>
-        <span class="metric-bar-val">48%</span>
-      </div>
-      <div class="metric-bar">
-        <span class="metric-bar-label">Chat Messages</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill purple" style="width: 41%;"></div></div>
-        <span class="metric-bar-val">41%</span>
-      </div>
-      <div class="metric-bar">
-        <span class="metric-bar-label">Support Tickets</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill purple" style="width: 37%;"></div></div>
-        <span class="metric-bar-val">37%</span>
-      </div>
-      <div class="metric-bar">
-        <span class="metric-bar-label">Log Events</span>
-        <div class="metric-bar-track"><div class="metric-bar-fill amber" style="width: 29%;"></div></div>
-        <span class="metric-bar-val">29%</span>
-      </div>
-    </div>
-
   </div>
 
   <div class="dash-spacer"></div>
 
+
   <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 3: Session Dedup + Event Feed     -->
+  <!--  ROW 4: Size Comparison + Architecture -->
   <!-- ═══════════════════════════════════════ -->
   <div class="dash-grid two-col dash-reveal">
 
-    <!-- Session Dedup Stats -->
+    <!-- Size & Token Comparison -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Session Dedup Analytics</span>
-        <span class="dash-panel-badge">StructuralDedupCache</span>
+        <span class="dash-panel-title">Format Performance (RealWorld 1K Rows)</span>
+        <span class="dash-panel-badge">Bytes &amp; Tokens</span>
       </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue);" id="dedup-schemas">23</div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Known Schemas</div>
-        </div>
-        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-green);" id="dedup-dict">1,247</div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Dictionary Entries</div>
-        </div>
-        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-purple);" id="dedup-schema-hits">8,412</div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Schema Cache Hits</div>
-        </div>
-        <div style="background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; text-align: center;">
-          <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-amber);" id="dedup-dict-hits">34,891</div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">Dict Cache Hits</div>
-        </div>
-      </div>
-
-      <!-- Sparkline: dedup effectiveness over time -->
-      <div class="sparkline-row">
-        <span class="sparkline-label">Schema Reuse</span>
-        <div class="sparkline-bars">
-          <div class="sp-bar" style="height: 60%;"></div>
-          <div class="sp-bar" style="height: 75%;"></div>
-          <div class="sp-bar" style="height: 80%;"></div>
-          <div class="sp-bar" style="height: 72%;"></div>
-          <div class="sp-bar" style="height: 88%;"></div>
-          <div class="sp-bar" style="height: 91%;"></div>
-          <div class="sp-bar" style="height: 85%;"></div>
-          <div class="sp-bar" style="height: 94%;"></div>
-          <div class="sp-bar" style="height: 90%;"></div>
-          <div class="sp-bar" style="height: 96%;"></div>
-          <div class="sp-bar" style="height: 93%;"></div>
-          <div class="sp-bar" style="height: 100%;"></div>
-        </div>
-        <span class="sparkline-val" style="color: var(--accent-green);">96%</span>
-      </div>
-      <div class="sparkline-row">
-        <span class="sparkline-label">Dict Dedup Rate</span>
-        <div class="sparkline-bars">
-          <div class="sp-bar" style="height: 40%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 55%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 62%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 58%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 70%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 74%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 68%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 78%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 82%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 79%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 85%; background: var(--accent-purple);"></div>
-          <div class="sp-bar" style="height: 81%; background: var(--accent-purple);"></div>
-        </div>
-        <span class="sparkline-val" style="color: var(--accent-purple);">81%</span>
-      </div>
-      <div class="sparkline-row">
-        <span class="sparkline-label">Incremental Δ</span>
-        <div class="sparkline-bars">
-          <div class="sp-bar" style="height: 30%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 45%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 52%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 48%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 55%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 60%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 58%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 65%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 70%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 68%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 72%; background: var(--accent-amber);"></div>
-          <div class="sp-bar" style="height: 74%; background: var(--accent-amber);"></div>
-        </div>
-        <span class="sparkline-val" style="color: var(--accent-amber);">74%</span>
-      </div>
+      <table class="dash-table" id="size-table">
+        <thead>
+          <tr>
+            <th>Format</th>
+            <th>Tokens</th>
+            <th>Bytes</th>
+            <th>Token Reduction</th>
+            <th>Byte Reduction</th>
+          </tr>
+        </thead>
+        <tbody id="size-tbody">
+          <tr><td colspan="5" class="loading-msg">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Live Event Feed -->
+    <!-- Pipeline Architecture -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Live Event Feed</span>
-        <span class="dash-panel-badge"><span class="live-dot"></span>Streaming</span>
+        <span class="dash-panel-title">Contex Pipeline Architecture</span>
+        <span class="dash-panel-badge">Phase 1 IR</span>
       </div>
-      <div class="event-feed" id="event-feed">
-        <div class="event-item">
-          <div class="event-icon green">✓</div>
-          <div class="event-body">
-            <div class="event-title">Schema cache hit — <code>user_profiles</code> (12th reuse)</div>
-            <div class="event-meta">gpt-4o · 847 tokens saved · 2s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon blue">⚡</div>
-          <div class="event-body">
-            <div class="event-title">Incremental encode — 3 delta rows out of 48</div>
-            <div class="event-meta">claude-3.5-sonnet · 1,240 tokens saved · 8s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon purple">📊</div>
-          <div class="event-body">
-            <div class="event-title">New schema registered — <code>support_tickets_v2</code></div>
-            <div class="event-meta">gemini-1.5-pro · 5 fields · 14s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon green">✓</div>
-          <div class="event-body">
-            <div class="event-title">Contex Compact format selected — 52% compression</div>
-            <div class="event-meta">gpt-4o-mini · 380 → 182 tokens · 21s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon amber">⚠</div>
-          <div class="event-body">
-            <div class="event-title">Budget threshold reached — switched from <code>toon</code> → <code>contex</code></div>
-            <div class="event-meta">gpt-4o · 4,096 token budget · 34s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon blue">⚡</div>
-          <div class="event-body">
-            <div class="event-title">Token cache materialized — <code>o200k_base</code> fingerprint match</div>
-            <div class="event-meta">gpt-4o · cache restored from disk · 41s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon green">✓</div>
-          <div class="event-body">
-            <div class="event-title">Dictionary dedup — 34 values reused across session</div>
-            <div class="event-meta">claude-3.5-sonnet · 892 tokens saved · 55s ago</div>
-          </div>
-        </div>
-        <div class="event-item">
-          <div class="event-icon purple">📊</div>
-          <div class="event-body">
-            <div class="event-title">Session state serialized — 23 schemas, 1,247 dict entries</div>
-            <div class="event-meta">persistence layer · .contex/session.json · 1m ago</div>
-          </div>
-        </div>
-      </div>
+      <div class="arch-diagram"><span class="hl-blue">Input Data</span> (JSON / Objects)
+    |
+    v
+<span class="hl-green">+--------------------------+</span>
+<span class="hl-green">|  canonicalize()          |</span>  Normalize types, sort keys,
+<span class="hl-green">|  -> Canonical IR         |</span>  handle NaN/Infinity/sparse
+<span class="hl-green">+------------+-------------+</span>
+             |
+             v
+<span class="hl-blue">+--------------------------+</span>
+<span class="hl-blue">|  formatSelector()        |</span>  Score formats by token cost
+<span class="hl-blue">|  -> Best format          |</span>  contex > toon > csv > json
+<span class="hl-blue">+------------+-------------+</span>
+             |
+             v
+<span class="hl-purple">+--------------------------+</span>
+<span class="hl-purple">|  formatOutput()          |</span>  Encode to selected format
+<span class="hl-purple">|  + @dict compression     |</span>  with dictionary, prefix
+<span class="hl-purple">|  + prefix stripping      |</span>  stripping, sparse mode
+<span class="hl-purple">+------------+-------------+</span>
+             |
+             v
+<span class="hl-amber">+--------------------------+</span>
+<span class="hl-amber">|  TokenStreamEncoder      |</span>  Tokenize for target model
+<span class="hl-amber">|  -> Int32Array tokens    |</span>  (o200k_base / cl100k_base)
+<span class="hl-amber">+--------------------------+</span></div>
     </div>
 
   </div>
@@ -993,381 +904,695 @@
 
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 4: Cost Analysis + Request Heatmap -->
+  <!--  ROW 5: Model Registry Overview        -->
   <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Model Registry (Feb 2026 Pricing)</span>
+        <span class="dash-panel-badge" id="registry-badge">&mdash;</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="dash-table" id="registry-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Provider</th>
+              <th>Context Window</th>
+              <th>Input $/1M</th>
+              <th>Output $/1M</th>
+              <th>Cached $/1M</th>
+              <th>Released</th>
+            </tr>
+          </thead>
+          <tbody id="registry-tbody">
+            <tr><td colspan="7" class="loading-msg">Loading&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ROW 6: SDK Integration                -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Build Your Own Dashboard</span>
+        <span class="dash-panel-badge">SDK API</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-purple">import</span> { ContexEngine } <span class="hl-purple">from</span> <span class="hl-green">'@contex-llm/engine'</span>;
+
+<span class="hl-blue">const</span> engine = <span class="hl-purple">new</span> ContexEngine({ model: <span class="hl-green">'gpt-5.2'</span> });
+
+<span class="hl-amber">// Encode your data</span>
+<span class="hl-blue">const</span> result = engine.encode(myData);
+console.log(result.stats);
+<span class="hl-amber">// -> { tokensSaved: 2894986, compressionRatio: 0.72, format: 'contex' }</span>
+
+<span class="hl-amber">// Session dedup across multiple calls</span>
+<span class="hl-blue">const</span> dedup = engine.getSessionStats();
+console.log(dedup);
+<span class="hl-amber">// -> { knownSchemas: 21, dictionarySize: 847, schemaCacheHits: 42 }</span>
+
+<span class="hl-amber">// Budget-aware packing</span>
+<span class="hl-blue">const</span> budget = engine.computeBudget({
+  model: <span class="hl-green">'claude-sonnet-4-6'</span>,
+  systemPromptTokens: 500,
+  responseReserve: 4096,
+});
+console.log(budget.bestFit);
+<span class="hl-amber">// -> { format: 'contex', maxRows: 847, estimatedTokens: 12480 }</span></div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: SECURITY & DATA INTEGRITY                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header red dash-reveal">
+    <h2>Security &amp; Data Integrity</h2>
+    <p>Every Contex-encoded payload carries cryptographic proof of provenance — non-tamperable fingerprints and HMAC-SHA256 watermarks that make the pipeline computationally infeasible to replicate.</p>
+  </div>
+
+  <!-- Fingerprint & Watermark — Full-width panel -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Structural Fingerprinting &amp; Anti-Copy Watermarking</span>
+        <span class="dash-panel-badge" style="background: color-mix(in srgb, var(--accent-red) 10%, transparent); color: var(--accent-red);">5-Layer Protection</span>
+      </div>
+      <div class="fp-layers">
+        <div class="fp-layer">
+          <div class="fp-layer-num green">1</div>
+          <div class="fp-layer-text"><strong>Entropy-Weighted Field Ordering</strong> — Fields sorted by Shannon entropy distribution, not just alphabetically. Replicating exact ordering requires knowledge of the full entropy profile.</div>
+        </div>
+        <div class="fp-layer">
+          <div class="fp-layer-num blue">2</div>
+          <div class="fp-layer-text"><strong>Salted Structural Hash Chain</strong> — Each pipeline stage's output salts the next stage's hash. Breaking one link invalidates the entire chain downstream.</div>
+        </div>
+        <div class="fp-layer">
+          <div class="fp-layer-num purple">3</div>
+          <div class="fp-layer-text"><strong>Pipeline-State Fingerprint</strong> — IR metadata embeds the full pipeline state: canonicalization parameters, dictionary configuration, and tokenizer version.</div>
+        </div>
+        <div class="fp-layer">
+          <div class="fp-layer-num amber">4</div>
+          <div class="fp-layer-text"><strong>Structural Complexity Scoring</strong> — Entropy + graph metrics produce a 0–100 score classifying data as trivial → simple → moderate → complex → extreme.</div>
+        </div>
+        <div class="fp-layer">
+          <div class="fp-layer-num red">5</div>
+          <div class="fp-layer-text"><strong>Encoding Watermark (HMAC-SHA256)</strong> — Invisible byte-level markers in binary output. <code>generateWatermark()</code> creates them, <code>verifyWatermark()</code> proves provenance.</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><div class="stat-num red">530</div><div class="stat-label">Lines of Code</div></div>
+        <div class="stat-item"><div class="stat-num green">✓</div><div class="stat-label">Fully Tested</div></div>
+        <div class="stat-item"><div class="stat-num purple">SHA-256</div><div class="stat-label">Hash Algorithm</div></div>
+        <div class="stat-item"><div class="stat-num blue">HMAC</div><div class="stat-label">Watermark Auth</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+  <!-- Cache Metrics & Observability -->
   <div class="dash-grid two-col dash-reveal">
-
-    <!-- Cost Analysis -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Cost Analysis — JSON vs Contex</span>
-        <span class="dash-panel-badge">$142.38 saved</span>
+        <span class="dash-panel-title">Cache Observability &amp; Miss-Reason Taxonomy</span>
+        <span class="dash-panel-badge" style="background: color-mix(in srgb, var(--accent-amber) 10%, transparent); color: var(--accent-amber);">12+ Miss Reasons</span>
       </div>
-      <table class="dash-table">
-        <thead>
-          <tr>
-            <th>Metric</th>
-            <th>Without Contex</th>
-            <th>With Contex</th>
-            <th>Savings</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Input tokens (30d)</td>
-            <td>1,582,400</td>
-            <td class="val-green">847,293</td>
-            <td class="val-green">735,107 (46.5%)</td>
-          </tr>
-          <tr>
-            <td>Input cost (GPT-4o)</td>
-            <td>$237.36</td>
-            <td class="val-green">$127.09</td>
-            <td class="val-green">$110.27</td>
-          </tr>
-          <tr>
-            <td>Input cost (Claude)</td>
-            <td>$47.47</td>
-            <td class="val-green">$25.42</td>
-            <td class="val-green">$22.05</td>
-          </tr>
-          <tr>
-            <td>Prefix cache hits</td>
-            <td>—</td>
-            <td class="val-purple">11,782</td>
-            <td class="val-purple">91.7% hit rate</td>
-          </tr>
-          <tr>
-            <td>Re-tokenizations avoided</td>
-            <td>—</td>
-            <td class="val-blue">8,412</td>
-            <td class="val-blue">~3.2s CPU saved</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Request Heatmap (24h × 7d) -->
-    <div class="dash-panel">
-      <div class="dash-panel-header">
-        <span class="dash-panel-title">Request Volume Heatmap (7d × 24h)</span>
-        <span class="dash-panel-badge">Peak: 2PM Tue</span>
-      </div>
-      <div style="margin-bottom: 8px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); margin-bottom: 4px;">
-          <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
-        </div>
-      </div>
-      <!-- Mon -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Mon</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
-          <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Tue -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Tue</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div>
-          <div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Wed -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Wed</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div>
-          <div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Thu -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Thu</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div>
-          <div class="heatmap-cell l3"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Fri -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Fri</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l5"></div><div class="heatmap-cell l4"></div>
-          <div class="heatmap-cell l4"></div><div class="heatmap-cell l4"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Sat -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Sat</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
-          <div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-      <!-- Sun -->
-      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-        <span style="font-size: 0.62rem; color: var(--text-muted); width: 28px;">Sun</span>
-        <div class="heatmap" style="flex: 1;">
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div>
-          <div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l0"></div>
-          <div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div><div class="heatmap-cell l0"></div>
-        </div>
-      </div>
-
-      <!-- Legend -->
-      <div style="display: flex; align-items: center; gap: 4px; margin-top: 12px; justify-content: flex-end;">
-        <span style="font-size: 0.62rem; color: var(--text-muted);">Less</span>
-        <div class="heatmap-cell l0" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <div class="heatmap-cell l1" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <div class="heatmap-cell l2" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <div class="heatmap-cell l3" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <div class="heatmap-cell l4" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <div class="heatmap-cell l5" style="width: 12px; height: 12px; display: inline-block;"></div>
-        <span style="font-size: 0.62rem; color: var(--text-muted);">More</span>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 16px;">Full-stack cache diagnostics with attributable, actionable miss reasons across every layer of the pipeline. Supports telemetry export and historical reporting.</p>
+      <div class="miss-grid">
+        <div class="miss-item"><span class="miss-cat">IR Level</span>IR_NOT_STORED</div>
+        <div class="miss-item"><span class="miss-cat">IR Level</span>IR_HASH_MISMATCH</div>
+        <div class="miss-item"><span class="miss-cat">Materialization</span>MODEL_NEVER_MATERIALIZED</div>
+        <div class="miss-item"><span class="miss-cat">Materialization</span>ENCODING_DRIFT</div>
+        <div class="miss-item"><span class="miss-cat">Materialization</span>TOKENIZER_VERSION_CHANGE</div>
+        <div class="miss-item"><span class="miss-cat">Materialization</span>MAX_TOKENS_CHANGED</div>
+        <div class="miss-item"><span class="miss-cat">Token Level</span>TOKEN_CACHE_EXPIRED</div>
+        <div class="miss-item"><span class="miss-cat">Token Level</span>TOKEN_CACHE_MISSED</div>
+        <div class="miss-item"><span class="miss-cat">Text Level</span>TEXT_CACHE_MISSED</div>
+        <div class="miss-item"><span class="miss-cat">System</span>DISK_IO_ERROR</div>
+        <div class="miss-item"><span class="miss-cat">System</span>CORRUPTED_CACHE</div>
+        <div class="miss-item"><span class="miss-cat">Positive</span>HIT ✓</div>
       </div>
     </div>
 
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Structured Logger &amp; Telemetry</span>
+        <span class="dash-panel-badge">4 Log Levels</span>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 16px;">Production-grade structured logging with callback hooks for middleware integration. Track every operation across the pipeline with nanosecond timers.</p>
+      <div class="arch-diagram"><span class="hl-blue">logEncode()</span>    → Track each encode operation
+<span class="hl-green">logMaterialize()</span> → Track model-specific materialization
+<span class="hl-purple">logCacheHit()</span>    → Record cache hits with metadata
+<span class="hl-amber">logCacheMiss()</span>   → Record misses with CacheMissReason
+<span class="hl-blue">logInject()</span>      → Track middleware injection events
+<span class="hl-green">logSavings()</span>     → Record token/cost savings analytics
+<span class="hl-purple">timer()</span>          → High-resolution timing utility
+
+<span class="hl-amber">// Custom hook integration</span>
+logger.onLog((entry) => {
+  myTelemetry.track(entry);      <span class="hl-amber">// Send to Datadog, etc.</span>
+});</div>
+    </div>
   </div>
 
   <div class="dash-spacer"></div>
 
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 5: Architecture Diagram           -->
-  <!-- ═══════════════════════════════════════ -->
-  <section class="section dash-reveal">
-    <div class="section-header">
-      <h2 class="section-title">Observability Architecture</h2>
-      <p class="section-desc">How the dashboard hooks into the Contex pipeline — every metric comes from real internal APIs.</p>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: PERFORMANCE INFRASTRUCTURE                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header purple dash-reveal">
+    <h2>Performance Infrastructure</h2>
+    <p>Built-in profiling, WASM acceleration, and pre-tokenized binary blocks — Contex measures and optimizes every CPU cycle and memory byte.</p>
+  </div>
+
+  <div class="feature-card-grid dash-reveal">
+    <!-- Resource Metrics -->
+    <div class="feature-card purple">
+      <div class="feature-card-icon purple">⚡</div>
+      <h3>Resource Metrics &amp; Pipeline Profiler</h3>
+      <p>Track CPU time, memory usage, throughput, and compression ratio per pipeline stage. Automatic efficiency scoring rates your pipeline as excellent / good / fair / poor.</p>
+      <div class="tech-detail">profileSync(fn) → ResourceSnapshot
+PipelineProfiler.addStage("canonicalize")
+PipelineProfiler.addStage("encode")
+PipelineProfiler.finalize() → PipelineReport
+  { efficiencyScore: 87, grade: "excellent" }</div>
+      <span class="feature-tag core">@core</span>
+      <span class="feature-tag tested">Tested</span>
     </div>
 
-    <div style="max-width: 860px; margin: 0 auto;">
-      <div class="arch-diagram"><span class="hl-green">CONTEX OBSERVABILITY PIPELINE</span>
-
-<span class="hl-blue">┌──────────────────────────────────────────────────────────────────┐</span>
-<span class="hl-blue">│  YOUR APPLICATION                                                │</span>
-<span class="hl-blue">│  data → contex.compile() → LLM                                  │</span>
-<span class="hl-blue">└────────────────┬─────────────────────────────────────────────────┘</span>
-                 │
-                 │ <span class="hl-dim">hooks into</span>
-                 ▼
-<span class="hl-purple">┌──────────────────────────────────────────────────────────────────┐</span>
-<span class="hl-purple">│  CONTEX ENGINE                                                   │</span>
-<span class="hl-purple">│  ┌────────────────┐  ┌─────────────────┐  ┌──────────────────┐   │</span>
-<span class="hl-purple">│  │ FormatSelector │  │ IR Pipeline     │  │ Token Materializ │   │</span>
-<span class="hl-purple">│  │ <span class="hl-dim">format chosen</span>  │  │ <span class="hl-dim">compression %</span>  │  │ <span class="hl-dim">tokens counted</span>  │   │</span>
-<span class="hl-purple">│  └───────┬────────┘  └────────┬────────┘  └────────┬─────────┘   │</span>
-<span class="hl-purple">│          │                    │                    │              │</span>
-<span class="hl-purple">│  ┌───────┴────────────────────┴────────────────────┴───────────┐  │</span>
-<span class="hl-purple">│  │  <span class="hl-amber">StructuralDedupCache</span>                                     │  │</span>
-<span class="hl-purple">│  │  <span class="hl-dim">schemas · dictionary · schemaCacheHits · dictCacheHits</span>    │  │</span>
-<span class="hl-purple">│  │  <span class="hl-dim">estimatedTokensSaved · encodeIncremental()</span>               │  │</span>
-<span class="hl-purple">│  └───────────────────────────┬────────────────────────────────┘  │</span>
-<span class="hl-purple">│                              │                                   │</span>
-<span class="hl-purple">│  ┌───────────────────────────┴────────────────────────────────┐  │</span>
-<span class="hl-purple">│  │  <span class="hl-green">Metrics Emitter</span>                                          │  │</span>
-<span class="hl-purple">│  │  <span class="hl-dim">getStats() · serializeState() · analyzeSavings()</span>         │  │</span>
-<span class="hl-purple">│  └───────────────────────────┬────────────────────────────────┘  │</span>
-<span class="hl-purple">└──────────────────────────────┬───────────────────────────────────┘</span>
-                               │
-                               │ <span class="hl-dim">emits metrics</span>
-                               ▼
-<span class="hl-green">┌──────────────────────────────────────────────────────────────────┐</span>
-<span class="hl-green">│  OBSERVABILITY DASHBOARD                                         │</span>
-<span class="hl-green">│  ────────────────────────                                        │</span>
-<span class="hl-green">│  KPIs · Bar Charts · Donut · Heatmap · Event Feed · Tables      │</span>
-<span class="hl-green">│  Alerts · Budget thresholds · Session state persistence          │</span>
-<span class="hl-green">└──────────────────────────────────────────────────────────────────┘</span></div>
+    <!-- WASM Accelerated -->
+    <div class="feature-card amber">
+      <div class="feature-card-icon amber">🦀</div>
+      <h3>WASM-Accelerated Rust Encoder</h3>
+      <p>1,264 lines of Rust compiled to WebAssembly via wasm-bindgen. Transparent fallback to TypeScript when WASM isn't available. 43 Rust tests.</p>
+      <div class="tech-detail">TensEncoder → encode() | encodeText()
+               hash() | hashBinary()
+decodeTens() | decodeTensText()
+wasm_bridge.ts → auto-detect + fallback
+  43 Rust tests | schema module</div>
+      <span class="feature-tag wasm">WASM</span>
+      <span class="feature-tag tested">43 Tests</span>
     </div>
-  </section>
 
+    <!-- Pre-Tokenized Binary -->
+    <div class="feature-card blue">
+      <div class="feature-card-icon blue">📦</div>
+      <h3>Pre-Tokenized Binary Blocks (PTOK)</h3>
+      <p>Store data with pre-computed token IDs for a target model encoding. Random access to any field's tokens without re-tokenizing. Binary format with field index.</p>
+      <div class="tech-detail">Magic: "PTOK" | Version: 1
+Encodings: cl100k_base, o200k_base,
+           p50k_base, r50k_base
+┌─ Field Index (per-field offset) ─┐
+│ fieldName | startOffset | count  │
+└─ Token Data: Int32Array ─────────┘</div>
+      <span class="feature-tag core">@core</span>
+      <span class="feature-tag tested">Tested</span>
+    </div>
+  </div>
 
   <div class="dash-spacer"></div>
 
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 6: Health Checks + Alerts         -->
-  <!-- ═══════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: SMART OPTIMIZATION                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header dash-reveal">
+    <h2>Smart Optimization Engine</h2>
+    <p>From automatic format selection to budget-constrained packing and cross-session dedup — Contex doesn't just compress, it <em>thinks</em> about your data.</p>
+  </div>
+
+  <div class="feature-card-grid dash-reveal">
+    <!-- Predictive Packer -->
+    <div class="feature-card green">
+      <div class="feature-card-icon green">🎯</div>
+      <h3>Predictive Packer (Budget Engine)</h3>
+      <p>Given N context items with priorities and a token budget, finds the optimal subset using 3 strategies with composite scoring (recency × relevance × priority).</p>
+      <div class="tech-detail">Strategies:
+  greedy   → Sort by priority, take until full
+  density  → Highest value-per-token first
+  knapsack → 0/1 DP exact optimal (N ≤ 200)
+
+packContext(items, config) → PackResult
+  { packed, rejected, totalTokens, budgetUsed }</div>
+      <span class="feature-tag engine">@engine</span>
+      <span class="feature-tag tested">Tested</span>
+    </div>
+
+    <!-- Token Composition -->
+    <div class="feature-card blue">
+      <div class="feature-card-icon blue">🧩</div>
+      <h3>Token Composition System</h3>
+      <p>Compose prompts from reusable token blocks (text/IR/tokens) with budget validation against model context windows. Required + optional priority packing.</p>
+      <div class="tech-detail">compose({
+  model: 'gpt-5.2',
+  reserveForResponse: 4096,
+  blocks: [
+    { type:'text', content:'...', priority:'required' },
+    { type:'ir', hash:'abc...', priority:'optional' },
+  ]
+}) → ComposeResult { tokens, budget, overflow }</div>
+      <span class="feature-tag core">@core</span>
+      <span class="feature-tag tested">Tested</span>
+    </div>
+
+    <!-- Auto Format Selector -->
+    <div class="feature-card purple">
+      <div class="feature-card-icon purple">🔮</div>
+      <h3>Auto Format Selector</h3>
+      <p>Heuristic-based model-aware format selection. Analyzes data shape (depth, sparsity, field count) and provider capabilities to pick the optimal format automatically.</p>
+      <div class="tech-detail">Decision tree:
+  &lt;5 rows → JSON (overhead not worth it)
+  &gt;80% sparse → JSON (tabular regresses)
+  Narrow window + large data → Contex
+  Nested depth &gt; 2 → Contex (dot-notation)
+Provider notes: OpenAI | Anthropic | Google | Meta</div>
+      <span class="feature-tag engine">@engine</span>
+    </div>
+
+    <!-- Cross-Session Dedup -->
+    <div class="feature-card amber">
+      <div class="feature-card-icon amber">♻️</div>
+      <h3>Cross-Session Structural Dedup</h3>
+      <p>Schema and dictionary state persists across sessions. Repeated context doesn't re-pay structural overhead. Serializable state for persistence.</p>
+      <div class="tech-detail">StructuralDedupCache
+  .encode(data) → uses known schemas
+  .getStats() → DedupStats {
+    knownSchemas, dictionarySize,
+    schemaCacheHits, estimatedTokensSaved
+  }
+  .serialize() / .restore() → SessionState</div>
+      <span class="feature-tag engine">@engine</span>
+      <span class="feature-tag tested">Tested</span>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: STORAGE & PERSISTENCE                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header amber dash-reveal">
+    <h2>Storage &amp; Persistence</h2>
+    <p>A full database storage engine with WAL crash safety, content-addressed IR storage, and prefix-cache-aware output for production LLM inference.</p>
+  </div>
+
   <div class="dash-grid two-col dash-reveal">
-
-    <!-- System Health -->
+    <!-- Storage Engine + WAL -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">System Health</span>
-        <span class="dash-panel-badge">All Clear</span>
+        <span class="dash-panel-title">Block Storage Engine + Write-Ahead Log</span>
+        <span class="dash-panel-badge" style="background: color-mix(in srgb, var(--accent-amber) 10%, transparent); color: var(--accent-amber);">Crash-Safe</span>
       </div>
-      <table class="dash-table">
-        <thead>
-          <tr>
-            <th>Component</th>
-            <th>Status</th>
-            <th>Latency</th>
-            <th>Uptime</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>IR Pipeline</td>
-            <td><span class="status-pill healthy">Healthy</span></td>
-            <td class="val-green">0.8ms</td>
-            <td>99.99%</td>
-          </tr>
-          <tr>
-            <td>Token Materializer</td>
-            <td><span class="status-pill healthy">Healthy</span></td>
-            <td class="val-green">1.2ms</td>
-            <td>99.98%</td>
-          </tr>
-          <tr>
-            <td>Format Selector</td>
-            <td><span class="status-pill healthy">Healthy</span></td>
-            <td class="val-green">0.1ms</td>
-            <td>100%</td>
-          </tr>
-          <tr>
-            <td>Dedup Cache</td>
-            <td><span class="status-pill healthy">Healthy</span></td>
-            <td class="val-green">0.3ms</td>
-            <td>99.97%</td>
-          </tr>
-          <tr>
-            <td>Session Persistence</td>
-            <td><span class="status-pill warn">Degraded</span></td>
-            <td class="val-amber">4.1ms</td>
-            <td>98.2%</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="arch-diagram"><span class="hl-amber">ContextStorage</span>
+├── <span class="hl-blue">Pager</span> (4KB pages)
+│   ├── readPage(pageId) → Uint8Array
+│   └── writePage(pageId, data)
+│
+├── <span class="hl-green">WAL</span> (Write-Ahead Log)
+│   ├── Record: [CRC32: 4B][Type: 1B][TxId: 4B][Len: 2B][Payload]
+│   ├── BEGIN_TX → WRITE_PAGE → COMMIT_TX
+│   └── Crash recovery: replay or rollback
+│
+└── <span class="hl-purple">Collections</span>
+    ├── write(collection, data[])
+    ├── read(collection) → data[]
+    └── list() → collection names</div>
     </div>
 
-    <!-- Alert Thresholds -->
+    <!-- Token Memory + Prefix Cache -->
     <div class="dash-panel">
       <div class="dash-panel-header">
-        <span class="dash-panel-title">Alert Configuration</span>
-        <span class="dash-panel-badge warn">1 Active Alert</span>
+        <span class="dash-panel-title">Token Memory &amp; Prefix-Cache Optimization</span>
+        <span class="dash-panel-badge">Content-Addressed</span>
       </div>
-      <table class="dash-table">
-        <thead>
-          <tr>
-            <th>Alert</th>
-            <th>Threshold</th>
-            <th>Current</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Compression drops below</td>
-            <td>30%</td>
-            <td class="val-green">46.2%</td>
-            <td><span class="status-pill healthy">OK</span></td>
-          </tr>
-          <tr>
-            <td>Cache hit rate below</td>
-            <td>80%</td>
-            <td class="val-green">91.7%</td>
-            <td><span class="status-pill healthy">OK</span></td>
-          </tr>
-          <tr>
-            <td>Encode latency above</td>
-            <td>5ms</td>
-            <td class="val-green">0.8ms</td>
-            <td><span class="status-pill healthy">OK</span></td>
-          </tr>
-          <tr>
-            <td>Session persist latency</td>
-            <td>3ms</td>
-            <td class="val-amber">4.1ms</td>
-            <td><span class="status-pill warn">Warning</span></td>
-          </tr>
-          <tr>
-            <td>Daily cost exceeds</td>
-            <td>$10.00</td>
-            <td class="val-green">$4.24</td>
-            <td><span class="status-pill healthy">OK</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="arch-diagram"><span class="hl-blue">Token Memory</span> (Persistent IR Storage)
+├── .contex/ir/{sha256}/ir.bin
+├── .contex/cache/{hash}/{model}.{enc}/tokens.bin
+├── SHA-256 dedup (identical data = stored once)
+└── Lazy materialization per model
 
+<span class="hl-green">Prefix-Cache-Aware Output</span>
+├── Maximize KV cache reuse (vLLM/SGLang/TRT-LLM)
+├── Schema header first (stable across requests)
+├── Fixed field order + sorted rows
+├── Optional header padding for alignment
+└── <span class="hl-purple">analyzePrefixReuse()</span> → overlap metrics</div>
+    </div>
   </div>
 
   <div class="dash-spacer"></div>
 
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  ROW 7: SDK Integration Code           -->
-  <!-- ═══════════════════════════════════════ -->
-  <section class="section dash-reveal">
-    <div class="section-header">
-      <h2 class="section-title">Integration</h2>
-      <p class="section-desc">Add observability to your Contex pipeline in 3 lines.</p>
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: DEVELOPER EXPERIENCE                                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header blue dash-reveal">
+    <h2>Developer Experience</h2>
+    <p>From a one-liner API to a full SQL-like query language, 16+ CLI commands, and 13+ REST endpoints — Contex meets developers where they are.</p>
+  </div>
+
+  <div class="dash-grid two-col dash-reveal">
+    <!-- quick() API -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">quick() — Zero-Config One-Shot API</span>
+        <span class="dash-panel-badge">3 Lines</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-purple">import</span> { quick } <span class="hl-purple">from</span> <span class="hl-green">'@contex-llm/engine'</span>;
+
+<span class="hl-blue">const</span> result = quick(myData, <span class="hl-green">'gpt-5.2'</span>);
+
+console.log(result.tokens);        <span class="hl-amber">// number[] — direct token array</span>
+console.log(result.asText());      <span class="hl-amber">// string — formatted text output</span>
+console.log(result.savings);
+<span class="hl-amber">// → { tokensSaved: 2894, percent: 72,</span>
+<span class="hl-amber">//     costPerCall: $0.0023, costSavedPerCall: $0.0059 }</span>
+</div>
     </div>
 
-    <div style="max-width: 860px; margin: 0 auto;">
-      <div class="code-block" style="white-space: pre; text-align: left; line-height: 1.7; font-size: 0.82rem;"><span style="color: var(--accent-purple);">import</span> { StructuralDedupCache } <span style="color: var(--accent-purple);">from</span> <span style="color: var(--accent-green);">'@contex/engine'</span>;
-<span style="color: var(--accent-purple);">import</span> { quick, analyzeSavings } <span style="color: var(--accent-purple);">from</span> <span style="color: var(--accent-green);">'@contex/engine'</span>;
+    <!-- PQL -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">PQL — Prompt Query Language</span>
+        <span class="dash-panel-badge">SQL-Like</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-amber">// SQL-like queries for context selection</span>
 
-<span style="color: var(--text-muted);">// Initialize session cache with observability</span>
-<span style="color: var(--accent-purple);">const</span> cache = <span style="color: var(--accent-purple);">new</span> StructuralDedupCache(<span style="color: var(--accent-green);">'o200k_base'</span>);
+<span class="hl-blue">GET</span> products
+  <span class="hl-green">WHERE</span> category <span class="hl-purple">=</span> electronics
+  <span class="hl-green">LIMIT</span> 50
+  <span class="hl-green">FORMAT</span> contex
 
-<span style="color: var(--text-muted);">// Encode with dedup tracking</span>
-<span style="color: var(--accent-purple);">const</span> result = cache.encode(userData, <span style="color: var(--accent-green);">'contex'</span>);
-console.log(result.isSchemaKnown);       <span style="color: var(--text-muted);">// true if schema seen before</span>
-console.log(result.tokensSaved);         <span style="color: var(--text-muted);">// tokens saved via dedup</span>
-
-<span style="color: var(--text-muted);">// Get full session stats (feeds the dashboard)</span>
-<span style="color: var(--accent-purple);">const</span> stats = cache.getStats();
-console.log(stats.knownSchemas);         <span style="color: var(--text-muted);">// 23</span>
-console.log(stats.dictionarySize);       <span style="color: var(--text-muted);">// 1,247</span>
-console.log(stats.schemaCacheHits);      <span style="color: var(--text-muted);">// 8,412</span>
-console.log(stats.dictCacheHits);        <span style="color: var(--text-muted);">// 34,891</span>
-console.log(stats.estimatedTokensSaved); <span style="color: var(--text-muted);">// 847,293</span>
-
-<span style="color: var(--text-muted);">// Incremental encoding — only send deltas</span>
-<span style="color: var(--accent-purple);">const</span> delta = cache.encodeIncremental(newBatch, prevBatch, <span style="color: var(--accent-green);">'id'</span>);
-console.log(delta.deltaRows);            <span style="color: var(--text-muted);">// 3 new rows out of 48</span>
-console.log(delta.tokensSaved);          <span style="color: var(--text-muted);">// 1,240 tokens saved</span>
-
-<span style="color: var(--text-muted);">// Persist session state across restarts</span>
-<span style="color: var(--accent-purple);">const</span> state = cache.serializeState();
-fs.writeFileSync(<span style="color: var(--accent-green);">'.contex/session.json'</span>, JSON.stringify(state));
-
-<span style="color: var(--text-muted);">// Restore on next startup</span>
-<span style="color: var(--accent-purple);">const</span> restored = StructuralDedupCache.fromState(JSON.parse(saved));
-<span style="color: var(--text-muted);">// → All schemas, dictionary, and stats are preserved</span></div>
+<span class="hl-amber">// Programmatic usage</span>
+<span class="hl-purple">import</span> { parsePql, applyFilter, applyLimit } <span class="hl-purple">from</span> <span class="hl-green">'@contex-llm/engine'</span>;
+<span class="hl-blue">const</span> query = parsePql(<span class="hl-green">"GET products WHERE price = 29.99 LIMIT 10"</span>);
+<span class="hl-blue">const</span> filtered = applyFilter(data, query.where);
+<span class="hl-blue">const</span> limited = applyLimit(filtered, query.limit);
+</div>
     </div>
-  </section>
+  </div>
 
+  <div class="dash-spacer"></div>
+
+  <!-- CLI + Server -->
+  <div class="dash-grid two-col dash-reveal">
+    <!-- CLI -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">CLI — 16+ Commands</span>
+        <span class="dash-panel-badge">3,600+ LoC</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-blue">$ npx contex encode</span> data.json     <span class="hl-amber"># Encode to Contex</span>
+<span class="hl-blue">$ npx contex decode</span> data.contex   <span class="hl-amber"># Decode back</span>
+<span class="hl-blue">$ npx contex stats</span> data.json      <span class="hl-amber"># Token statistics</span>
+<span class="hl-blue">$ npx contex savings</span> data.json    <span class="hl-amber"># Cost analysis</span>
+<span class="hl-blue">$ npx contex formats</span> data.json    <span class="hl-amber"># Compare all formats</span>
+<span class="hl-blue">$ npx contex convert</span> --to csv     <span class="hl-amber"># Format conversion</span>
+<span class="hl-blue">$ npx contex validate</span> data.tens   <span class="hl-amber"># Schema validation</span>
+<span class="hl-blue">$ npx contex guard</span> data.json      <span class="hl-amber"># Quality gates</span>
+<span class="hl-blue">$ npx contex analyze</span> data.json    <span class="hl-amber"># Structure analysis</span>
+<span class="hl-blue">$ npx contex ir-encode</span> data.json  <span class="hl-amber"># IR pipeline</span>
+<span class="hl-blue">$ npx contex ir-inspect</span> hash      <span class="hl-amber"># Inspect stored IR</span>
+<span class="hl-blue">$ npx contex bench</span>               <span class="hl-amber"># Run benchmarks</span>
+<span class="hl-blue">$ npx contex scorecard</span>           <span class="hl-amber"># CI scorecard</span></div>
+    </div>
+
+    <!-- Server REST API -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Server — 13+ REST Endpoints</span>
+        <span class="dash-panel-badge">Hono Framework</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-green">GET</span>  /health                  <span class="hl-amber"># Health check</span>
+<span class="hl-blue">POST</span> /v1/encode                <span class="hl-amber"># Encode data</span>
+<span class="hl-blue">POST</span> /v1/decode                <span class="hl-amber"># Decode data</span>
+<span class="hl-blue">POST</span> /v1/optimize              <span class="hl-amber"># Auto-optimize</span>
+<span class="hl-green">GET</span>  /v1/collections            <span class="hl-amber"># List collections</span>
+<span class="hl-blue">POST</span> /v1/collections/:name      <span class="hl-amber"># Write to collection</span>
+<span class="hl-green">GET</span>  /v1/collections/:name      <span class="hl-amber"># Read collection</span>
+<span class="hl-blue">POST</span> /v1/query                  <span class="hl-amber"># PQL query execution</span>
+<span class="hl-green">GET</span>  /v1/formats/:collection    <span class="hl-amber"># Format comparison</span>
+
+<span class="hl-purple">── Provider Proxies ──</span>
+<span class="hl-blue">POST</span> /v1/providers/openai/chat
+<span class="hl-blue">POST</span> /v1/providers/anthropic/messages
+<span class="hl-blue">POST</span> /v1/providers/gemini/generate
+
+<span class="hl-amber">Features: CORS, Zod validation, graceful shutdown</span></div>
+    </div>
+  </div>
 
   <div class="dash-spacer"></div>
 
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  CTA                                   -->
-  <!-- ═══════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: INTEGRATIONS & ECOSYSTEM                                     -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-section-header purple dash-reveal">
+    <h2>Integrations &amp; Ecosystem</h2>
+    <p>Drop-in middleware and adapters for every major LLM framework. Zero config required — just wrap your existing code.</p>
+  </div>
+
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Framework Integrations</span>
+        <span class="dash-panel-badge">6 Frameworks</span>
+      </div>
+      <div class="integration-chips">
+        <div class="int-chip">
+          <div class="int-chip-icon green">V</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">Vercel AI SDK</span>
+            <span class="int-chip-desc">contex(messages) — drop-in wrapper</span>
+          </div>
+        </div>
+        <div class="int-chip">
+          <div class="int-chip-icon blue">🔗</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">LangChain</span>
+            <span class="int-chip-desc">ContexLoader — Document Loader adapter</span>
+          </div>
+        </div>
+        <div class="int-chip">
+          <div class="int-chip-icon purple">🦙</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">LlamaIndex</span>
+            <span class="int-chip-desc">ContexReader — Data Reader adapter</span>
+          </div>
+        </div>
+        <div class="int-chip">
+          <div class="int-chip-icon blue">⬡</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">OpenAI SDK</span>
+            <span class="int-chip-desc">Provider proxy via REST endpoint</span>
+          </div>
+        </div>
+        <div class="int-chip">
+          <div class="int-chip-icon amber">A</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">Anthropic SDK</span>
+            <span class="int-chip-desc">injectContexContent() middleware</span>
+          </div>
+        </div>
+        <div class="int-chip">
+          <div class="int-chip-icon red">G</div>
+          <div class="int-chip-detail">
+            <span class="int-chip-name">Google Gemini</span>
+            <span class="int-chip-desc">Provider proxy via REST endpoint</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+  <div class="dash-grid two-col dash-reveal">
+    <!-- Vercel middleware code -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Vercel AI SDK — Drop-in Middleware</span>
+        <span class="dash-panel-badge" style="background: color-mix(in srgb, var(--accent-green) 10%, transparent); color: var(--accent-green);">Zero Config</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-purple">import</span> { streamText } <span class="hl-purple">from</span> <span class="hl-green">'ai'</span>;
+<span class="hl-purple">import</span> { contex } <span class="hl-purple">from</span> <span class="hl-green">'@contex-llm/core/vercel'</span>;
+
+<span class="hl-blue">await</span> streamText({
+  model: openai(<span class="hl-green">'gpt-5.2'</span>),
+  messages: contex(messages)  <span class="hl-amber">// ← One line. That's it.</span>
+});
+
+<span class="hl-amber">// Auto-detects JSON arrays in the last user message</span>
+<span class="hl-amber">// Compiles with Contex Compact format</span>
+<span class="hl-amber">// Falls back gracefully if not JSON</span></div>
+    </div>
+
+    <!-- Injection middleware -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Provider-Aware Injection Middleware</span>
+        <span class="dash-panel-badge">Text or Tokens</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-purple">import</span> { injectContexContent } <span class="hl-purple">from</span> <span class="hl-green">'@contex-llm/middleware'</span>;
+
+<span class="hl-amber">// Automatically chooses text vs raw tokens</span>
+<span class="hl-amber">// based on provider capabilities</span>
+<span class="hl-blue">const</span> result = <span class="hl-blue">await</span> injectContexContent(
+  anthropic,
+  <span class="hl-green">'claude-sonnet-4-6'</span>,
+  myTens,
+  (payload) => anthropic.messages.create({
+    ...baseParams,
+    ...payload  <span class="hl-amber">// { text } or { tokens }</span>
+  })
+);</div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  SECTION: ENGINEERING STATS SUMMARY                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel" style="text-align: center;">
+      <div class="dash-panel-header" style="justify-content: center;">
+        <span class="dash-panel-title">Engineering at a Glance</span>
+      </div>
+      <div class="kpi-strip" style="margin-bottom: 0; padding: 0;">
+        <div class="kpi-card blue">
+          <div class="kpi-value">7</div>
+          <div class="kpi-label">Packages</div>
+          <div class="kpi-sublabel">core · engine · cli · server · middleware · adapters · tens-wasm</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-value">10K+</div>
+          <div class="kpi-label">Lines of Code</div>
+          <div class="kpi-sublabel">TypeScript + 1,264 lines Rust</div>
+        </div>
+        <div class="kpi-card purple">
+          <div class="kpi-value">16+</div>
+          <div class="kpi-label">CLI Commands</div>
+          <div class="kpi-sublabel">encode · decode · stats · bench · ...</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-value">13+</div>
+          <div class="kpi-label">REST Endpoints</div>
+          <div class="kpi-sublabel">Hono server with Zod validation</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-value">14</div>
+          <div class="kpi-label">Error Types</div>
+          <div class="kpi-sublabel">Comprehensive error taxonomy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+  <!-- Additional: Architecture Deep-Dive -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Complete Pipeline Architecture — All Layers</span>
+        <span class="dash-panel-badge" style="background: color-mix(in srgb, var(--accent-purple) 10%, transparent); color: var(--accent-purple);">Full Stack</span>
+      </div>
+      <div class="arch-diagram"><span class="hl-blue">Input Data</span> (JSON / Objects / Vercel Messages / LangChain Docs)
+    │
+    ├── <span class="hl-green">analyzeStructure()</span>        → Measure depth, sparsity, field count
+    ├── <span class="hl-green">selectBestFormat()</span>        → Heuristic format selection
+    ├── <span class="hl-green">analyzeComplexity()</span>       → Structural complexity scoring (0-100)
+    │
+    v
+<span class="hl-green">┌──────────────────────────────┐</span>
+<span class="hl-green">│  canonicalize()              │</span>  Normalize types, sort keys, handle NaN/Infinity/sparse
+<span class="hl-green">│  → Canonical IR              │</span>  Deterministic, content-addressable
+<span class="hl-green">│  + SHA-256 structural hash   │</span>  Dedup: identical data = stored once
+<span class="hl-green">│  + String dictionary         │</span>  Shared value compression
+<span class="hl-green">└──────────┬───────────────────┘</span>
+           │
+           ├── <span class="hl-purple">entropyWeightedFieldOrder()</span>   → Anti-copy fingerprint layer 1
+           ├── <span class="hl-purple">buildHashChain()</span>              → Salted structural hash chain
+           ├── <span class="hl-purple">generateWatermark()</span>           → HMAC-SHA256 encoding watermark
+           │
+           v
+<span class="hl-blue">┌──────────────────────────────┐</span>
+<span class="hl-blue">│  TokenMemory.store()         │</span>  Content-addressed persistent IR
+<span class="hl-blue">│  → .contex/ir/{hash}/ir.bin  │</span>  with WAL crash safety
+<span class="hl-blue">└──────────┬───────────────────┘</span>
+           │
+           v
+<span class="hl-purple">┌──────────────────────────────┐</span>
+<span class="hl-purple">│  formatOutput()              │</span>  Encode to selected format
+<span class="hl-purple">│  + @dict compression         │</span>  (contex | toon | csv | json)
+<span class="hl-purple">│  + prefix stripping          │</span>  + prefix-cache optimization
+<span class="hl-purple">│  + sparse mode               │</span>
+<span class="hl-purple">└──────────┬───────────────────┘</span>
+           │
+           v
+<span class="hl-amber">┌──────────────────────────────┐</span>
+<span class="hl-amber">│  Materialize for target model│</span>  39 models × 4 encodings
+<span class="hl-amber">│  → Int32Array tokens         │</span>  Lazy per-model materialization
+<span class="hl-amber">│  → PTOK binary (optional)    │</span>  Pre-tokenized binary blocks
+<span class="hl-amber">└──────────┬───────────────────┘</span>
+           │
+           ├── <span class="hl-blue">compose()</span>      → Budget-validated prompt assembly
+           ├── <span class="hl-blue">packContext()</span>  → Predictive packing (greedy/density/knapsack)
+           ├── <span class="hl-blue">PQL queries</span>   → SQL-like context selection
+           │
+           v
+<span class="hl-green">┌──────────────────────────────┐</span>
+<span class="hl-green">│  injectContexContent()       │</span>  Provider-aware injection
+<span class="hl-green">│  → OpenAI / Anthropic /      │</span>  Automatic text vs token mode
+<span class="hl-green">│    Gemini / Vercel AI SDK    │</span>
+<span class="hl-green">└──────────────────────────────┘</span></div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
+
+
+  <!-- VSCode Extension -->
+  <div class="dash-grid full dash-reveal">
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">VSCode Extension — TENS Syntax Highlighting</span>
+        <span class="dash-panel-badge">Extensions</span>
+      </div>
+      <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 8px;">First-class editor support for <code>.tens</code> files with syntax highlighting, bracket matching, and comment toggling. Available in the extensions marketplace.</p>
+      <div class="stat-row">
+        <div class="stat-item"><div class="stat-num blue">.tens</div><div class="stat-label">File Extension</div></div>
+        <div class="stat-item"><div class="stat-num green">✓</div><div class="stat-label">Syntax Highlight</div></div>
+        <div class="stat-item"><div class="stat-num purple">✓</div><div class="stat-label">Bracket Match</div></div>
+        <div class="stat-item"><div class="stat-num amber">✓</div><div class="stat-label">Comment Toggle</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-spacer"></div>
   <section class="cta-box" style="margin-top: 40px;">
-    <h2>See inside your context layer</h2>
-    <p>The observability APIs are available today in <code>@contex/engine</code>.<br>Use <code>getStats()</code>, <code>analyzeSavings()</code>, and <code>serializeState()</code> to build your own dashboards.</p>
+    <h2>Start Building with Contex</h2>
+    <p>All benchmarks on this page come from <code>benchmark_results.json</code> — generated by <code>npx contex benchmark</code>.<br>Every feature shown above is production code with tests. Try it yourself.</p>
     <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
       <a href="./playground.html" class="btn btn-primary">Try the Playground</a>
+      <a href="./benchmarks.html" class="btn btn-ghost">Detailed Benchmarks</a>
       <a href="./docs.html" class="btn btn-ghost">Read the Docs</a>
-      <a href="./benchmarks.html" class="btn btn-ghost">View Benchmarks</a>
     </div>
   </section>
 
@@ -1376,19 +1601,18 @@ fs.writeFileSync(<span style="color: var(--accent-green);">'.contex/session.json
 
   <!-- Footer -->
   <footer class="footer">
-    <p>&copy; 2026 Contex. MIT License. Built for the compiled AI future.</p>
+    <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
   </footer>
 
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  SCRIPTS                               -->
+  <!--  SCRIPTS — All data-driven             -->
   <!-- ═══════════════════════════════════════ -->
   <script>
     // ── Theme toggle ──
     const toggle = document.getElementById('theme-toggle');
     const sun = toggle.querySelector('.sun-icon');
     const moon = toggle.querySelector('.moon-icon');
-
     function applyTheme(t) {
       document.documentElement.setAttribute('data-theme', t);
       localStorage.setItem('contex-theme', t);
@@ -1396,99 +1620,293 @@ fs.writeFileSync(<span style="color: var(--accent-green);">'.contex/session.json
       moon.style.display = t === 'dark' ? 'block' : 'none';
     }
     applyTheme(localStorage.getItem('contex-theme') || 'dark');
-
     toggle.addEventListener('click', () => {
       const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       applyTheme(next);
     });
 
-
     // ── Scroll reveal ──
     const dashObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('.dash-reveal').forEach(el => dashObserver.observe(el));
 
-
-    // ── Simulate live counter updates ──
-    function animateValue(el, start, end, duration, prefix, suffix) {
-      const range = end - start;
-      const startTime = performance.now();
-      function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        const current = Math.round(start + range * eased);
-        el.textContent = prefix + current.toLocaleString() + suffix;
-        if (progress < 1) requestAnimationFrame(step);
+    // ── Load real data and render everything ──
+    async function loadDashboard() {
+      // Fetch benchmark data (always available) and model registry (may 404 from website/)
+      const benchRes = await fetch('./benchmark_results.json').then(r => r.json());
+      let models = {};
+      try {
+        // Try fetching from relative path — works in dev (vite) or if copied alongside
+        const modelsRes = await fetch('./models.json').then(r => {
+          if (!r.ok) throw new Error('not found');
+          return r.json();
+        });
+        models = modelsRes.models || modelsRes;
+      } catch {
+        // Fallback: inline a subset for the dashboard (if models.json isn't served)
+        models = buildFallbackModels();
       }
-      requestAnimationFrame(step);
+
+      const matrix = benchRes.matrix;
+      const modelCount = Object.keys(models).length;
+      const datasets = [...new Set(matrix.map(m => m.dataset))];
+      const timestamp = benchRes.metadata?.timestamp
+        ? new Date(benchRes.metadata.timestamp).toLocaleDateString()
+        : '';
+
+      // Hero badge
+      document.getElementById('hero-badge').textContent =
+        `v${benchRes.metadata?.version || '?'} \u00B7 ${datasets.length} datasets \u00B7 ${timestamp}`;
+      document.getElementById('hero-datasets').textContent = datasets.length;
+
+      renderKPIs(matrix, datasets, modelCount);
+      renderDatasetChart(matrix, datasets, 1000);
+
+      document.querySelectorAll('.scale-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.scale-tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderDatasetChart(matrix, datasets, parseInt(btn.dataset.rows));
+        });
+      });
+
+      renderFormatComparison(matrix);
+      renderContexWins(matrix);
+      renderCostTable(matrix, models);
+      renderSizeTable(matrix);
+      renderRegistryTable(models, modelCount);
     }
 
-    // Animate KPIs on first view
-    const kpiObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !entry.target.dataset.animated) {
-          entry.target.dataset.animated = 'true';
-          animateValue(document.getElementById('kpi-tokens-saved'), 0, 847293, 2000, '', '');
-          animateValue(document.getElementById('kpi-requests'), 0, 12847, 1800, '', '');
-        }
-      });
-    }, { threshold: 0.3 });
-    kpiObserver.observe(document.querySelector('.kpi-strip'));
+    // ── KPI computation ──
+    function renderKPIs(matrix, datasets, modelCount) {
+      const contex1k = matrix.filter(m => m.format === 'contex' && m.rows === 1000);
+      const json1k = matrix.filter(m => m.format === 'json' && m.rows === 1000);
+      const avgSavings = Math.round(contex1k.reduce((a, m) => a + m.savingsVsJson, 0) / contex1k.length);
+      const maxEntry = contex1k.reduce((a, m) => m.savingsVsJson > a.savingsVsJson ? m : a);
 
-
-    // ── Simulate live event feed ──
-    const feedEvents = [
-      { icon: 'green', sym: '✓', title: 'Schema cache hit — <code>orders</code> (8th reuse)', meta: 'gpt-4o · 623 tokens saved' },
-      { icon: 'blue', sym: '⚡', title: 'Contex Compact selected — 58% compression', meta: 'claude-3.5-sonnet · 1,024 → 430 tokens' },
-      { icon: 'green', sym: '✓', title: 'Dictionary dedup — 12 values reused', meta: 'gpt-4o-mini · 345 tokens saved' },
-      { icon: 'purple', sym: '📊', title: 'Token fingerprint validated — <code>o200k_base</code>', meta: 'materializer · cache restored' },
-      { icon: 'amber', sym: '⚠', title: 'Budget cap engaged — max 2,048 tokens', meta: 'gemini-1.5-pro · 3,200 → 2,048 tokens' },
-      { icon: 'blue', sym: '⚡', title: 'Incremental encode — 7 delta rows out of 120', meta: 'gpt-4o · 2,890 tokens saved' },
-      { icon: 'green', sym: '✓', title: 'Session state persisted — 24 schemas', meta: 'persistence · .contex/session.json' },
-    ];
-
-    let feedIdx = 0;
-    setInterval(() => {
-      const feed = document.getElementById('event-feed');
-      const evt = feedEvents[feedIdx % feedEvents.length];
-      const item = document.createElement('div');
-      item.className = 'event-item';
-      item.style.opacity = '0';
-      item.style.transform = 'translateY(-10px)';
-      item.innerHTML = `
-        <div class="event-icon ${evt.icon}">${evt.sym}</div>
-        <div class="event-body">
-          <div class="event-title">${evt.title}</div>
-          <div class="event-meta">${evt.meta} · just now</div>
-        </div>`;
-      feed.insertBefore(item, feed.firstChild);
-      requestAnimationFrame(() => {
-        item.style.transition = 'opacity 0.4s, transform 0.4s';
-        item.style.opacity = '1';
-        item.style.transform = 'translateY(0)';
-      });
-
-      // Keep feed manageable
-      while (feed.children.length > 15) {
-        feed.removeChild(feed.lastChild);
+      let totalJson = 0, totalContex = 0;
+      for (const c of contex1k) {
+        const j = json1k.find(x => x.dataset === c.dataset);
+        if (j) { totalJson += j.tokens; totalContex += c.tokens; }
       }
-      feedIdx++;
-    }, 5000);
 
+      document.getElementById('kpi-avg-savings').textContent = avgSavings + '%';
+      document.getElementById('kpi-peak-savings').textContent = maxEntry.savingsVsJson + '%';
+      document.getElementById('kpi-peak-dataset').textContent = maxEntry.dataset + ' dataset';
+      document.getElementById('kpi-total-saved').textContent = (totalJson - totalContex).toLocaleString();
+      document.getElementById('kpi-datasets').textContent = datasets.length;
+      document.getElementById('kpi-models').textContent = modelCount;
+    }
 
-    // ── Time range buttons ──
-    document.querySelectorAll('.dash-control-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.dash-control-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    // ── Per-dataset bar chart ──
+    function renderDatasetChart(matrix, datasets, rows) {
+      const container = document.getElementById('dataset-chart');
+      const contex = matrix.filter(m => m.format === 'contex' && m.rows === rows);
+      const sorted = [...contex].sort((a, b) => b.savingsVsJson - a.savingsVsJson);
+      const max = Math.max(...sorted.map(d => d.savingsVsJson), 1);
+
+      container.innerHTML = '';
+      for (const entry of sorted) {
+        const pct = (entry.savingsVsJson / max) * 100;
+        const bar = document.createElement('div');
+        bar.className = 'bar tooltip';
+        bar.setAttribute('data-tip',
+          `${entry.dataset}: ${entry.savingsVsJson}% savings (${entry.tokens.toLocaleString()} tokens)`);
+        const hue = entry.savingsVsJson >= 80 ? 'var(--accent-green)' :
+                     entry.savingsVsJson >= 65 ? 'var(--accent-blue)' :
+                     entry.savingsVsJson >= 50 ? 'var(--accent-purple)' : 'var(--accent-amber)';
+        bar.style.cssText = `height: ${pct}%; background: ${hue};`;
+        bar.innerHTML = `<span class="bar-val" style="color: ${hue};">${entry.savingsVsJson}%</span>` +
+                         `<span class="bar-label">${entry.dataset}</span>`;
+        container.appendChild(bar);
+      }
+    }
+
+    // ── Format comparison bars ──
+    function renderFormatComparison(matrix) {
+      const container = document.getElementById('format-bars');
+      const formats = ['contex', 'toon', 'csv'];
+      const colors = ['green', 'blue', 'purple'];
+      const labels = ['Contex Compact', 'TOON', 'CSV'];
+
+      const avgs = formats.map(fmt => {
+        const data = matrix.filter(m => m.format === fmt && m.rows === 1000);
+        return data.length ? Math.round(data.reduce((a, m) => a + m.savingsVsJson, 0) / data.length) : 0;
       });
+
+      document.getElementById('format-badge').textContent = `Contex leads by ${avgs[0] - avgs[1]}pp`;
+
+      for (let i = 0; i < formats.length; i++) {
+        const row = document.createElement('div');
+        row.className = 'hbar-row';
+        row.innerHTML = `
+          <span class="hbar-label">${labels[i]}</span>
+          <div class="hbar-track">
+            <div class="hbar-fill ${colors[i]}" style="width: ${avgs[i]}%;"><span>${avgs[i]}%</span></div>
+          </div>
+          <span class="hbar-val">${avgs[i]}%</span>`;
+        container.appendChild(row);
+      }
+      // JSON baseline
+      const row = document.createElement('div');
+      row.className = 'hbar-row';
+      row.innerHTML = `
+        <span class="hbar-label">JSON (baseline)</span>
+        <div class="hbar-track"><div class="hbar-fill amber" style="width: 0%;"></div></div>
+        <span class="hbar-val">0%</span>`;
+      container.appendChild(row);
+    }
+
+    // ── Where contex beats toon most ──
+    function renderContexWins(matrix) {
+      const container = document.getElementById('contex-wins');
+      const contex1k = matrix.filter(m => m.format === 'contex' && m.rows === 1000);
+      const toon1k = matrix.filter(m => m.format === 'toon' && m.rows === 1000);
+
+      const wins = [];
+      for (const c of contex1k) {
+        const t = toon1k.find(m => m.dataset === c.dataset);
+        if (t) wins.push({ dataset: c.dataset, gap: c.savingsVsJson - t.savingsVsJson, savings: c.savingsVsJson });
+      }
+      wins.sort((a, b) => b.gap - a.gap);
+
+      for (const w of wins.slice(0, 8)) {
+        const row = document.createElement('div');
+        row.className = 'metric-bar';
+        const color = w.gap >= 15 ? 'green' : w.gap >= 8 ? 'blue' : 'purple';
+        row.innerHTML = `
+          <span class="metric-bar-label">${w.dataset}</span>
+          <div class="metric-bar-track"><div class="metric-bar-fill ${color}" style="width: ${w.savings}%;"></div></div>
+          <span class="metric-bar-val">+${w.gap}pp</span>`;
+        container.appendChild(row);
+      }
+    }
+
+    // ── Cost analysis table ──
+    function renderCostTable(matrix, models) {
+      const tbody = document.getElementById('cost-tbody');
+      const json1k = matrix.filter(m => m.format === 'json' && m.rows === 1000);
+      const contex1k = matrix.filter(m => m.format === 'contex' && m.rows === 1000);
+
+      let totalJson = 0, totalContex = 0;
+      for (const c of contex1k) {
+        const j = json1k.find(x => x.dataset === c.dataset);
+        if (j) { totalJson += j.tokens; totalContex += c.tokens; }
+      }
+
+      const keyModels = [
+        'gpt-5.2', 'gpt-5.2-pro', 'gpt-5-mini', 'gpt-4.1', 'gpt-4.1-mini',
+        'o4-mini',
+        'claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5',
+        'gemini-3-pro', 'gemini-3-flash', 'gemini-2-5-pro', 'gemini-2-5-flash'
+      ];
+
+      let html = '';
+      for (const id of keyModels) {
+        const m = models[id];
+        if (!m) continue;
+        const jsonCost = (totalJson / 1e6) * m.inputPricePer1M;
+        const contexCost = (totalContex / 1e6) * m.inputPricePer1M;
+        const saved = jsonCost - contexCost;
+        const pct = jsonCost > 0 ? Math.round((saved / jsonCost) * 100) : 0;
+        html += `<tr>
+          <td><strong>${m.name}</strong></td>
+          <td>${m.provider}</td>
+          <td>$${m.inputPricePer1M.toFixed(2)}</td>
+          <td>$${jsonCost.toFixed(2)}</td>
+          <td class="val-blue">$${contexCost.toFixed(2)}</td>
+          <td class="val-green">$${saved.toFixed(2)}</td>
+          <td class="val-green">${pct}%</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html || '<tr><td colspan="7">No model data available</td></tr>';
+    }
+
+    // ── Size / token comparison ──
+    function renderSizeTable(matrix) {
+      const tbody = document.getElementById('size-tbody');
+      const rw1k = matrix.filter(m => m.dataset === 'RealWorld' && m.rows === 1000);
+      const json = rw1k.find(m => m.format === 'json');
+      if (!json) { tbody.innerHTML = '<tr><td colspan="5">No RealWorld data</td></tr>'; return; }
+
+      const formats = [
+        { id: 'json', label: 'JSON', color: '' },
+        { id: 'contex', label: 'Contex Compact', color: 'val-green' },
+        { id: 'toon', label: 'TOON', color: 'val-blue' },
+        { id: 'csv', label: 'CSV', color: 'val-purple' }
+      ];
+
+      let html = '';
+      for (const f of formats) {
+        const entry = rw1k.find(m => m.format === f.id);
+        if (!entry) continue;
+        const tokenSavings = f.id === 'json' ? '\u2014' : `-${entry.savingsVsJson}%`;
+        const byteSavings = f.id === 'json' ? '\u2014' :
+          `-${Math.round((1 - entry.bytes / json.bytes) * 100)}%`;
+        html += `<tr>
+          <td><strong>${f.label}</strong></td>
+          <td class="${f.color}">${entry.tokens.toLocaleString()}</td>
+          <td>${entry.bytes.toLocaleString()}</td>
+          <td class="${f.color}">${tokenSavings}</td>
+          <td>${byteSavings}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+
+    // ── Model registry table ──
+    function renderRegistryTable(models, count) {
+      document.getElementById('registry-badge').textContent = `${count} models`;
+      const tbody = document.getElementById('registry-tbody');
+
+      const entries = Object.entries(models).sort((a, b) => {
+        if (a[1].provider !== b[1].provider) return a[1].provider.localeCompare(b[1].provider);
+        return b[1].inputPricePer1M - a[1].inputPricePer1M;
+      });
+
+      let html = '';
+      for (const [id, m] of entries) {
+        const ctx = m.contextWindow >= 1e6 ? `${(m.contextWindow / 1e6).toFixed(0)}M` :
+                    m.contextWindow >= 1e3 ? `${(m.contextWindow / 1e3).toFixed(0)}K` :
+                    String(m.contextWindow);
+        html += `<tr>
+          <td><strong>${m.name}</strong></td>
+          <td>${m.provider}</td>
+          <td>${ctx}</td>
+          <td>$${m.inputPricePer1M.toFixed(2)}</td>
+          <td>$${m.outputPricePer1M.toFixed(2)}</td>
+          <td>${m.cachedInputPricePer1M != null ? '$' + m.cachedInputPricePer1M.toFixed(3) : '\u2014'}</td>
+          <td>${m.releaseDate || '\u2014'}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+
+    // ── Fallback model data (for when models.json can't be fetched) ──
+    function buildFallbackModels() {
+      return {
+        'gpt-5.2': { name: 'GPT-5.2', provider: 'openai', inputPricePer1M: 1.75, outputPricePer1M: 14.00, cachedInputPricePer1M: 0.175, contextWindow: 400000, releaseDate: '2025-12-15' },
+        'gpt-5.2-pro': { name: 'GPT-5.2 Pro', provider: 'openai', inputPricePer1M: 21.00, outputPricePer1M: 168.00, cachedInputPricePer1M: 2.10, contextWindow: 400000, releaseDate: '2025-12-15' },
+        'gpt-5-mini': { name: 'GPT-5 Mini', provider: 'openai', inputPricePer1M: 0.25, outputPricePer1M: 2.00, cachedInputPricePer1M: 0.025, contextWindow: 400000, releaseDate: '2025-08-07' },
+        'gpt-4.1': { name: 'GPT-4.1', provider: 'openai', inputPricePer1M: 2.00, outputPricePer1M: 8.00, cachedInputPricePer1M: 0.50, contextWindow: 1000000, releaseDate: '2025-04-14' },
+        'gpt-4.1-mini': { name: 'GPT-4.1 Mini', provider: 'openai', inputPricePer1M: 0.80, outputPricePer1M: 3.20, cachedInputPricePer1M: 0.20, contextWindow: 1000000, releaseDate: '2025-04-14' },
+        'o4-mini': { name: 'o4-mini', provider: 'openai', inputPricePer1M: 4.00, outputPricePer1M: 16.00, cachedInputPricePer1M: 1.00, contextWindow: 200000, releaseDate: '2025-04-16' },
+        'claude-opus-4-6': { name: 'Claude Opus 4.6', provider: 'anthropic', inputPricePer1M: 5.00, outputPricePer1M: 25.00, cachedInputPricePer1M: 0.50, contextWindow: 200000, releaseDate: '2026-01-20' },
+        'claude-sonnet-4-6': { name: 'Claude Sonnet 4.6', provider: 'anthropic', inputPricePer1M: 3.00, outputPricePer1M: 15.00, cachedInputPricePer1M: 0.30, contextWindow: 200000, releaseDate: '2026-01-20' },
+        'claude-haiku-4-5': { name: 'Claude Haiku 4.5', provider: 'anthropic', inputPricePer1M: 1.00, outputPricePer1M: 5.00, cachedInputPricePer1M: 0.10, contextWindow: 200000, releaseDate: '2025-10-15' },
+        'gemini-3-pro': { name: 'Gemini 3 Pro', provider: 'google', inputPricePer1M: 2.00, outputPricePer1M: 12.00, cachedInputPricePer1M: 0.50, contextWindow: 1000000, releaseDate: '2026-01-15' },
+        'gemini-3-flash': { name: 'Gemini 3 Flash', provider: 'google', inputPricePer1M: 0.50, outputPricePer1M: 3.00, cachedInputPricePer1M: 0.125, contextWindow: 1000000, releaseDate: '2026-01-15' },
+        'gemini-2-5-pro': { name: 'Gemini 2.5 Pro', provider: 'google', inputPricePer1M: 1.25, outputPricePer1M: 10.00, cachedInputPricePer1M: 0.125, contextWindow: 1000000, releaseDate: '2025-06-17' },
+        'gemini-2-5-flash': { name: 'Gemini 2.5 Flash', provider: 'google', inputPricePer1M: 0.30, outputPricePer1M: 2.50, cachedInputPricePer1M: 0.075, contextWindow: 1000000, releaseDate: '2025-06-17' },
+      };
+    }
+
+    // ── Boot ──
+    loadDashboard().catch(err => {
+      console.error('Dashboard load failed:', err);
+      document.getElementById('hero-badge').textContent =
+        'Error loading benchmark data \u2014 run npx contex benchmark first';
     });
   </script>
 

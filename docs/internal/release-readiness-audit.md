@@ -30,7 +30,7 @@ Scope: Structural consolidation and release readiness (no feature implementation
 - **Secondary A: Server runtime path (canonical IR path)**
    - `packages/server/src/index.ts`
    - Uses `encodeIR` + `TokenMemory` for `/v1/encode` and `/v1/decode`
-   - Uses `@contex/engine` `Contex` class for optimize/query/collections
+   - Uses `@contex-llm/engine` `Contex` class for optimize/query/collections
 
 - **Secondary B: CLI IR tooling path**
   - `packages/cli/src/cli.ts`
@@ -89,7 +89,7 @@ Scope: Structural consolidation and release readiness (no feature implementation
 
 ### Materialization fragmentation
 
-- Materialization is in `@contex/core` and works, but there are multiple ways to get tokens (`Tens.materialize`, `TokenMemory.materializeAndCache`, legacy token stream APIs).
+- Materialization is in `@contex-llm/core` and works, but there are multiple ways to get tokens (`Tens.materialize`, `TokenMemory.materializeAndCache`, legacy token stream APIs).
 - Composition (`compose`) is present but not part of wrapper runtime pipeline.
 
 ### Middleware injection fragmentation
@@ -101,7 +101,7 @@ Scope: Structural consolidation and release readiness (no feature implementation
 ### Memory/cache fragmentation
 
 - Strong `TokenMemory` mechanism exists.
-- Server’s active route path does not leverage the same canonical IR storage/materialization flow for encode/decode endpoints.
+- Server's active route path does not leverage the same canonical IR storage/materialization flow for encode/decode endpoints.
 
 ---
 
@@ -122,19 +122,19 @@ Scope: Structural consolidation and release readiness (no feature implementation
 
 ### Expected layering
 
-- `@contex/core`: canonicalization, IR, materialization, cache primitives
-- `@contex/engine`: budget/selection/context APIs
-- `@contex/middleware`: provider wrappers + injection
-- `@contex/cli`: tooling and operational workflows
+- `@contex-llm/core`: canonicalization, IR, materialization, cache primitives
+- `@contex-llm/engine`: budget/selection/context APIs
+- `@contex-llm/middleware`: provider wrappers + injection
+- `@contex-llm/cli`: tooling and operational workflows
 
 ### Findings
 
 - **Cross-layer violations:** none severe in import graph.
 - **Circular dependencies:** none detected.
 - **Responsibility leaks:**
-  - `@contex/server` runtime path bypasses canonical IR path for encode/decode.
-  - `@contex/core` exports both modern and legacy/deprecated surfaces.
-  - `@contex/engine` contains disconnected storage/index files under active source tree.
+  - `@contex-llm/server` runtime path bypasses canonical IR path for encode/decode.
+  - `@contex-llm/core` exports both modern and legacy/deprecated surfaces.
+  - `@contex-llm/engine` contains disconnected storage/index files under active source tree.
 
 ### Integrity verdict
 
@@ -188,7 +188,7 @@ Requested statuses:
 | `docs/reference/core.md` | ALIGNED | Updated examples/options to current `Tens`/`TokenMemory`/`Materializer` signatures |
 | `docs/reference/middleware.md` | ALIGNED | Recreated with current wrapper signatures and placeholder flow |
 | `docs/guide/comparison.md` | ALIGNED | Recreated with API-valid strategy examples and usage |
-| `README.md` | PARTIAL | High-level direction aligns, but API-level claims and “stable” framing exceed structural reality |
+| `README.md` | PARTIAL | High-level direction aligns, but API-level claims and "stable" framing exceed structural reality |
 | `docs/PRD.md` | PARTIAL | Architectural intent aligns with v3 path but not all runtime edges are unified |
 
 ---

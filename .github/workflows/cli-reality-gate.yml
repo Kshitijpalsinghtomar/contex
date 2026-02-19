@@ -72,7 +72,7 @@ jobs:
         run: pnpm build
 
       - name: CLI regression tests
-        run: pnpm --filter @contex/cli test
+        run: pnpm --filter @contex-llm/cli test
 
       - name: Generate CI scorecard artifact bundle
         run: pnpm generate:ci-scorecard-artifacts

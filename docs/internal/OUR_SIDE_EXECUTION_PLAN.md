@@ -10,7 +10,7 @@
 
 The codebase has moved from idea-stage to serious implementation stage:
 
-- Core and CLI tests are green locally (`@contex/core`, `@contex/cli`)
+- Core and CLI tests are green locally (`@contex-llm/core`, `@contex-llm/cli`)
 - CLI now has regression coverage for `analyze`, `inject`, `validate`, and `guard`
 - Observability and logger primitives exist in core
 - Middleware and CLI capabilities are broader than before
@@ -33,7 +33,7 @@ This is real progress. It is **not yet** product-proof across diverse production
 - **2026-02-16 (done):** Added claim-evidence CI guard (`pnpm check:claim-evidence`).
 - **2026-02-16 (done):** Added CI scorecard artifact-bundle generator (`pnpm generate:ci-scorecard-artifacts`), workflow upload wiring, and non-blocking gate capture in artifacts.
 - **2026-02-16 (done):** Removed duplicate transient caches (`.contex_temp`, `.contex_user`, `.turbo/cache`, `.turbo/cookies`) to reduce workspace noise without touching source fixtures.
-- **2026-02-16 (done):** Week 3 completion review executed against current code (`packages/cli/src/cli.ts`, `packages/core/src/cache_metrics.ts`, `packages/middleware/src/core.ts`) with validation passes on `pnpm check:claim-evidence` and `pnpm --filter @contex/cli test`.
+- **2026-02-16 (done):** Week 3 completion review executed against current code (`packages/cli/src/cli.ts`, `packages/core/src/cache_metrics.ts`, `packages/middleware/src/core.ts`) with validation passes on `pnpm check:claim-evidence` and `pnpm --filter @contex-llm/cli test`.
 - **2026-02-16 (done):** Implemented Week 2 DX cleanup batch 1 — normalized CLI/help command language to `contex` and removed `ctx`/`--ctx-only` drift in user-facing usage strings.
 - **2026-02-16 (done):** Implemented Week 2 docs contract cleanup batch 1 — updated `quickstart`, `migration-from-json`, and `examples` middleware snippets to use `Tens` objects in `data` payloads.
 - **2026-02-16 (done):** Implemented Week 2 docs-snippet validation guard (`pnpm check:docs-snippets`) and wired it into CI reality gate workflow.
@@ -42,7 +42,7 @@ This is real progress. It is **not yet** product-proof across diverse production
 - **2026-02-16 (done):** Started Week 4 proof-pack automation with fixed dataset set + cadence tracking (`pnpm generate:week4-proof-pack`), generated first run at `artifacts/scorecards/2026-02-16/week4-fixed-set/gpt-4o-mini-week4-mlp1vmv1`, and updated `artifacts/scorecards/week4-cadence.json`.
 - **2026-02-16 (done):** Corrected fixed-set baseline dataset from `my_test_data.json` to `dummy.json` in proof-pack/CI generators; regenerated Week 4 artifacts at `artifacts/scorecards/2026-02-16/week4-fixed-set/gpt-4o-mini-week4-mlpib7r6` with floor `63.49%` and median `74.18%` (gate PASS).
 - **2026-02-16 (done):** Hardened claim language in `README.md` to artifact-scoped, dataset-dependent wording; re-validated with `pnpm check:claim-evidence` and `pnpm check:docs-snippets`.
-- **2026-02-16 (done):** Connected `@contex/server` to middleware-backed provider gateway routes (`/v1/providers/openai/chat`, `/v1/providers/anthropic/messages`, `/v1/providers/gemini/generate`) with missing-key guard responses and integration tests.
+- **2026-02-16 (done):** Connected `@contex-llm/server` to middleware-backed provider gateway routes (`/v1/providers/openai/chat`, `/v1/providers/anthropic/messages`, `/v1/providers/gemini/generate`) with missing-key guard responses and integration tests.
 
 ### Week 3 Focus Lock (Active)
 
@@ -71,7 +71,7 @@ What is confirmed implemented:
 	- text cache hit/miss recording through diagnostics
 4. ✅ Validation checks are green on current branch:
 	- `pnpm check:claim-evidence`
-	- `pnpm --filter @contex/cli test` (10/10 pass)
+	- `pnpm --filter @contex-llm/cli test` (10/10 pass)
 
 Review findings (high-value gaps to close next):
 
@@ -134,7 +134,7 @@ Review findings (closure state):
 1. ✅ **Normalize command/flag language (batch 1 complete)** across CLI help and execution plan command references.
 2. ✅ **Patch quickstart + migration snippets (batch 1 complete)** to match middleware types and runnable usage.
 3. ✅ **Add docs-snippet validation check** (smoke-test key TypeScript snippets in CI).
-4. ✅ **Publish one canonical newcomer flow** in README/getting-started with “advanced paths” section.
+4. ✅ **Publish one canonical newcomer flow** in README/getting-started with "advanced paths" section.
 5. ✅ **Add DX regression checklist to PR review** for naming parity and snippet correctness.
 
 ---
@@ -256,7 +256,7 @@ Do not position Contex as a default optimization layer for:
 ## Non-Negotiable Rules
 
 1. No benchmark claim without command, dataset artifact, and raw output
-2. No universal words: “always”, “guaranteed”, “for every workload”
+2. No universal words: "always", "guaranteed", "for every workload"
 3. Every optimization must ship with correctness guard + fallback behavior
 4. Docs must match actual command surface (`contex`), package names, and current behavior
 5. No ContexDB scope until Contex reality gates pass
@@ -293,7 +293,7 @@ Use these normalized labels in CLI output and scorecards:
 1. Create a single reproducible scorecard command for 3 dataset families
 2. Save artifacts to versioned paths (`command`, dataset hash, raw output)
 3. Add miss-reason taxonomy wiring end-to-end in CLI output
-4. Add docs section: “Where Contex does not help” with 3 concrete examples
+4. Add docs section: "Where Contex does not help" with 3 concrete examples
 5. Align command naming and examples across README/ROADMAP/reference docs
 
 ### Week 2 — Reliability + Decision Quality

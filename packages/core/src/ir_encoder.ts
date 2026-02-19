@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Canonical IR Encoder
+// @contex-llm/core — Canonical IR Encoder
 // ============================================================================
 //
 // Encodes structured data into a model-agnostic Canonical IR (TensIR).
@@ -19,6 +19,7 @@ import { logEncode } from './logger.js';
 import { SchemaRegistry, flattenObject } from './schema.js';
 import { computeStructuralHash } from './tens/hashing.js';
 import type { TensIR, TensSchema } from './types.js';
+import { isWasmAvailable, createWasmEncoder } from './wasm_bridge.js';
 
 // ---- Version constants ----
 // Bump these when the corresponding algorithm changes.
@@ -55,12 +56,19 @@ export function encodeIR(data: object[]): TensIR {
   // 1. Canonicalize: normalize all values to canonical form
   const canonicalized = canonicalize(data);
 
-  // 2. Binary encode: produce deterministic TENS v2 binary
-  const encoder = new TensEncoder();
-  const ir = encoder.encode(canonicalized);
+  // 2. Binary encode: use WASM when available (3-5x faster), fallback to TS
+  let ir: Uint8Array;
+  let hash: string;
 
-  // 3. Hash: compute content-addressable SHA-256
-  const hash = computeStructuralHash(ir);
+  if (isWasmAvailable()) {
+    const wasmEncoder = createWasmEncoder();
+    ir = wasmEncoder.encode(canonicalized);
+    hash = wasmEncoder.hashBinary(ir);
+  } else {
+    const encoder = new TensEncoder();
+    ir = encoder.encode(canonicalized);
+    hash = computeStructuralHash(ir);
+  }
 
   // 4. Extract schemas from the canonicalized data
   const schemas = extractSchemas(canonicalized);

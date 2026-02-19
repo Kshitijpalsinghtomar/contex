@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/cli — Format Transcoders
+// @contex-llm/cli — Format Transcoders
 // ============================================================================
 //
 // Converts data arrays between all supported serialization formats.
@@ -10,7 +10,7 @@
 // prefix cache benchmarks and structural hashing).
 // ============================================================================
 
-import { TensTextEncoder, TokenStreamEncoder, formatOutput } from '@contex/core';
+import { TensTextEncoder, TokenStreamEncoder, formatOutput } from '@contex-llm/core';
 import yaml from 'js-yaml';
 import { js2xml } from 'xml-js';
 

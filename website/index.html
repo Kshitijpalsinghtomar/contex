@@ -4,33 +4,429 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contex — Intelligent Context Engine for LLMs</title>
+  <title>Contex — The Token Compiler for LLMs</title>
   <meta name="description"
-    content="Contex stores structured data as canonical IR (TENS) and serves it in the most token-efficient format for any LLM — saving 40-94% of context costs.">
+    content="Contex is a token compiler that encodes structured data into the most token-efficient format for any LLM — saving 46-90% of context costs. 39 models, 8 formats, WASM-accelerated.">
+  <meta name="keywords" content="LLM, token optimization, context compression, GPT, Claude, Gemini, TENS, token compiler">
+
+  <!-- OG -->
+  <meta property="og:title" content="Contex — The Token Compiler for LLMs">
+  <meta property="og:description" content="Save 46-90% of LLM context token costs with deterministic, model-aware compression. Drop-in middleware for OpenAI, Anthropic, and Gemini.">
+  <meta property="og:type" content="website">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./style.css">
   <script>
     const theme = localStorage.getItem('contex-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
   </script>
+
+  <style>
+    /* ─── Index Hero Overrides ─── */
+    .index-hero {
+      position: relative;
+      padding: 160px 32px 120px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .index-hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 1000px;
+      background:
+        radial-gradient(circle at 30% 40%, rgba(59,130,246,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(139,92,246,0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: heroOrb 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes heroOrb {
+      0% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 0.7; }
+      50% { transform: translateX(-50%) scale(1.15) rotate(5deg); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1.05) rotate(-3deg); opacity: 0.8; }
+    }
+
+    .hero-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .hero-logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 40px rgba(59,130,246,0.3), 0 0 80px rgba(139,92,246,0.15);
+    }
+
+    .hero-logo-text {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .index-hero .hero-tagline {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--accent-blue) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent);
+      color: var(--accent-blue);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 32px;
+    }
+
+    .index-hero h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 28px;
+      color: var(--text-primary);
+      position: relative;
+    }
+
+    .index-hero h1 .gradient-word {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .index-hero .hero-desc {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .index-hero .hero-desc strong {
+      color: var(--text-primary);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .hero-mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: border-color var(--transition);
+    }
+
+    .hero-mini-badge:hover {
+      border-color: var(--border-active);
+    }
+
+    .hero-mini-badge .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* ─── Pipeline Visual ─── */
+    .pipeline-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+
+    .pipeline-stage {
+      flex: 1;
+      min-width: 200px;
+      text-align: center;
+      padding: 32px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+
+    .pipeline-stage:hover {
+      border-color: var(--border-active);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
+    }
+
+    .pipeline-stage .stage-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .pipeline-stage .stage-num.blue { background: color-mix(in srgb, var(--accent-blue) 12%, transparent); color: var(--accent-blue); }
+    .pipeline-stage .stage-num.purple { background: color-mix(in srgb, var(--accent-purple) 12%, transparent); color: var(--accent-purple); }
+    .pipeline-stage .stage-num.green { background: color-mix(in srgb, var(--accent-green) 12%, transparent); color: var(--accent-green); }
+
+    .pipeline-stage h4 { color: var(--text-primary); font-size: 1rem; margin-bottom: 8px; }
+    .pipeline-stage p { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; }
+
+    .pipeline-arrow {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .pipeline-arrow { transform: rotate(90deg); padding: 8px 0; }
+      .pipeline-visual { flex-direction: column; gap: 0; }
+    }
+
+    /* ─── Dramatic Comparison ─── */
+    .dramatic-comparison {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+      .dramatic-comparison { grid-template-columns: 1fr; }
+      .comparison-divider { display: none; }
+    }
+
+    .comp-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .comp-panel.bad::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-red), var(--accent-amber));
+    }
+
+    .comp-panel.good::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+    }
+
+    .comp-panel .comp-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .comp-panel .comp-header svg { flex-shrink: 0; }
+    .comp-panel .comp-header h4 { font-size: 1rem; font-weight: 700; }
+    .comp-panel.bad .comp-header h4 { color: var(--accent-red); }
+    .comp-panel.good .comp-header h4 { color: var(--accent-green); }
+
+    .comp-panel .token-count { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
+    .comp-panel.bad .token-count { color: var(--accent-red); }
+    .comp-panel.good .token-count { color: var(--accent-green); }
+
+    .comp-panel .token-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; }
+
+    .comparison-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    .comparison-divider .arrow-circle {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px rgba(59,130,246,0.3);
+    }
+
+    /* ─── Differentiator Grid ─── */
+    .diff-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2px;
+      background: var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .diff-cell {
+      background: var(--bg-card);
+      padding: 32px 28px;
+      transition: background var(--transition);
+    }
+
+    .diff-cell:hover { background: var(--bg-elevated); }
+
+    .diff-cell h4 {
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .diff-cell p { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; }
+    .diff-cell .diff-accent { font-weight: 700; }
+
+    /* ─── Integrations Row ─── */
+    .integrations-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .integ-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .integ-chip:hover { border-color: var(--border-active); box-shadow: var(--shadow-sm); }
+
+    .integ-chip .integ-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ─── Package Architecture Cards ─── */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    .arch-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      text-align: center;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+
+    .arch-card:hover { border-color: var(--border-active); transform: translateY(-2px); }
+
+    .arch-card .arch-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .arch-card .arch-role {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .arch-card .arch-desc {
+      color: var(--text-secondary);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body>
 
   <!-- Navigation -->
   <nav class="nav">
-    <a href="/" class="nav-brand">
+    <a href="./" class="nav-brand">
       <div class="logo-icon">C</div>
       Contex
     </a>
     <ul class="nav-links">
-      <li><a href="/" class="active">Home</a></li>
+      <li><a href="./" class="active">Home</a></li>
       <li><a href="./docs.html">Docs</a></li>
       <li><a href="./tens-text.html">TENS-Text</a></li>
       <li><a href="./benchmarks.html">Benchmarks</a></li>
@@ -57,11 +453,10 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </button>
-      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+      <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
-          <path
-            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
           </path>
         </svg>
         GitHub
@@ -69,60 +464,343 @@
     </div>
   </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container hero-content">
-      <div class="hero-badge">
-        <span class="dot"></span>
-        <span>v3.0 · Canonical IR · Deterministic</span>
-      </div>
 
-      <h1>The Intelligent<br>Context Engine</h1>
+  <!-- ═══════════════════════════════════════ -->
+  <!--  HERO                                  -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="index-hero">
 
-      <p>Contex stores structured data as a canonical intermediate representation (TENS) and serves it in the most
-        token-efficient format for any LLM — saving <strong>40-94% of context costs</strong> with deterministic output
-        for prefix caching.</p>
+    <div class="hero-tagline">
+      <span style="margin-right: 6px;">&#9889;</span>
+      v3.1 &middot; WASM Accelerated &middot; 39 Models &middot; 21 Benchmark Datasets
+    </div>
 
-      <div class="hero-actions">
-        <a href="./docs.html" class="btn btn-primary">Get Started</a>
-        <a href="./benchmarks.html" class="btn btn-ghost">View Benchmarks</a>
-      </div>
+    <h1>
+      The <span class="gradient-word">Token Compiler</span><br>
+      for LLMs
+    </h1>
 
-      <div class="install-cmd" id="installCmd" title="Click to copy">
-        <span class="prefix">$</span>
-        <span>pnpm add @contex/core @contex/engine @contex/middleware</span>
-        <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 12px; opacity: 0.6;">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-      </div>
+    <p class="hero-desc">
+      Contex encodes structured data into a <strong>canonical intermediate representation</strong> and serves it
+      in the most token-efficient format for any model — saving <strong>46–90% of context costs</strong>
+      with deterministic output for prefix caching.
+    </p>
+
+    <div class="hero-actions">
+      <a href="./docs.html" class="btn btn-primary">Get Started</a>
+      <a href="./benchmarks.html" class="btn btn-ghost">View Benchmarks</a>
+      <a href="./playground.html" class="btn btn-ghost">Try Playground</a>
+    </div>
+
+    <div class="install-cmd" id="installCmd" title="Click to copy">
+      <span class="prefix">$</span>
+      <span>pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware</span>
+      <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 12px; opacity: 0.6;">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </div>
+
+    <div class="hero-badges">
+      <span class="hero-mini-badge"><span class="badge-dot" style="background: var(--accent-green);"></span> 600+ Tests Passing</span>
+      <span class="hero-mini-badge"><span class="badge-dot" style="background: var(--accent-blue);"></span> 8 Output Formats</span>
+      <span class="hero-mini-badge"><span class="badge-dot" style="background: var(--accent-purple);"></span> WASM + Rust Encoder</span>
+      <span class="hero-mini-badge"><span class="badge-dot" style="background: var(--accent-amber);"></span> MIT Licensed</span>
     </div>
   </section>
 
-  <!-- Stats -->
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  STATS                                 -->
+  <!-- ═══════════════════════════════════════ -->
   <div class="container">
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-blue); color: var(--accent-blue);">43%</div>
+        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-blue); color: var(--accent-blue);">72%</div>
         <div class="stat-label">Avg Pipeline Savings</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-green); color: var(--accent-green);">94%</div>
+        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-green); color: var(--accent-green);">90%</div>
         <div class="stat-label">Best Format Savings</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-purple); color: var(--accent-purple);">3</div>
-        <div class="stat-label">Providers Supported</div>
+        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-purple); color: var(--accent-purple);">39</div>
+        <div class="stat-label">Models Supported</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-amber); color: var(--accent-amber);">600+</div>
-        <div class="stat-label">Tests Passing</div>
+        <div class="stat-value" style="-webkit-text-fill-color: var(--accent-amber); color: var(--accent-amber);">21</div>
+        <div class="stat-label">Benchmark Datasets</div>
       </div>
     </div>
   </div>
 
-  <!-- Cost Calculator -->
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  THE PROBLEM → SOLUTION                -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">The Token Problem</h2>
+      <p class="section-desc">Every time you feed JSON to an LLM, 60% of your tokens are wasted on syntax.<br>Brackets. Quotes. Colons. Commas. Repeated field names. Contex eliminates all of it.</p>
+    </div>
+
+    <div class="dramatic-comparison">
+      <div class="comp-panel bad">
+        <div class="comp-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <h4>Raw JSON</h4>
+        </div>
+        <div class="token-count">39,605</div>
+        <div class="token-label">tokens for 500 rows</div>
+        <div class="code-block" style="font-size: 0.8rem; line-height: 1.6;">
+<span class="key">{</span><span class="val">"users"</span><span class="key">: [</span>
+  <span class="key">{</span><span class="val">"id"</span><span class="key">:</span> 1<span class="key">,</span>
+   <span class="val">"name"</span><span class="key">:</span> <span class="val">"Alice"</span><span class="key">,</span>
+   <span class="val">"role"</span><span class="key">:</span> <span class="val">"admin"</span><span class="key">,</span>
+   <span class="val">"active"</span><span class="key">:</span> <span class="val">true</span><span class="key">},</span>
+  <span class="key">{</span><span class="val">"id"</span><span class="key">:</span> 2<span class="key">,</span>
+   <span class="val">"name"</span><span class="key">:</span> <span class="val">"Bob"</span><span class="key">,</span>
+   <span class="val">"role"</span><span class="key">:</span> <span class="val">"user"</span><span class="key">,</span>
+   <span class="val">"active"</span><span class="key">:</span> <span class="val">true</span><span class="key">}</span>
+<span class="key">]}</span>
+<span class="comment">// 60% is brackets, quotes, colons</span></div>
+      </div>
+
+      <div class="comparison-divider">
+        <div class="arrow-circle">&rarr;</div>
+      </div>
+
+      <div class="comp-panel good">
+        <div class="comp-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <h4>Contex Compact</h4>
+        </div>
+        <div class="token-count">11,089</div>
+        <div class="token-label">tokens — 72% saved</div>
+        <div class="code-block" style="font-size: 0.8rem; line-height: 1.6;">
+@f	id	name	role	active
+@d	admin=@0	user=@1	T=true
+1	Alice	@0	T
+2	Bob	@1	T
+<span class="comment">// Dictionary-compressed headers.</span>
+<span class="comment">// Tab-separated values. No syntax.</span>
+<span class="comment">// Deterministic for prefix caching.</span></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  HOW IT WORKS                          -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-desc">Contex is a token compiler. Three steps. Three lines of code. Immediate savings.</p>
+    </div>
+
+    <div class="pipeline-visual">
+      <div class="pipeline-stage">
+        <div class="stage-num blue">1</div>
+        <h4>Encode</h4>
+        <p>Your JSON is encoded into a canonical IR (TENS). Same data always produces identical output — deterministic by design.</p>
+        <div class="code-block" style="font-size: 0.78rem; margin-top: 14px;">const tens = Tens.encode(data);</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-stage">
+        <div class="stage-num purple">2</div>
+        <h4>Optimize</h4>
+        <p>11 compressions: dictionary encoding, field shortening, deep flattening, boolean abbreviation, sparse mode, and more.</p>
+        <div class="code-block" style="font-size: 0.78rem; margin-top: 14px;">const text = tens.toString();</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-stage">
+        <div class="stage-num green">3</div>
+        <h4>Inject</h4>
+        <p>Middleware replaces <code>{{CONTEX:key}}</code> placeholders with optimized output. Zero prompt changes.</p>
+        <div class="code-block" style="font-size: 0.78rem; margin-top: 14px;">'Analyze {{CONTEX:users}}'</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  WHAT MAKES CONTEX DIFFERENT           -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">What Makes Contex Different</h2>
+      <p class="section-desc">Not a prompt hack. Not a compression library. A compiler.</p>
+    </div>
+
+    <div class="diff-grid">
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Canonical IR
+        </h4>
+        <p>TENS (Token-Encoded Native Structure) is a model-agnostic intermediate representation. Same data always produces <span class="diff-accent" style="color: var(--accent-blue);">identical bytes</span>.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          46–90% Savings
+        </h4>
+        <p>11 compression directives. <span class="diff-accent" style="color: var(--accent-green);">72% average</span> savings across 21 benchmark datasets. Up to 90% on deeply nested data.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Prefix Cache Friendly
+        </h4>
+        <p>Deterministic output = identical tokens every time. Maximizes provider-side <span class="diff-accent" style="color: var(--accent-purple);">prefix cache hits</span> for repeat queries.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          39 Models, 9 Providers
+        </h4>
+        <p>Model-aware formatting. Auto-selects <span class="diff-accent" style="color: var(--accent-amber);">optimal format</span> per model's tokenizer. OpenAI, Anthropic, Gemini, Meta, DeepSeek, xAI, and more.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          WASM Accelerated
+        </h4>
+        <p>1,264-line Rust encoder compiled to WebAssembly. <span class="diff-accent" style="color: var(--accent-blue);">43 Rust tests</span>. Auto-detects WASM and falls back to JS.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+          8 Output Formats
+        </h4>
+        <p>Contex Compact, TOON, CSV, Markdown, JSON, TENS-Text, TENS Binary, Tokens. Engine <span class="diff-accent" style="color: var(--accent-green);">auto-selects</span> the best per model.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Budget Engine
+        </h4>
+        <p>Token budget packing with 3 strategies: greedy, density, knapsack. <span class="diff-accent" style="color: var(--accent-purple);">PQL query language</span> for context selection.</p>
+      </div>
+      <div class="diff-cell">
+        <h4>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Full CLI + Server
+        </h4>
+        <p>16+ CLI commands for analysis, benchmarking, and batch processing. <span class="diff-accent" style="color: var(--accent-amber);">13 REST endpoints</span> via Hono server.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  INTEGRATES WITH                       -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">Works With Your Stack</h2>
+      <p class="section-desc">Drop-in middleware for major LLM providers and frameworks.</p>
+    </div>
+
+    <div class="integrations-row">
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--accent-green);"></span> OpenAI (GPT-5.2, 4.1, o4)</div>
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--accent-purple);"></span> Anthropic (Claude 4.6, Opus)</div>
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--accent-blue);"></span> Google Gemini (3 Pro, Flash)</div>
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--accent-amber);"></span> LangChain Adapter</div>
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--accent-red);"></span> LlamaIndex Adapter</div>
+      <div class="integ-chip"><span class="integ-dot" style="background: var(--text-muted);"></span> REST API (Hono)</div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CODE TABS                             -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">3 Lines to Ship</h2>
+      <p class="section-desc">Pick your provider. Wrap your client. Replace JSON with a placeholder. Done.</p>
+    </div>
+
+    <div class="code-tabs-container">
+      <div class="code-tabs">
+        <button class="code-tab active" data-tab="openai">OpenAI</button>
+        <button class="code-tab" data-tab="anthropic">Anthropic</button>
+        <button class="code-tab" data-tab="gemini">Gemini</button>
+        <button class="code-tab" data-tab="langchain">LangChain</button>
+      </div>
+      <div class="code-tab-content active" id="tab-openai">
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexOpenAI } from '@contex-llm/middleware';
+
+<span class="key">// 1. Wrap your client</span>
+const client = createContexOpenAI(new OpenAI(), {
+  data: { users: myData }      <span class="key">// 2. Register data</span>
+});
+
+<span class="key">// 3. Use placeholder — middleware handles the rest</span>
+const res = await client.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user',
+    content: 'Summarize {{CONTEX:users}}' }]
+});
+<span class="comment">// 72% fewer input tokens. Same response quality.</span></div>
+      </div>
+      <div class="code-tab-content" id="tab-anthropic">
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexAnthropic } from '@contex-llm/middleware';
+
+<span class="key">// Anthropic — auto cache_control breakpoints</span>
+const client = createContexAnthropic(new Anthropic(), {
+  data: { context: kbData }
+});
+
+const msg = await client.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{ role: 'user',
+    content: 'Answer using {{CONTEX:context}}' }]
+});
+<span class="comment">// Automatic prefix caching for Claude.</span></div>
+      </div>
+      <div class="code-tab-content" id="tab-gemini">
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexGemini } from '@contex-llm/middleware';
+
+const client = createContexGemini(genai, {
+  data: { documents: docsData }
+});
+
+const result = await client.models.generateContent({
+  model: 'gemini-2.5-flash',
+  contents: 'Summarize {{CONTEX:documents}}'
+});
+<span class="comment">// Gemini-optimized format auto-selected.</span></div>
+      </div>
+      <div class="code-tab-content" id="tab-langchain">
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { ContexLoader } from '@contex-llm/adapters';
+import { ChatOpenAI } from '@langchain/openai';
+
+<span class="key">// Load data through Contex adapter</span>
+const loader = new ContexLoader(productsData, {
+  model: 'gpt-4o',
+  format: 'auto'
+});
+
+const docs = await loader.load();
+<span class="comment">// Returns LangChain Document[] with compressed content.</span>
+<span class="comment">// Plug into any LangChain chain or agent.</span></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  COST CALCULATOR                       -->
+  <!-- ═══════════════════════════════════════ -->
   <section class="section" id="calculator">
     <div class="section-header">
       <h2 class="section-title">Cost Calculator</h2>
@@ -160,10 +838,10 @@
             <span class="calc-label">Model</span>
           </label>
           <select id="modelSelect" class="calc-select">
-            <option value="gpt4o" selected>GPT-4o ($2.50/1M)</option>
-            <option value="gpt4o-mini">GPT-4o Mini ($0.15/1M)</option>
-            <option value="claude35">Claude Sonnet 4 ($3.00/1M)</option>
-            <option value="gemini25">Gemini 2.5 Flash ($0.30/1M)</option>
+            <option value="gpt52" selected>GPT-5.2 ($1.75/1M)</option>
+            <option value="gpt41-mini">GPT-4.1 Mini ($0.80/1M)</option>
+            <option value="claude46">Claude Sonnet 4.6 ($3.00/1M)</option>
+            <option value="gemini3f">Gemini 3 Flash ($0.50/1M)</option>
           </select>
         </div>
       </div>
@@ -171,10 +849,8 @@
       <div class="calc-results">
         <div class="calc-result-card bad-card">
           <div class="calc-result-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
             Without Contex (JSON)
           </div>
@@ -184,8 +860,7 @@
         </div>
         <div class="calc-result-card good-card">
           <div class="calc-result-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-              stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
             With Contex
@@ -196,8 +871,7 @@
         </div>
         <div class="calc-result-card savings-card">
           <div class="calc-result-label">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="1" x2="12" y2="23"></line>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
@@ -211,293 +885,10 @@
     </div>
   </section>
 
-  <!-- Before / After -->
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">The Token Problem</h2>
-      <p class="section-desc">JSON wastes tokens on structure. Contex eliminates that waste with canonical
-        representation.</p>
-    </div>
 
-    <div class="comparison-container">
-      <div class="comp-col bad">
-        <h4>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-            stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          JSON (39,605 tokens)
-        </h4>
-        <div class="code-block">
-          <span class="key">{</span>
-          <span class="val">"users"</span><span class="key">: [</span>
-          <span class="key">{</span><span class="val">"id"</span><span class="key">:</span> 1<span class="key">,</span>
-          <span class="val">"name"</span><span class="key">:</span> <span class="val">"Alice"</span><span
-            class="key">,</span> <span class="val">"role"</span><span class="key">:</span> <span
-            class="val">"admin"</span><span class="key">},</span>
-          <span class="key">{</span><span class="val">"id"</span><span class="key">:</span> 2<span class="key">,</span>
-          <span class="val">"name"</span><span class="key">:</span> <span class="val">"Bob"</span><span
-            class="key">,</span> <span class="val">"role"</span><span class="key">:</span> <span
-            class="val">"user"</span><span class="key">},</span>
-          <span class="key">]</span>
-          <span class="key">}</span>
-          <span class="comment">// 60% is syntax overhead</span>
-        </div>
-      </div>
-      <div class="comp-col good">
-        <h4>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          Contex Compact
-        </h4>
-        <div class="code-block">
-          @0	id	name	role
-          1	Alice	admin
-          2	Bob	user
-          <span class="comment">// Dictionary-compressed headers, tab-separated values.</span>
-          <span class="comment">// 43% avg pipeline savings. Up to 94% on nested data.</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">Core Features</h2>
-      <p class="section-desc">What makes Contex different from other serialization libraries.</p>
-    </div>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon blue">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-          </svg>
-        </div>
-        <h3>Canonical IR</h3>
-        <p>TENS (Token Encoded Native Structure) is a deterministic, model-agnostic intermediate representation. Same
-          data always produces the same output.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon green">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-        </div>
-        <h3>40-94% Token Savings</h3>
-        <p>Contex Compact format with dictionary compression. Avg 43% pipeline savings, up to 94% on deeply nested data. Verified across 15 dataset types.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon purple">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-        </div>
-        <h3>Prefix Cache Friendly</h3>
-        <p>Deterministic output ensures identical prompts produce identical tokens, maximizing provider-side prefix
-          cache hits.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-          </svg>
-        </div>
-        <h3>Multi-Provider Support</h3>
-        <p>Drop-in middleware for OpenAI, Anthropic, and Google Gemini. Uses {{CONTEX:key}} placeholder syntax.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon blue">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 11a9 9 0 0 1 9 9"></path>
-            <path d="M4 4a16 16 0 0 1 16 16"></path>
-            <circle cx="5" cy="19" r="1"></circle>
-          </svg>
-        </div>
-        <h3>Output Formats</h3>
-        <p>Multiple output formats: Contex Compact, TOON (Token-Oriented Object Notation), CSV, Markdown, and JSON. Auto-selects the best per model and data shape.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon green">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"></line>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-        </div>
-        <h3>TypeScript First</h3>
-        <p>Full type safety with comprehensive TypeScript support. 600+ tests passing across 7 packages.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works — Visual Pipeline -->
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">How It Works</h2>
-      <p class="section-desc">Contex is a token compiler. Three steps to cut your context costs.</p>
-    </div>
-
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-num">1</div>
-        <h3>Encode</h3>
-        <p>Your JSON/objects are encoded into a canonical intermediate representation (TENS). Same data always produces identical output — deterministic by design.</p>
-        <div class="code-block" style="font-size: 12px; margin-top: 16px;">
-          const tens = Tens.encode(data);
-          tens.hash; // SHA-256 content hash
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-num">2</div>
-        <h3>Optimize</h3>
-        <p>11 optimizations compress your data: dictionary encoding, field name shortening, deep flattening, boolean abbreviation, sparse mode, and more.</p>
-        <div class="code-block" style="font-size: 12px; margin-top: 16px;">
-          const text = tens.toString();
-          // Contex Compact: 40-94% savings
-        </div>
-      </div>
-      <div class="step-card">
-        <div class="step-num">3</div>
-        <h3>Inject</h3>
-        <p>Middleware replaces <code>{{CONTEX:key}}</code> placeholders in your prompt with optimized output. Drop-in — zero prompt changes needed.</p>
-        <div class="code-block" style="font-size: 12px; margin-top: 16px;">
-          content: 'Analyze {{CONTEX:users}}'
-          // → optimized Contex Compact
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Integrates With -->
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">Works With Your Stack</h2>
-      <p class="section-desc">Drop-in middleware for major LLM providers and frameworks. No lock-in.</p>
-    </div>
-
-    <div class="integrations-grid">
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        </div>
-        <h4>OpenAI</h4>
-        <p>GPT-4o, GPT-4o Mini</p>
-        <span class="integration-tag">Middleware</span>
-      </div>
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </div>
-        <h4>Anthropic</h4>
-        <p>Claude Sonnet 4, Opus</p>
-        <span class="integration-tag">Middleware</span>
-      </div>
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
-        </div>
-        <h4>Google Gemini</h4>
-        <p>Gemini 2.5 Flash &amp; Pro</p>
-        <span class="integration-tag">Middleware</span>
-      </div>
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        </div>
-        <h4>LangChain</h4>
-        <p>Callback handler adapter</p>
-        <span class="integration-tag">Adapter</span>
-      </div>
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </div>
-        <h4>LlamaIndex</h4>
-        <p>Node postprocessor adapter</p>
-        <span class="integration-tag">Adapter</span>
-      </div>
-      <div class="integration-card">
-        <div class="integration-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        </div>
-        <h4>CLI</h4>
-        <p>Analyze, bench, materialize</p>
-        <span class="integration-tag">Tooling</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Code Tabs — Provider Examples -->
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">3 Lines to Ship</h2>
-      <p class="section-desc">Pick your provider. Wrap your client. Replace JSON with a placeholder. Done.</p>
-    </div>
-
-    <div class="code-tabs-container">
-      <div class="code-tabs">
-        <button class="code-tab active" data-tab="openai">OpenAI</button>
-        <button class="code-tab" data-tab="anthropic">Anthropic</button>
-        <button class="code-tab" data-tab="gemini">Gemini</button>
-      </div>
-      <div class="code-tab-content active" id="tab-openai">
-        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexOpenAI } from '@contex/middleware';
-
-<span class="key">// 1. Wrap your client</span>
-const client = createContexOpenAI(new OpenAI(), {
-  data: { users: myData }      <span class="key">// 2. Register data</span>
-});
-
-<span class="key">// 3. Use placeholder — middleware handles the rest</span>
-const res = await client.chat.completions.create({
-  model: 'gpt-4o',
-  messages: [{ role: 'user',
-    content: 'Summarize {{CONTEX:users}}' }]
-});</div>
-      </div>
-      <div class="code-tab-content" id="tab-anthropic">
-        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexAnthropic } from '@contex/middleware';
-
-<span class="key">// Anthropic — auto cache_control breakpoints</span>
-const client = createContexAnthropic(new Anthropic(), {
-  data: { context: kbData }
-});
-
-const msg = await client.messages.create({
-  model: 'claude-sonnet-4-20250514',
-  max_tokens: 1024,
-  messages: [{ role: 'user',
-    content: 'Answer using {{CONTEX:context}}' }]
-});</div>
-      </div>
-      <div class="code-tab-content" id="tab-gemini">
-        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7;">import { createContexGemini } from '@contex/middleware';
-
-const client = createContexGemini(genai, {
-  data: { documents: docsData }
-});
-
-const result = await client.models.generateContent({
-  model: 'gemini-2.5-flash',
-  contents: 'Summarize {{CONTEX:documents}}'
-});</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Use Cases -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--  USE CASES                             -->
+  <!-- ═══════════════════════════════════════ -->
   <section class="section">
     <div class="section-header">
       <h2 class="section-title">Built for Real Workloads</h2>
@@ -507,17 +898,17 @@ const result = await client.models.generateContent({
     <div class="use-cases-grid">
       <div class="use-case-card">
         <div class="use-case-icon" style="color: var(--accent-blue);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         </div>
         <h4>RAG Pipelines</h4>
-        <p>Stuff 3× more retrieved documents into your context window. Dictionary compression shines when chunks share vocabulary.</p>
+        <p>Stuff 3x more retrieved documents into your context window. Dictionary compression shines when chunks share vocabulary.</p>
         <span class="use-case-stat">68% savings on document data</span>
       </div>
       <div class="use-case-card">
         <div class="use-case-icon" style="color: var(--accent-green);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         </div>
-        <h4>Customer Support</h4>
+        <h4>Customer Support Agents</h4>
         <p>Feed ticket history, user profiles, and product data to your agent. Repetitive fields like status and priority compress heavily.</p>
         <span class="use-case-stat">Tested on real support ticket data</span>
       </div>
@@ -525,111 +916,128 @@ const result = await client.models.generateContent({
         <div class="use-case-icon" style="color: var(--accent-purple);">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         </div>
-        <h4>Analytics &amp; Dashboards</h4>
-        <p>Send database query results directly as context. Deep flattening handles nested aggregations — up to 94% format-level savings.</p>
-        <span class="use-case-stat">94% savings on deeply nested data</span>
+        <h4>Analytics Dashboards</h4>
+        <p>Send database query results directly as context. Deep flattening handles nested aggregations — up to 90% savings.</p>
+        <span class="use-case-stat">90% savings on nested structures</span>
       </div>
       <div class="use-case-card">
         <div class="use-case-icon" style="color: var(--accent-amber);">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </div>
-        <h4>Compliance &amp; Audit</h4>
-        <p>Deterministic output means identical tokens every time — maximizing prefix cache hits and ensuring reproducible responses.</p>
-        <span class="use-case-stat">100% cache hit rate</span>
+        <h4>Web Crawl Pipelines</h4>
+        <p>Pair with Firecrawl, Crawl4AI, or Jina Reader. Crawl bots extract clean data — Contex compresses it before the LLM sees it.</p>
+        <span class="use-case-stat">66% cost reduction end-to-end</span>
       </div>
     </div>
   </section>
 
-  <!-- Architecture -->
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  PACKAGE ARCHITECTURE                  -->
+  <!-- ═══════════════════════════════════════ -->
   <section class="section">
     <div class="section-header">
-      <h2 class="section-title">Package Architecture</h2>
-      <p class="section-desc">A modular monorepo. Install only what you need.</p>
+      <h2 class="section-title">Modular Architecture</h2>
+      <p class="section-desc">A monorepo of 7 packages. Install only what you need.</p>
     </div>
 
-    <div class="comparison-container">
-      <div class="comp-col" style="border-left: 2px solid var(--accent-blue);">
-        <h4>The Pipeline</h4>
-        <div class="code-block" style="line-height: 2;">
-          <b>Input:</b> Your Data (JSON, objects)
-          ↓
-          <b>Encode:</b> Tens.encode(data) → Canonical IR
-          ↓
-          <b>Materialize:</b> tens.materialize('gpt-4o') → Tokens
-          ↓
-          <b>Inject:</b> Middleware replaces {{CONTEX:key}}
-          ↓
-          <b>Output:</b> Optimized prompt → LLM
-        </div>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/core</div>
+        <div class="arch-role">IR Encoder &middot; Formatters &middot; Tokenizer</div>
+        <div class="arch-desc">TENS encoding, 8 output formats, dictionary compression, SHA-256 content hashing</div>
       </div>
-      <div class="comp-col" style="border-left: 2px solid var(--accent-green);">
-        <h4>Package Structure</h4>
-        <div class="code-block" style="line-height: 2;">
-          <b>@contex/core</b> — IR encoder, formats, tokenizer
-          ↓
-          <b>@contex/engine</b> — Budget, quick(), auto-select
-          ↓
-          <b>@contex/middleware</b> — SDK wrappers
-          ↓
-          <b>@contex/adapters</b> — LangChain, LlamaIndex
-          ↓
-          <b>@contex/cli</b> — CLI tools, benchmarks
-        </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/engine</div>
+        <div class="arch-role">Budget &middot; Packer &middot; Model Registry</div>
+        <div class="arch-desc">39-model registry, 3 packing strategies, PQL queries, auto-format selection</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/middleware</div>
+        <div class="arch-role">OpenAI &middot; Anthropic &middot; Gemini</div>
+        <div class="arch-desc">Drop-in SDK wrappers, {{CONTEX:key}} placeholder injection, streaming support</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/adapters</div>
+        <div class="arch-role">LangChain &middot; LlamaIndex</div>
+        <div class="arch-desc">ContexLoader and ContexReader for framework integration</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/cli</div>
+        <div class="arch-role">16+ Commands &middot; Benchmark Suite</div>
+        <div class="arch-desc">analyze, bench, materialize, compare, serve, and more</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/server</div>
+        <div class="arch-role">REST API &middot; 13 Endpoints</div>
+        <div class="arch-desc">Hono HTTP server for encode, materialize, analyze, and batch ops</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-name">@contex-llm/tens-wasm</div>
+        <div class="arch-role">Rust &middot; WASM &middot; 43 Tests</div>
+        <div class="arch-desc">1,264-line Rust encoder compiled to WebAssembly for near-native performance</div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  FAQ                                   -->
+  <!-- ═══════════════════════════════════════ -->
   <section class="section">
     <div class="section-header">
       <h2 class="section-title">Frequently Asked Questions</h2>
-      <p class="section-desc">Common questions about Contex.</p>
     </div>
 
     <div class="faq-list">
       <details class="faq-item">
         <summary class="faq-question">How does Contex reduce tokens?</summary>
-        <div class="faq-answer">Contex applies 11 optimizations: dictionary compression (repeated values become <code>@0</code>, <code>@1</code>), field name shortening, deep flattening of nested objects, boolean abbreviation (<code>true</code> → <code>T</code>), null shortening (<code>null</code> → <code>_</code>), integer normalization, tab-separated schema (declared once), array compaction, sparse mode for mostly-null data, numeric deduplication, and elimination of all JSON syntax (no brackets, quotes, colons, or commas).</div>
+        <div class="faq-answer">Contex applies 11 optimizations: dictionary compression (repeated values become <code>@0</code>, <code>@1</code>), field name shortening, deep flattening of nested objects, boolean abbreviation (<code>true</code> → <code>T</code>), null shortening (<code>null</code> → <code>_</code>), integer normalization, tab-separated schema (declared once), array compaction, sparse mode for mostly-null data, numeric deduplication, and elimination of all JSON syntax.</div>
       </details>
       <details class="faq-item">
         <summary class="faq-question">Can the LLM still understand the compressed format?</summary>
-        <div class="faq-answer">Yes. Contex Compact is plain text with a self-describing header. The <code>@f</code> line maps short field names to full names, and the <code>@d</code> line defines the dictionary. Modern LLMs (GPT-4o, Claude, Gemini) parse this trivially — the format is simpler than JSON, not more complex. The schema is declared once and each row is a tab-separated line.</div>
+        <div class="faq-answer">Yes. Contex Compact is plain text with a self-describing header. The <code>@f</code> line maps short field names to full names, and the <code>@d</code> line defines the dictionary. Modern LLMs parse this trivially — the format is simpler than JSON, not more complex.</div>
       </details>
       <details class="faq-item">
-        <summary class="faq-question">What's the difference between TENS, TENS-Text, and Contex Compact?</summary>
-        <div class="faq-answer">They're three layers of the same pipeline, not competing formats. <strong>TENS Binary</strong> is the internal IR (<code>Uint8Array</code> with a SHA-256 hash) — for storage and deduplication. <strong>TENS-Text</strong> (<code>.tens</code>) is a human-readable serialization for debugging/inspection. <strong>Contex Compact</strong> is the optimized output you send to LLMs — 40-94% savings. Think of it like a compiler: source → object file → executable.</div>
+        <summary class="faq-question">What's TENS vs TENS-Text vs Contex Compact?</summary>
+        <div class="faq-answer">Three layers of the same pipeline. <strong>TENS Binary</strong> is the internal IR (<code>Uint8Array</code> + SHA-256 hash) — for storage. <strong>TENS-Text</strong> (<code>.tens</code>) is human-readable for debugging. <strong>Contex Compact</strong> is the optimized output for LLMs. Think: source → object file → executable.</div>
       </details>
       <details class="faq-item">
-        <summary class="faq-question">Does Contex work with streaming responses?</summary>
-        <div class="faq-answer">Yes. Contex compresses the <em>prompt</em> (input context), not the LLM response. Once the middleware replaces <code>{{CONTEX:key}}</code> with optimized data, the API call proceeds normally — including streaming. You get the same response, just with fewer input tokens.</div>
+        <summary class="faq-question">Does it work with streaming responses?</summary>
+        <div class="faq-answer">Yes. Contex compresses the <em>input</em> (prompt context), not the output. Once middleware replaces <code>{{CONTEX:key}}</code> with optimized data, the API call proceeds normally — including streaming.</div>
       </details>
       <details class="faq-item">
         <summary class="faq-question">When should I NOT use Contex?</summary>
-        <div class="faq-answer">Skip Contex for: free-text/unstructured data (no structure to optimize), fewer than 5 rows (header overhead not worth it), data where the LLM needs to output structured JSON (LLMs parse JSON natively), or datasets with 100% unique string values (no dictionary opportunity). For everything else — especially repetitive, nested, or large datasets — Contex delivers significant savings.</div>
+        <div class="faq-answer">Skip Contex for: free-text/unstructured data, fewer than 5 rows, or data with 100% unique string values. For structured, repetitive, or nested data — Contex delivers significant savings.</div>
       </details>
       <details class="faq-item">
-        <summary class="faq-question">Is Contex production-ready?</summary>
-        <div class="faq-answer">Yes. 600+ tests across 7 packages, 47 edge-case tests covering unicode, sparse data, nested structures, and crash safety. 20/20 data fidelity (100% lossless roundtrip). Benchmark v7 verified across 15 dataset types. MIT licensed.</div>
+        <summary class="faq-question">Is it production-ready?</summary>
+        <div class="faq-answer">Yes. 600+ tests across 7 packages (36 TypeScript test suites + 43 Rust WASM tests). 20/20 data fidelity — 100% lossless roundtrip. Verified across 21 dataset types. WASM-accelerated. MIT licensed.</div>
       </details>
     </div>
   </section>
 
-  <!-- CTA -->
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CTA                                   -->
+  <!-- ═══════════════════════════════════════ -->
   <section class="cta-box">
     <h2>Start saving tokens today</h2>
-    <p>Drop-in middleware. Three lines of code. Immediate cost reduction.</p>
+    <p>Drop-in middleware. Three lines of code. 39 models. 8 formats. WASM-accelerated. MIT licensed.</p>
     <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
       <a href="./docs.html" class="btn btn-primary">Read Documentation</a>
       <a href="./playground.html" class="btn btn-ghost">Try Playground</a>
-      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost" target="_blank">View on GitHub</a>
+      <a href="./vision.html" class="btn btn-ghost">See the Vision</a>
+      <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost" target="_blank">View on GitHub</a>
     </div>
   </section>
 
+
   <!-- Footer -->
   <footer class="footer">
-    <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM
-      pipelines</p>
+    <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
   </footer>
+
 
   <script>
     // Theme Toggle
@@ -653,8 +1061,9 @@ const result = await client.models.generateContent({
       updateIcon();
     });
 
+    // Copy install command
     document.getElementById('installCmd')?.addEventListener('click', () => {
-      navigator.clipboard.writeText('pnpm add @contex/core @contex/engine @contex/middleware');
+      navigator.clipboard.writeText('pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware');
       const icon = document.querySelector('#installCmd .copy-icon');
       if (icon) {
         icon.style.opacity = '1';
@@ -665,10 +1074,10 @@ const result = await client.models.generateContent({
 
     // Cost Calculator
     const MODELS = {
-      "gpt4o": { price: 2.50, savings: 0.43 },
-      "gpt4o-mini": { price: 0.15, savings: 0.43 },
-      "claude35": { price: 3.00, savings: 0.43 },
-      "gemini25": { price: 0.30, savings: 0.43 },
+      "gpt52": { price: 1.75, savings: 0.72 },
+      "gpt41-mini": { price: 0.80, savings: 0.72 },
+      "claude46": { price: 3.00, savings: 0.72 },
+      "gemini3f": { price: 0.50, savings: 0.72 },
     };
 
     const JSON_TOKENS_PER_FIELD = 5;

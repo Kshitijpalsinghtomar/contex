@@ -1,8 +1,8 @@
-import { Tens, type TensIR, TokenMemory, encodeIR, formatOutput, getGlobalDiagnostics, CacheMissReason } from '@contex/core';
+import { Tens, type TensIR, TokenMemory, encodeIR, formatOutput, getGlobalDiagnostics, CacheMissReason } from '@contex-llm/core';
 import type { ContexMiddlewareOptions, InjectionInfo } from './types.js';
 
 // ============================================================================
-// @contex/middleware v3 — Shared Core
+// @contex-llm/middleware v3 — Shared Core
 // ============================================================================
 // Provides the shared IR pipeline logic used by all SDK wrappers.
 // Data → encodeIR → TokenMemory.store → materialize → canonical JSON text

@@ -1,9 +1,9 @@
 {
   "metadata": {
     "version": "7.0",
-    "timestamp": "2026-02-16T21:29:49.718Z",
+    "timestamp": "2026-02-18T18:51:24.876Z",
     "model": "gpt-4o-mini",
-    "datasetCount": 15
+    "datasetCount": 21
   },
   "matrix": [
     {
@@ -34,9 +34,9 @@
       "dataset": "Flat",
       "rows": 100,
       "format": "contex",
-      "tokens": 2678,
-      "bytes": 5556,
-      "savingsVsJson": 58
+      "tokens": 1991,
+      "bytes": 2910,
+      "savingsVsJson": 68
     },
     {
       "dataset": "Flat",
@@ -66,9 +66,9 @@
       "dataset": "Flat",
       "rows": 1000,
       "format": "contex",
-      "tokens": 22760,
-      "bytes": 52332,
-      "savingsVsJson": 64
+      "tokens": 13771,
+      "bytes": 25660,
+      "savingsVsJson": 78
     },
     {
       "dataset": "RealWorld",
@@ -98,9 +98,9 @@
       "dataset": "RealWorld",
       "rows": 100,
       "format": "contex",
-      "tokens": 3194,
-      "bytes": 6936,
-      "savingsVsJson": 65
+      "tokens": 2700,
+      "bytes": 4803,
+      "savingsVsJson": 70
     },
     {
       "dataset": "RealWorld",
@@ -130,9 +130,9 @@
       "dataset": "RealWorld",
       "rows": 1000,
       "format": "contex",
-      "tokens": 28996,
-      "bytes": 63303,
-      "savingsVsJson": 68
+      "tokens": 24182,
+      "bytes": 43080,
+      "savingsVsJson": 73
     },
     {
       "dataset": "NumericHeavy",
@@ -162,9 +162,9 @@
       "dataset": "NumericHeavy",
       "rows": 100,
       "format": "contex",
-      "tokens": 4882,
-      "bytes": 9624,
-      "savingsVsJson": 57
+      "tokens": 4687,
+      "bytes": 9429,
+      "savingsVsJson": 58
     },
     {
       "dataset": "NumericHeavy",
@@ -194,9 +194,9 @@
       "dataset": "NumericHeavy",
       "rows": 1000,
       "format": "contex",
-      "tokens": 49417,
-      "bytes": 97454,
-      "savingsVsJson": 56
+      "tokens": 47422,
+      "bytes": 95459,
+      "savingsVsJson": 58
     },
     {
       "dataset": "Repetitive",
@@ -210,25 +210,25 @@
       "dataset": "Repetitive",
       "rows": 100,
       "format": "toon",
-      "tokens": 1808,
-      "bytes": 5297,
-      "savingsVsJson": 67
+      "tokens": 1707,
+      "bytes": 4697,
+      "savingsVsJson": 68
     },
     {
       "dataset": "Repetitive",
       "rows": 100,
       "format": "csv",
-      "tokens": 1874,
-      "bytes": 4697,
-      "savingsVsJson": 65
+      "tokens": 2475,
+      "bytes": 5897,
+      "savingsVsJson": 54
     },
     {
       "dataset": "Repetitive",
       "rows": 100,
       "format": "contex",
-      "tokens": 1732,
-      "bytes": 1906,
-      "savingsVsJson": 68
+      "tokens": 635,
+      "bytes": 709,
+      "savingsVsJson": 88
     },
     {
       "dataset": "Repetitive",
@@ -242,25 +242,25 @@
       "dataset": "Repetitive",
       "rows": 1000,
       "format": "toon",
-      "tokens": 18008,
-      "bytes": 52697,
-      "savingsVsJson": 67
+      "tokens": 17007,
+      "bytes": 46697,
+      "savingsVsJson": 69
     },
     {
       "dataset": "Repetitive",
       "rows": 1000,
       "format": "csv",
-      "tokens": 18674,
-      "bytes": 46697,
-      "savingsVsJson": 65
+      "tokens": 24675,
+      "bytes": 58697,
+      "savingsVsJson": 54
     },
     {
       "dataset": "Repetitive",
       "rows": 1000,
       "format": "contex",
-      "tokens": 17032,
-      "bytes": 18106,
-      "savingsVsJson": 68
+      "tokens": 6035,
+      "bytes": 6109,
+      "savingsVsJson": 89
     },
     {
       "dataset": "Nested",
@@ -274,25 +274,25 @@
       "dataset": "Nested",
       "rows": 100,
       "format": "toon",
-      "tokens": 6504,
-      "bytes": 22516,
-      "savingsVsJson": 51
+      "tokens": 2521,
+      "bytes": 7959,
+      "savingsVsJson": 81
     },
     {
       "dataset": "Nested",
       "rows": 100,
       "format": "csv",
-      "tokens": 805,
-      "bytes": 3506,
-      "savingsVsJson": 94
+      "tokens": 5224,
+      "bytes": 15239,
+      "savingsVsJson": 60
     },
     {
       "dataset": "Nested",
       "rows": 100,
       "format": "contex",
-      "tokens": 2828,
-      "bytes": 7103,
-      "savingsVsJson": 79
+      "tokens": 1405,
+      "bytes": 3175,
+      "savingsVsJson": 89
     },
     {
       "dataset": "Nested",
@@ -306,25 +306,25 @@
       "dataset": "Nested",
       "rows": 1000,
       "format": "toon",
-      "tokens": 65004,
-      "bytes": 229966,
-      "savingsVsJson": 51
+      "tokens": 25021,
+      "bytes": 81309,
+      "savingsVsJson": 81
     },
     {
       "dataset": "Nested",
       "rows": 1000,
       "format": "csv",
-      "tokens": 8005,
-      "bytes": 35906,
-      "savingsVsJson": 94
+      "tokens": 52024,
+      "bytes": 156089,
+      "savingsVsJson": 61
     },
     {
       "dataset": "Nested",
       "rows": 1000,
       "format": "contex",
-      "tokens": 28028,
-      "bytes": 74603,
-      "savingsVsJson": 79
+      "tokens": 13050,
+      "bytes": 34366,
+      "savingsVsJson": 90
     },
     {
       "dataset": "DeepNested",
@@ -338,25 +338,25 @@
       "dataset": "DeepNested",
       "rows": 100,
       "format": "toon",
-      "tokens": 12504,
-      "bytes": 40686,
-      "savingsVsJson": 52
+      "tokens": 1613,
+      "bytes": 4452,
+      "savingsVsJson": 94
     },
     {
       "dataset": "DeepNested",
       "rows": 100,
       "format": "csv",
-      "tokens": 805,
-      "bytes": 3102,
-      "savingsVsJson": 97
+      "tokens": 15517,
+      "bytes": 41346,
+      "savingsVsJson": 40
     },
     {
       "dataset": "DeepNested",
       "rows": 100,
       "format": "contex",
-      "tokens": 1532,
-      "bytes": 1815,
-      "savingsVsJson": 94
+      "tokens": 7639,
+      "bytes": 21547,
+      "savingsVsJson": 70
     },
     {
       "dataset": "DeepNested",
@@ -370,25 +370,25 @@
       "dataset": "DeepNested",
       "rows": 1000,
       "format": "toon",
-      "tokens": 125004,
-      "bytes": 413617,
-      "savingsVsJson": 52
+      "tokens": 16013,
+      "bytes": 45852,
+      "savingsVsJson": 94
     },
     {
       "dataset": "DeepNested",
       "rows": 1000,
       "format": "csv",
-      "tokens": 8005,
-      "bytes": 31902,
-      "savingsVsJson": 97
+      "tokens": 155017,
+      "bytes": 419677,
+      "savingsVsJson": 40
     },
     {
       "dataset": "DeepNested",
       "rows": 1000,
       "format": "contex",
-      "tokens": 15032,
-      "bytes": 18915,
-      "savingsVsJson": 94
+      "tokens": 76039,
+      "bytes": 221250,
+      "savingsVsJson": 71
     },
     {
       "dataset": "MixedNested",
@@ -402,25 +402,25 @@
       "dataset": "MixedNested",
       "rows": 100,
       "format": "toon",
-      "tokens": 906,
-      "bytes": 2364,
-      "savingsVsJson": 85
+      "tokens": 1868,
+      "bytes": 5049,
+      "savingsVsJson": 69
     },
     {
       "dataset": "MixedNested",
       "rows": 100,
       "format": "csv",
-      "tokens": 958,
-      "bytes": 2364,
-      "savingsVsJson": 84
+      "tokens": 2247,
+      "bytes": 5649,
+      "savingsVsJson": 63
     },
     {
       "dataset": "MixedNested",
       "rows": 100,
       "format": "contex",
-      "tokens": 2542,
-      "bytes": 4859,
-      "savingsVsJson": 58
+      "tokens": 2481,
+      "bytes": 5222,
+      "savingsVsJson": 59
     },
     {
       "dataset": "MixedNested",
@@ -434,25 +434,25 @@
       "dataset": "MixedNested",
       "rows": 1000,
       "format": "toon",
-      "tokens": 9006,
-      "bytes": 25400,
-      "savingsVsJson": 85
+      "tokens": 18518,
+      "bytes": 52153,
+      "savingsVsJson": 70
     },
     {
       "dataset": "MixedNested",
       "rows": 1000,
       "format": "csv",
-      "tokens": 9508,
-      "bytes": 25400,
-      "savingsVsJson": 84
+      "tokens": 22272,
+      "bytes": 58153,
+      "savingsVsJson": 63
     },
     {
       "dataset": "MixedNested",
       "rows": 1000,
       "format": "contex",
-      "tokens": 25042,
-      "bytes": 49816,
-      "savingsVsJson": 59
+      "tokens": 24051,
+      "bytes": 54075,
+      "savingsVsJson": 61
     },
     {
       "dataset": "Ecommerce",
@@ -466,24 +466,24 @@
       "dataset": "Ecommerce",
       "rows": 100,
       "format": "toon",
-      "tokens": 19591,
-      "bytes": 66179,
-      "savingsVsJson": 44
-    },
-    {
-      "dataset": "Ecommerce",
-      "rows": 100,
-      "format": "csv",
-      "tokens": 7937,
+      "tokens": 8157,
       "bytes": 27827,
       "savingsVsJson": 77
     },
     {
       "dataset": "Ecommerce",
       "rows": 100,
+      "format": "csv",
+      "tokens": 23882,
+      "bytes": 73189,
+      "savingsVsJson": 32
+    },
+    {
+      "dataset": "Ecommerce",
+      "rows": 100,
       "format": "contex",
-      "tokens": 12440,
-      "bytes": 32062,
+      "tokens": 12312,
+      "bytes": 32415,
       "savingsVsJson": 65
     },
     {
@@ -498,25 +498,25 @@
       "dataset": "Ecommerce",
       "rows": 1000,
       "format": "toon",
-      "tokens": 195749,
-      "bytes": 664299,
-      "savingsVsJson": 44
-    },
-    {
-      "dataset": "Ecommerce",
-      "rows": 1000,
-      "format": "csv",
-      "tokens": 79148,
+      "tokens": 81318,
       "bytes": 278016,
       "savingsVsJson": 77
     },
     {
       "dataset": "Ecommerce",
       "rows": 1000,
+      "format": "csv",
+      "tokens": 238763,
+      "bytes": 734487,
+      "savingsVsJson": 32
+    },
+    {
+      "dataset": "Ecommerce",
+      "rows": 1000,
       "format": "contex",
-      "tokens": 115189,
-      "bytes": 294010,
-      "savingsVsJson": 67
+      "tokens": 113868,
+      "bytes": 299242,
+      "savingsVsJson": 68
     },
     {
       "dataset": "Healthcare",
@@ -530,24 +530,24 @@
       "dataset": "Healthcare",
       "rows": 100,
       "format": "toon",
-      "tokens": 15505,
-      "bytes": 46353,
-      "savingsVsJson": 47
+      "tokens": 6328,
+      "bytes": 17905,
+      "savingsVsJson": 78
     },
     {
       "dataset": "Healthcare",
       "rows": 100,
       "format": "csv",
-      "tokens": 4509,
-      "bytes": 17017,
-      "savingsVsJson": 84
+      "tokens": 14344,
+      "bytes": 38098,
+      "savingsVsJson": 51
     },
     {
       "dataset": "Healthcare",
       "rows": 100,
       "format": "contex",
-      "tokens": 7662,
-      "bytes": 15943,
+      "tokens": 7525,
+      "bytes": 15316,
       "savingsVsJson": 74
     },
     {
@@ -562,25 +562,25 @@
       "dataset": "Healthcare",
       "rows": 1000,
       "format": "toon",
-      "tokens": 156238,
-      "bytes": 469115,
-      "savingsVsJson": 47
+      "tokens": 63489,
+      "bytes": 181222,
+      "savingsVsJson": 78
     },
     {
       "dataset": "Healthcare",
       "rows": 1000,
       "format": "csv",
-      "tokens": 45575,
-      "bytes": 173745,
-      "savingsVsJson": 84
+      "tokens": 144606,
+      "bytes": 385698,
+      "savingsVsJson": 51
     },
     {
       "dataset": "Healthcare",
       "rows": 1000,
       "format": "contex",
-      "tokens": 72183,
-      "bytes": 141983,
-      "savingsVsJson": 75
+      "tokens": 70958,
+      "bytes": 141377,
+      "savingsVsJson": 76
     },
     {
       "dataset": "IoT",
@@ -594,25 +594,25 @@
       "dataset": "IoT",
       "rows": 100,
       "format": "toon",
-      "tokens": 7621,
-      "bytes": 15370,
-      "savingsVsJson": 49
+      "tokens": 6107,
+      "bytes": 11196,
+      "savingsVsJson": 59
     },
     {
       "dataset": "IoT",
       "rows": 100,
       "format": "csv",
-      "tokens": 4234,
-      "bytes": 9736,
-      "savingsVsJson": 72
+      "tokens": 6260,
+      "bytes": 11891,
+      "savingsVsJson": 58
     },
     {
       "dataset": "IoT",
       "rows": 100,
       "format": "contex",
-      "tokens": 6216,
-      "bytes": 9354,
-      "savingsVsJson": 59
+      "tokens": 4976,
+      "bytes": 6972,
+      "savingsVsJson": 67
     },
     {
       "dataset": "IoT",
@@ -626,25 +626,345 @@
       "dataset": "IoT",
       "rows": 1000,
       "format": "toon",
-      "tokens": 76269,
-      "bytes": 152866,
-      "savingsVsJson": 49
+      "tokens": 61067,
+      "bytes": 110752,
+      "savingsVsJson": 59
     },
     {
       "dataset": "IoT",
       "rows": 1000,
       "format": "csv",
-      "tokens": 42297,
-      "bytes": 96596,
-      "savingsVsJson": 72
+      "tokens": 62351,
+      "bytes": 117447,
+      "savingsVsJson": 59
     },
     {
       "dataset": "IoT",
       "rows": 1000,
       "format": "contex",
-      "tokens": 59836,
-      "bytes": 85469,
-      "savingsVsJson": 60
+      "tokens": 50834,
+      "bytes": 71229,
+      "savingsVsJson": 66
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 100,
+      "format": "json",
+      "tokens": 21944,
+      "bytes": 61476,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 7162,
+      "bytes": 15598,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 7240,
+      "bytes": 15598,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 6700,
+      "bytes": 11968,
+      "savingsVsJson": 69
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 219771,
+      "bytes": 616130,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 71544,
+      "bytes": 155222,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 72269,
+      "bytes": 155222,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 62734,
+      "bytes": 111444,
+      "savingsVsJson": 71
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 100,
+      "format": "json",
+      "tokens": 19243,
+      "bytes": 58193,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 6621,
+      "bytes": 15521,
+      "savingsVsJson": 66
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 7308,
+      "bytes": 17121,
+      "savingsVsJson": 62
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 6270,
+      "bytes": 12240,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 192496,
+      "bytes": 582889,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 65827,
+      "bytes": 154221,
+      "savingsVsJson": 66
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 72742,
+      "bytes": 170221,
+      "savingsVsJson": 62
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 61459,
+      "bytes": 115589,
+      "savingsVsJson": 68
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 100,
+      "format": "json",
+      "tokens": 48180,
+      "bytes": 219686,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 33179,
+      "bytes": 169758,
+      "savingsVsJson": 31
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 33901,
+      "bytes": 171786,
+      "savingsVsJson": 30
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 23120,
+      "bytes": 105103,
+      "savingsVsJson": 52
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 482459,
+      "bytes": 2209829,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 332069,
+      "bytes": 1709171,
+      "savingsVsJson": 31
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 339112,
+      "bytes": 1729183,
+      "savingsVsJson": 30
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 132563,
+      "bytes": 485947,
+      "savingsVsJson": 73
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 100,
+      "format": "json",
+      "tokens": 15105,
+      "bytes": 51598,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 4822,
+      "bytes": 16724,
+      "savingsVsJson": 68
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 4946,
+      "bytes": 16724,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 4910,
+      "bytes": 9284,
+      "savingsVsJson": 67
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 151245,
+      "bytes": 517027,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 47666,
+      "bytes": 165113,
+      "savingsVsJson": 68
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 48979,
+      "bytes": 165113,
+      "savingsVsJson": 68
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 44604,
+      "bytes": 79681,
+      "savingsVsJson": 71
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 100,
+      "format": "json",
+      "tokens": 37004,
+      "bytes": 111185,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 8461,
+      "bytes": 23322,
+      "savingsVsJson": 77
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 19947,
+      "bytes": 48961,
+      "savingsVsJson": 46
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 9910,
+      "bytes": 19519,
+      "savingsVsJson": 73
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 370429,
+      "bytes": 1112802,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 84560,
+      "bytes": 232307,
+      "savingsVsJson": 77
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 199389,
+      "bytes": 488688,
+      "savingsVsJson": 46
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 89840,
+      "bytes": 168757,
+      "savingsVsJson": 76
     },
     {
       "dataset": "Sparse",
@@ -658,25 +978,25 @@
       "dataset": "Sparse",
       "rows": 100,
       "format": "toon",
-      "tokens": 271,
-      "bytes": 858,
-      "savingsVsJson": 78
+      "tokens": 259,
+      "bytes": 833,
+      "savingsVsJson": 79
     },
     {
       "dataset": "Sparse",
       "rows": 100,
       "format": "csv",
-      "tokens": 365,
-      "bytes": 838,
-      "savingsVsJson": 71
+      "tokens": 377,
+      "bytes": 845,
+      "savingsVsJson": 70
     },
     {
       "dataset": "Sparse",
       "rows": 100,
       "format": "contex",
-      "tokens": 739,
-      "bytes": 1119,
-      "savingsVsJson": 41
+      "tokens": 500,
+      "bytes": 779,
+      "savingsVsJson": 60
     },
     {
       "dataset": "Sparse",
@@ -690,25 +1010,25 @@
       "dataset": "Sparse",
       "rows": 1000,
       "format": "toon",
-      "tokens": 2647,
-      "bytes": 9417,
-      "savingsVsJson": 79
+      "tokens": 2518,
+      "bytes": 9104,
+      "savingsVsJson": 80
     },
     {
       "dataset": "Sparse",
       "rows": 1000,
       "format": "csv",
-      "tokens": 3587,
-      "bytes": 9217,
-      "savingsVsJson": 71
+      "tokens": 3698,
+      "bytes": 9224,
+      "savingsVsJson": 70
     },
     {
       "dataset": "Sparse",
       "rows": 1000,
       "format": "contex",
-      "tokens": 7278,
-      "bytes": 11799,
-      "savingsVsJson": 42
+      "tokens": 4850,
+      "bytes": 8387,
+      "savingsVsJson": 61
     },
     {
       "dataset": "ExtSparse",
@@ -738,9 +1058,9 @@
       "dataset": "ExtSparse",
       "rows": 100,
       "format": "contex",
-      "tokens": 4786,
-      "bytes": 6480,
-      "savingsVsJson": 74
+      "tokens": 2067,
+      "bytes": 3810,
+      "savingsVsJson": 89
     },
     {
       "dataset": "ExtSparse",
@@ -770,9 +1090,9 @@
       "dataset": "ExtSparse",
       "rows": 1000,
       "format": "contex",
-      "tokens": 47206,
-      "bytes": 65016,
-      "savingsVsJson": 74
+      "tokens": 20058,
+      "bytes": 38362,
+      "savingsVsJson": 89
     },
     {
       "dataset": "WideSchema",
@@ -802,9 +1122,9 @@
       "dataset": "WideSchema",
       "rows": 100,
       "format": "contex",
-      "tokens": 13302,
-      "bytes": 23303,
-      "savingsVsJson": 69
+      "tokens": 6883,
+      "bytes": 10889,
+      "savingsVsJson": 84
     },
     {
       "dataset": "WideSchema",
@@ -834,9 +1154,9 @@
       "dataset": "WideSchema",
       "rows": 1000,
       "format": "contex",
-      "tokens": 131890,
-      "bytes": 243928,
-      "savingsVsJson": 69
+      "tokens": 66971,
+      "bytes": 105514,
+      "savingsVsJson": 84
     },
     {
       "dataset": "ChatMessages",
@@ -850,25 +1170,25 @@
       "dataset": "ChatMessages",
       "rows": 100,
       "format": "toon",
-      "tokens": 6368,
-      "bytes": 20569,
-      "savingsVsJson": 49
+      "tokens": 5478,
+      "bytes": 17134,
+      "savingsVsJson": 56
     },
     {
       "dataset": "ChatMessages",
       "rows": 100,
       "format": "csv",
-      "tokens": 5655,
-      "bytes": 18388,
-      "savingsVsJson": 55
+      "tokens": 6099,
+      "bytes": 18778,
+      "savingsVsJson": 51
     },
     {
       "dataset": "ChatMessages",
       "rows": 100,
       "format": "contex",
-      "tokens": 4881,
-      "bytes": 9877,
-      "savingsVsJson": 61
+      "tokens": 3842,
+      "bytes": 8308,
+      "savingsVsJson": 69
     },
     {
       "dataset": "ChatMessages",
@@ -882,25 +1202,25 @@
       "dataset": "ChatMessages",
       "rows": 1000,
       "format": "toon",
-      "tokens": 62939,
-      "bytes": 204242,
-      "savingsVsJson": 49
+      "tokens": 54423,
+      "bytes": 171170,
+      "savingsVsJson": 56
     },
     {
       "dataset": "ChatMessages",
       "rows": 1000,
       "format": "csv",
-      "tokens": 56231,
-      "bytes": 183880,
-      "savingsVsJson": 55
+      "tokens": 59960,
+      "bytes": 185769,
+      "savingsVsJson": 52
     },
     {
       "dataset": "ChatMessages",
       "rows": 1000,
       "format": "contex",
-      "tokens": 45908,
-      "bytes": 83906,
-      "savingsVsJson": 63
+      "tokens": 35170,
+      "bytes": 68519,
+      "savingsVsJson": 72
     },
     {
       "dataset": "LogEvents",
@@ -914,25 +1234,25 @@
       "dataset": "LogEvents",
       "rows": 100,
       "format": "toon",
-      "tokens": 9462,
-      "bytes": 26204,
-      "savingsVsJson": 44
+      "tokens": 7638,
+      "bytes": 20706,
+      "savingsVsJson": 55
     },
     {
       "dataset": "LogEvents",
       "rows": 100,
       "format": "csv",
-      "tokens": 5867,
-      "bytes": 16857,
-      "savingsVsJson": 65
+      "tokens": 8489,
+      "bytes": 21730,
+      "savingsVsJson": 50
     },
     {
       "dataset": "LogEvents",
       "rows": 100,
       "format": "contex",
-      "tokens": 8173,
-      "bytes": 19068,
-      "savingsVsJson": 51
+      "tokens": 6925,
+      "bytes": 17259,
+      "savingsVsJson": 59
     },
     {
       "dataset": "LogEvents",
@@ -946,36 +1266,100 @@
       "dataset": "LogEvents",
       "rows": 1000,
       "format": "toon",
-      "tokens": 93334,
-      "bytes": 256570,
-      "savingsVsJson": 44
+      "tokens": 75039,
+      "bytes": 201162,
+      "savingsVsJson": 55
     },
     {
       "dataset": "LogEvents",
       "rows": 1000,
       "format": "csv",
-      "tokens": 57260,
-      "bytes": 162753,
-      "savingsVsJson": 66
+      "tokens": 83489,
+      "bytes": 211290,
+      "savingsVsJson": 50
     },
     {
       "dataset": "LogEvents",
       "rows": 1000,
       "format": "contex",
-      "tokens": 78103,
-      "bytes": 173994,
-      "savingsVsJson": 53
+      "tokens": 64639,
+      "bytes": 158357,
+      "savingsVsJson": 61
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 100,
+      "format": "json",
+      "tokens": 52094,
+      "bytes": 179458,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 100,
+      "format": "toon",
+      "tokens": 34840,
+      "bytes": 124499,
+      "savingsVsJson": 33
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 100,
+      "format": "csv",
+      "tokens": 37975,
+      "bytes": 133962,
+      "savingsVsJson": 27
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 100,
+      "format": "contex",
+      "tokens": 28140,
+      "bytes": 91379,
+      "savingsVsJson": 46
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 1000,
+      "format": "json",
+      "tokens": 52094,
+      "bytes": 179458,
+      "savingsVsJson": 0
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 1000,
+      "format": "toon",
+      "tokens": 34840,
+      "bytes": 124499,
+      "savingsVsJson": 33
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 1000,
+      "format": "csv",
+      "tokens": 37975,
+      "bytes": 133962,
+      "savingsVsJson": 27
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 1000,
+      "format": "contex",
+      "tokens": 28140,
+      "bytes": 91379,
+      "savingsVsJson": 46
     }
   ],
   "pipeline": [
     {
       "dataset": "Flat",
       "rows": 500,
-      "irHash": "c2ac3eb0e86a7bbb630d427d92c0ad4d1e43b64a85e39775b4aa0e5375270426",
+      "irHash": "ba775ee7166776cfd41931fb6e227af5d37f40d7e6844ac036a69933239539b1",
       "irBytes": 33740,
-      "contexTokens": 12746,
+      "contexTokens": 8357,
       "jsonTokens": 21003,
-      "savingsPercent": 39,
+      "savingsPercent": 60,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -983,11 +1367,11 @@
     {
       "dataset": "RealWorld",
       "rows": 500,
-      "irHash": "2e7080c9b701e141f07caa566f1dbbaa4576f79d39cfb5d1250eae2c99f610c9",
+      "irHash": "dd496b3088c82f415057c8f81f3134aa66666beeb5840e5773695c4883670290",
       "irBytes": 35914,
-      "contexTokens": 14655,
+      "contexTokens": 12341,
       "jsonTokens": 30418,
-      "savingsPercent": 52,
+      "savingsPercent": 59,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1007,11 +1391,11 @@
     {
       "dataset": "Repetitive",
       "rows": 500,
-      "irHash": "feea45becbd83d8db30fd466db4b950479a1ea23a028cb2cd77a86c2b00f1ffe",
+      "irHash": "77f414c34996cfde33ff90888e6ace89439a094f3c9d9ad71de605d7ed81d7e8",
       "irBytes": 10613,
-      "contexTokens": 8531,
+      "contexTokens": 3035,
       "jsonTokens": 15002,
-      "savingsPercent": 43,
+      "savingsPercent": 80,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1019,11 +1403,11 @@
     {
       "dataset": "Nested",
       "rows": 500,
-      "irHash": "a35344c87551fc5e3b0092810b75d1ecc435d5952348f5c4645bb5aa91ff9a73",
+      "irHash": "cadde3d36b4d8138c51f7addc25c85d6713ad20392cd970f7f78d90d6d6be120",
       "irBytes": 50697,
-      "contexTokens": 14028,
+      "contexTokens": 8296,
       "jsonTokens": 35002,
-      "savingsPercent": 60,
+      "savingsPercent": 76,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1031,11 +1415,11 @@
     {
       "dataset": "DeepNested",
       "rows": 500,
-      "irHash": "7074441757508e68bfb967c2d3b48b3039cb99ff6db3cea0fd7dd6b14e926603",
+      "irHash": "3033ba50ec79b8d58d7a2b2b92730ec46c7ebd304459f463893420d8fe94979a",
       "irBytes": 64945,
-      "contexTokens": 7533,
+      "contexTokens": 37538,
       "jsonTokens": 65503,
-      "savingsPercent": 88,
+      "savingsPercent": 43,
       "budgetGain": 47,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1043,11 +1427,11 @@
     {
       "dataset": "MixedNested",
       "rows": 500,
-      "irHash": "d88f522a25eceddbc9989ef297eef92047e88ca1e7c7a6fe110badfee1fb0dd7",
+      "irHash": "5f2753be87130751a8a4b19c24ad2b4ff0bd1a8abd598a1a742c07b92f499ac7",
       "irBytes": 27976,
-      "contexTokens": 12792,
+      "contexTokens": 12301,
       "jsonTokens": 17002,
-      "savingsPercent": 25,
+      "savingsPercent": 28,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1055,11 +1439,11 @@
     {
       "dataset": "Ecommerce",
       "rows": 500,
-      "irHash": "567dffdd0ae11044e5d110734ff9ec9463a70278f2546016e1e939dbc0728dbe",
+      "irHash": "5db93cb078778899623e2225c1af11fb67c5f1161cd40dedc0cf86007490f207",
       "irBytes": 149289,
-      "contexTokens": 55347,
+      "contexTokens": 54698,
       "jsonTokens": 110534,
-      "savingsPercent": 50,
+      "savingsPercent": 51,
       "budgetGain": 158,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1067,9 +1451,9 @@
     {
       "dataset": "Healthcare",
       "rows": 500,
-      "irHash": "ecc720ce7a94f63babbc36549b9b98c9bfacef1667962b2df4fe12b5ef2fe0cb",
+      "irHash": "12577475699dd5fb3f60a49eba0a7f000af81b8f92bdaaa08fe52d47de3dcdbb",
       "irBytes": 74719,
-      "contexTokens": 37230,
+      "contexTokens": 36625,
       "jsonTokens": 92169,
       "savingsPercent": 60,
       "budgetGain": 103,
@@ -1079,23 +1463,83 @@
     {
       "dataset": "IoT",
       "rows": 500,
-      "irHash": "ad146750627ee211984628ae50a52e0ace93bd58568196ae418c535b9f6fe264",
+      "irHash": "cbed84e9cbf067f43c3cb3e012cb9f2976a54b413747ebed09167cc2c176aeba",
       "irBytes": 58683,
-      "contexTokens": 30603,
+      "contexTokens": 25847,
       "jsonTokens": 50169,
-      "savingsPercent": 39,
+      "savingsPercent": 48,
       "budgetGain": 0,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "Inventory",
+      "rows": 500,
+      "irHash": "150442b300562b0701d3201ab3399bf2ac6c4d85b2f8fd748af99110c2896e8a",
+      "irBytes": 75302,
+      "contexTokens": 32074,
+      "jsonTokens": 70835,
+      "savingsPercent": 55,
+      "budgetGain": 0,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "GeoData",
+      "rows": 500,
+      "irHash": "c6c88423571c22916a0adb46e2aa37e331248b3ecfaf786721b13e7a6c4f1272",
+      "irBytes": 72909,
+      "contexTokens": 30899,
+      "jsonTokens": 58572,
+      "savingsPercent": 47,
+      "budgetGain": 0,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "ContentCMS",
+      "rows": 500,
+      "irHash": "cd544cd62c185a94b09e4cfef4ee56dd935065e8dd6b0de04bbd5ab7077aa2eb",
+      "irBytes": 466370,
+      "contexTokens": 81587,
+      "jsonTokens": 199068,
+      "savingsPercent": 59,
+      "budgetGain": 258,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "MultiLingual",
+      "rows": 500,
+      "irHash": "08bf1dc21cbe0e7a4e6167a13a0846d64bbe3870af7e2d2659fd8abc0d349eb8",
+      "irBytes": 40059,
+      "contexTokens": 22089,
+      "jsonTokens": 46822,
+      "savingsPercent": 53,
+      "budgetGain": 0,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "ApiResponses",
+      "rows": 500,
+      "irHash": "52cc35405fecce38faa0e9ed7dec7123310715aa1c071e1756a9ea83d7b66605",
+      "irBytes": 117209,
+      "contexTokens": 47658,
+      "jsonTokens": 115170,
+      "savingsPercent": 59,
+      "budgetGain": 184,
       "composeBlocks": 2,
       "quickApiMatch": true
     },
     {
       "dataset": "Sparse",
       "rows": 500,
-      "irHash": "826d31af7d18e2cb51c4cdbeb7488e8823b1dbcc2d8f14af09b4addcd9aa4873",
+      "irHash": "e0db8e9f12685199657178642ba32e859fb3dd6fed738640caf215cfb8578e39",
       "irBytes": 4917,
-      "contexTokens": 3698,
+      "contexTokens": 2435,
       "jsonTokens": 2492,
-      "savingsPercent": -48,
+      "savingsPercent": 2,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1103,11 +1547,11 @@
     {
       "dataset": "ExtSparse",
       "rows": 500,
-      "irHash": "13fa9f9d42fb0d283630cc20a7493588d3c064f07e7aa84cbcf39553ab854201",
+      "irHash": "c89bceb0c066251a42a8c340ae1853247f1e75396a15cab6250036702ab81e70",
       "irBytes": 37588,
-      "contexTokens": 24114,
+      "contexTokens": 10041,
       "jsonTokens": 65584,
-      "savingsPercent": 63,
+      "savingsPercent": 85,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1115,11 +1559,11 @@
     {
       "dataset": "WideSchema",
       "rows": 500,
-      "irHash": "b047db336e0bad653d60be5ac7349054676cc064b140faca377905feee7802c8",
+      "irHash": "c72a706593d225dcdb127dd1d0a8264b89e1861ae33821bee03c71bfeb49882c",
       "irBytes": 176024,
-      "contexTokens": 66004,
+      "contexTokens": 33585,
       "jsonTokens": 157889,
-      "savingsPercent": 58,
+      "savingsPercent": 79,
       "budgetGain": 226,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1127,11 +1571,11 @@
     {
       "dataset": "ChatMessages",
       "rows": 500,
-      "irHash": "fabd10fa09a7a190a19cef67e2f766e909d657ec58273870855b4c422e6ce251",
+      "irHash": "21f21690090212f8743133d2515e946b84cf244a902c7399c4d34e5041ef6c24",
       "irBytes": 52062,
-      "contexTokens": 22228,
+      "contexTokens": 17408,
       "jsonTokens": 43604,
-      "savingsPercent": 49,
+      "savingsPercent": 60,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1139,11 +1583,23 @@
     {
       "dataset": "LogEvents",
       "rows": 500,
-      "irHash": "250a5193c598697d53f6df38a686fb8830bd1af18171f000e48e1a2130325117",
+      "irHash": "5fdda2261f19a6037c020f591b13404b896e1f458f6a6b07b0253d22c363dda0",
       "irBytes": 106005,
-      "contexTokens": 39374,
+      "contexTokens": 33125,
       "jsonTokens": 58754,
-      "savingsPercent": 33,
+      "savingsPercent": 44,
+      "budgetGain": 0,
+      "composeBlocks": 2,
+      "quickApiMatch": true
+    },
+    {
+      "dataset": "GitHubAPI",
+      "rows": 500,
+      "irHash": "48f12022b38ded7f581f85861b8ee1abaa237aed45b2bc08a2d2ed8625e8da9d",
+      "irBytes": 121879,
+      "contexTokens": 27741,
+      "jsonTokens": 45433,
+      "savingsPercent": 39,
       "budgetGain": 0,
       "composeBlocks": 2,
       "quickApiMatch": true
@@ -1203,7 +1659,7 @@
     {
       "test": "1000-row data fidelity",
       "status": "pass",
-      "detail": "First + last row of 1000-row dataset verified"
+      "detail": "First + last row via @t template or literal values"
     },
     {
       "test": "Nested data fidelity",
@@ -1218,7 +1674,7 @@
     {
       "test": "Sparse data fidelity",
       "status": "pass",
-      "detail": "Sparse rows with many nulls handled correctly"
+      "detail": "Sparse rows use @sparse directive or _ markers"
     },
     {
       "test": "Token round-trip",
@@ -1256,13 +1712,13 @@
       "package": "core",
       "component": "Tens.encode",
       "status": "pass",
-      "detail": "hash=b9e97fc9b3b3... rows=50"
+      "detail": "hash=777d7661b493... rows=50"
     },
     {
       "package": "core",
       "component": "encodeIR",
       "status": "pass",
-      "detail": "version=1.0 hash=b9e97fc9b3b3..."
+      "detail": "version=1.0 hash=777d7661b493..."
     },
     {
       "package": "core",
@@ -1292,7 +1748,7 @@
       "package": "core",
       "component": "formatOutput(contex)",
       "status": "pass",
-      "detail": "3875 chars"
+      "detail": "2747 chars"
     },
     {
       "package": "core",
@@ -1322,7 +1778,7 @@
       "package": "engine",
       "component": "quick()",
       "status": "pass",
-      "detail": "1737 tokens, 43% saved"
+      "detail": "1492 tokens, 51% saved"
     },
     {
       "package": "engine",
@@ -1354,250 +1810,346 @@
       "dataset": "Flat",
       "size": 500,
       "encode": {
-        "p50": 5.07,
-        "p95": 11.27
+        "p50": 10.81,
+        "p95": 19.44
       },
       "materialize": {
-        "p50": 2.55,
-        "p95": 6.11
+        "p50": 2.1,
+        "p95": 5.3
       },
       "total": {
-        "p50": 8.64,
-        "p95": 17.38
+        "p50": 13.37,
+        "p95": 21.66
       }
     },
     {
       "dataset": "RealWorld",
       "size": 500,
       "encode": {
-        "p50": 5.69,
-        "p95": 12.56
+        "p50": 20.23,
+        "p95": 27.84
       },
       "materialize": {
-        "p50": 2.26,
-        "p95": 5.98
+        "p50": 2.41,
+        "p95": 6.69
       },
       "total": {
-        "p50": 9.65,
-        "p95": 14.62
+        "p50": 22.53,
+        "p95": 31.19
       }
     },
     {
       "dataset": "NumericHeavy",
       "size": 500,
       "encode": {
-        "p50": 5.01,
-        "p95": 15.34
+        "p50": 13.02,
+        "p95": 22.81
       },
       "materialize": {
-        "p50": 3.85,
-        "p95": 8.52
+        "p50": 3.18,
+        "p95": 8.21
       },
       "total": {
-        "p50": 11,
-        "p95": 19.19
+        "p50": 17.2,
+        "p95": 25.65
       }
     },
     {
       "dataset": "Repetitive",
       "size": 500,
       "encode": {
-        "p50": 2.53,
-        "p95": 5.07
+        "p50": 9.3,
+        "p95": 13.2
       },
       "materialize": {
-        "p50": 1.74,
-        "p95": 9.2
+        "p50": 1.73,
+        "p95": 6.06
       },
       "total": {
-        "p50": 4.65,
-        "p95": 11.87
+        "p50": 12.07,
+        "p95": 17.38
       }
     },
     {
       "dataset": "Nested",
       "size": 500,
       "encode": {
-        "p50": 16.82,
-        "p95": 22.1
+        "p50": 33.43,
+        "p95": 38.19
       },
       "materialize": {
-        "p50": 2.71,
-        "p95": 7.91
+        "p50": 2.49,
+        "p95": 6.02
       },
       "total": {
-        "p50": 21.58,
-        "p95": 24.18
+        "p50": 37.16,
+        "p95": 40.68
       }
     },
     {
       "dataset": "DeepNested",
       "size": 500,
       "encode": {
-        "p50": 23.94,
-        "p95": 35.47
+        "p50": 46.61,
+        "p95": 58.06
       },
       "materialize": {
-        "p50": 2.46,
-        "p95": 10.32
+        "p50": 4.26,
+        "p95": 9.64
       },
       "total": {
-        "p50": 31.98,
-        "p95": 37.81
+        "p50": 50.87,
+        "p95": 62.63
       }
     },
     {
       "dataset": "MixedNested",
       "size": 500,
       "encode": {
-        "p50": 7.5,
-        "p95": 13
+        "p50": 12.42,
+        "p95": 20.21
       },
       "materialize": {
-        "p50": 2.76,
-        "p95": 8.08
+        "p50": 2.49,
+        "p95": 5.52
       },
       "total": {
-        "p50": 10.29,
-        "p95": 15.76
+        "p50": 17.12,
+        "p95": 24.3
       }
     },
     {
       "dataset": "Ecommerce",
       "size": 500,
       "encode": {
-        "p50": 23.72,
-        "p95": 41.19
+        "p50": 57.89,
+        "p95": 103.16
       },
       "materialize": {
-        "p50": 5.06,
-        "p95": 8.02
+        "p50": 4.62,
+        "p95": 7.63
       },
       "total": {
-        "p50": 30,
-        "p95": 49.21
+        "p50": 62.51,
+        "p95": 108.37
       }
     },
     {
       "dataset": "Healthcare",
       "size": 500,
       "encode": {
-        "p50": 26.29,
-        "p95": 28.3
+        "p50": 56.09,
+        "p95": 63.3
       },
       "materialize": {
-        "p50": 4.61,
-        "p95": 8.42
+        "p50": 3.7,
+        "p95": 10
       },
       "total": {
-        "p50": 30.46,
-        "p95": 36.72
+        "p50": 59.79,
+        "p95": 67.04
       }
     },
     {
       "dataset": "IoT",
       "size": 500,
       "encode": {
-        "p50": 11.22,
-        "p95": 18.29
+        "p50": 25.73,
+        "p95": 33.06
       },
       "materialize": {
-        "p50": 3.36,
-        "p95": 5
+        "p50": 2.96,
+        "p95": 8.36
       },
       "total": {
-        "p50": 14.29,
-        "p95": 21.26
+        "p50": 32.36,
+        "p95": 35.93
+      }
+    },
+    {
+      "dataset": "Inventory",
+      "size": 500,
+      "encode": {
+        "p50": 40.5,
+        "p95": 54.33
+      },
+      "materialize": {
+        "p50": 3.07,
+        "p95": 11.99
+      },
+      "total": {
+        "p50": 43.58,
+        "p95": 59.77
+      }
+    },
+    {
+      "dataset": "GeoData",
+      "size": 500,
+      "encode": {
+        "p50": 38.14,
+        "p95": 53.53
+      },
+      "materialize": {
+        "p50": 3.55,
+        "p95": 6.39
+      },
+      "total": {
+        "p50": 41.07,
+        "p95": 57.08
+      }
+    },
+    {
+      "dataset": "ContentCMS",
+      "size": 500,
+      "encode": {
+        "p50": 104.29,
+        "p95": 121.68
+      },
+      "materialize": {
+        "p50": 6.72,
+        "p95": 10.13
+      },
+      "total": {
+        "p50": 111.02,
+        "p95": 128.52
+      }
+    },
+    {
+      "dataset": "MultiLingual",
+      "size": 500,
+      "encode": {
+        "p50": 32.35,
+        "p95": 37.43
+      },
+      "materialize": {
+        "p50": 2.7,
+        "p95": 8.2
+      },
+      "total": {
+        "p50": 35.7,
+        "p95": 40.22
+      }
+    },
+    {
+      "dataset": "ApiResponses",
+      "size": 500,
+      "encode": {
+        "p50": 62.77,
+        "p95": 70.37
+      },
+      "materialize": {
+        "p50": 6.6,
+        "p95": 9.51
+      },
+      "total": {
+        "p50": 69.1,
+        "p95": 79.88
       }
     },
     {
       "dataset": "Sparse",
       "size": 500,
       "encode": {
-        "p50": 0.54,
-        "p95": 0.83
+        "p50": 1.72,
+        "p95": 2.16
       },
       "materialize": {
-        "p50": 1.05,
-        "p95": 1.53
+        "p50": 1.1,
+        "p95": 2.42
       },
       "total": {
-        "p50": 1.61,
-        "p95": 2.37
+        "p50": 2.87,
+        "p95": 4.13
       }
     },
     {
       "dataset": "ExtSparse",
       "size": 500,
       "encode": {
-        "p50": 18,
-        "p95": 37.96
+        "p50": 41.12,
+        "p95": 62.46
       },
       "materialize": {
-        "p50": 3.95,
-        "p95": 9.04
+        "p50": 2.76,
+        "p95": 6.18
       },
       "total": {
-        "p50": 23.77,
-        "p95": 44.4
+        "p50": 43.65,
+        "p95": 68.64
       }
     },
     {
       "dataset": "WideSchema",
       "size": 500,
       "encode": {
-        "p50": 36.81,
-        "p95": 68.1
+        "p50": 84.63,
+        "p95": 96.72
       },
       "materialize": {
-        "p50": 5.62,
-        "p95": 8.82
+        "p50": 7.64,
+        "p95": 14.04
       },
       "total": {
-        "p50": 42.17,
-        "p95": 73.92
+        "p50": 91.22,
+        "p95": 106.96
       }
     },
     {
       "dataset": "ChatMessages",
       "size": 500,
       "encode": {
-        "p50": 9.92,
-        "p95": 15.39
+        "p50": 46.28,
+        "p95": 100.13
       },
       "materialize": {
-        "p50": 2.95,
-        "p95": 7.2
+        "p50": 6.32,
+        "p95": 13.55
       },
       "total": {
-        "p50": 13.3,
-        "p95": 19.87
+        "p50": 50.63,
+        "p95": 103.37
       }
     },
     {
       "dataset": "LogEvents",
       "size": 500,
       "encode": {
-        "p50": 15.99,
-        "p95": 19.33
+        "p50": 33.67,
+        "p95": 69.94
       },
       "materialize": {
-        "p50": 4.74,
-        "p95": 12.14
+        "p50": 6.33,
+        "p95": 12.65
       },
       "total": {
-        "p50": 20.65,
-        "p95": 27.31
+        "p50": 41.9,
+        "p95": 76.27
+      }
+    },
+    {
+      "dataset": "GitHubAPI",
+      "size": 500,
+      "encode": {
+        "p50": 23.78,
+        "p95": 29.17
+      },
+      "materialize": {
+        "p50": 4.42,
+        "p95": 8.95
+      },
+      "total": {
+        "p50": 29.66,
+        "p95": 33.95
       }
     }
   ],
   "summary": {
-    "avgSavingsPercent": 43.1,
-    "maxSavingsPercent": 88,
-    "minSavingsPercent": -48,
-    "avgBudgetGain": 36,
-    "avgEncodeUsPerRow": 13.94,
-    "avgMaterializeUsPerRow": 3.31,
+    "avgSavingsPercent": 53.5,
+    "maxSavingsPercent": 85,
+    "minSavingsPercent": 0,
+    "avgBudgetGain": 46,
+    "avgEncodeUsPerRow": 37.85,
+    "avgMaterializeUsPerRow": 3.86,
     "fidelityScore": "20/20",
     "connectivityScore": "16/16",
     "totalTests": 36,

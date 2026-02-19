@@ -1,4 +1,4 @@
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 import { providerSupportsTokens } from './config.js';
 
 export type TensReference = { tensHash: string };

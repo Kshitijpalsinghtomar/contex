@@ -1,12 +1,12 @@
 {
-  "name": "@contex/core",
+  "name": "@contex-llm/core",
   "version": "0.1.0",
   "description": "Core primitives for Contex (Tokenizer, TENS Encoder/Decoder)",
   "license": "MIT",
-  "author": "Contex Team",
+  "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/contex/contex.git",
+    "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git",
     "directory": "packages/core"
   },
   "publishConfig": {
@@ -49,6 +49,9 @@
   },
   "dependencies": {
     "js-tiktoken": "^1.0.10"
+  },
+  "optionalDependencies": {
+    "@contex-llm/tens-wasm": "workspace:*"
   },
   "devDependencies": {
     "fast-check": "^4.5.3",

@@ -1,4 +1,4 @@
-import { TokenStreamDecoder, TokenStreamEncoder, flattenObject } from '@contex/core';
+import { TokenStreamDecoder, TokenStreamEncoder, flattenObject } from '@contex-llm/core';
 
 // --- Fuzzy Equality Helper ---
 function fuzzyDeepEqual(a: unknown, b: unknown, path = ''): boolean {

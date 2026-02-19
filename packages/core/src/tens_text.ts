@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — TENS-Text: Human-Readable TENS Representation
+// @contex-llm/core — TENS-Text: Human-Readable TENS Representation
 // ============================================================================
 //
 // TENS-Text is a human-readable text format that maps 1:1 to TENS binary data.
@@ -248,11 +248,23 @@ export class TensTextEncoder {
       }
     }
 
-    // Only dictionary-encode strings that appear 2+ times
+    // Dictionary-encode strings that appear 2+ times with positive cost-benefit.
+    // Cost-benefit gate: the @N reference must be shorter than the value to save tokens.
+    // Cap at 10,000 entries to avoid pathological dictionary-line bloat.
+    const MAX_DICT_SIZE = 10_000;
     const dictionary: string[] = [];
     const dictIndex = new Map<string, number>();
-    for (const [val, count] of valueCounts.entries()) {
-      if (count >= 2 && val.length > 0) {
+
+    // Sort candidates by (frequency × length) desc for maximum savings first
+    const dictCandidates = [...valueCounts.entries()]
+      .filter(([val, count]) => count >= 2 && val.length > 0)
+      .sort((a, b) => (b[1] * b[0].length) - (a[1] * a[0].length));
+
+    for (const [val, count] of dictCandidates) {
+      if (dictionary.length >= MAX_DICT_SIZE) break;
+      // Cost-benefit: @N reference length vs original value length
+      const refLen = 1 + String(dictionary.length).length; // e.g. @0=2, @99=3, @1000=5
+      if (val.length > refLen || (val.length === refLen && count >= 3)) {
         dictIndex.set(val, dictionary.length);
         dictionary.push(val);
       }

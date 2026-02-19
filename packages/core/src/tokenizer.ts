@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Multi-Tokenizer Manager
+// @contex-llm/core — Multi-Tokenizer Manager
 // ============================================================================
 //
 // Manages multiple tokenizer instances (one per encoding) with LRU caching.

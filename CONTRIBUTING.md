@@ -12,10 +12,10 @@
 
 | Resource | Link |
 |----------|------|
-| 📖 **Documentation** | [docs/](docs/) |
-| 💬 **Discussions** | [GitHub Discussions](https://github.com/kshitijpalsinghtomar/contex/discussions) |
-| 🐛 **Issue Tracker** | [GitHub Issues](https://github.com/kshitijpalsinghtomar/contex/issues) |
-| 📦 **NPM Packages** | [@contex/core](https://www.npmjs.com/package/@contex/core) |
+| 📐– **Documentation** | [docs/](docs/) |
+| 💬 **Discussions** | [GitHub Discussions](https://github.com/kshitijpalsinghtomar/contex-llm/discussions) |
+| 🐛 **Issue Tracker** | [GitHub Issues](https://github.com/kshitijpalsinghtomar/contex-llm/issues) |
+| 📐¦ **NPM Packages** | [@contex-llm/core](https://www.npmjs.com/package/@contex-llm/core) |
 
 
 ---
@@ -45,7 +45,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/kshitijpalsinghtomar/contex.git
+git clone https://github.com/kshitijpalsinghtomar/contex-llm.git
 cd contex
 
 # Install dependencies
@@ -66,30 +66,30 @@ pnpm lint:fix
 
 ---
 
-## 📁 Project Structure
+## 📐 Project Structure
 
 ```
-contex/
+contex-llm/
 ├── CONTEX_V3_MASTER.md    # ⚠️ READ THIS FIRST — The Single Source of Truth
 ├── docs/
 │   ├── architecture.md     # System architecture
 │   ├── guide/              # User guides
 │   └── reference/          # API reference
 ├── packages/
-│   ├── core/               # @contex/core — Canonical IR, materializer, TokenMemory
-│   ├── engine/             # @contex/engine — Budget, quick() API
-│   ├── middleware/         # @contex/middleware — SDK wrappers (OpenAI, Anthropic)
-│   ├── cli/                # @contex/cli — Tools & benchmarks
-│   ├── adapters/           # @contex/adapters — LangChain & LlamaIndex integrations
-│   ├── server/             # @contex/server — [PAUSED]
-│   └── tens-wasm/          # @contex/tens-wasm — [PAUSED]
+│   ├── core/               # @contex-llm/core — Canonical IR, materializer, TokenMemory
+│   ├── engine/             # @contex-llm/engine — Budget, quick() API
+│   ├── middleware/         # @contex-llm/middleware — SDK wrappers (OpenAI, Anthropic)
+│   ├── cli/                # @contex-llm/cli — Tools & benchmarks
+│   ├── adapters/           # @contex-llm/adapters — LangChain & LlamaIndex integrations
+│   ├── server/             # @contex-llm/server — [PAUSED]
+│   └── tens-wasm/          # @contex-llm/tens-wasm — [PAUSED]
 ├── website/                # Marketing website
 └── README.md
 ```
 
 ---
 
-## 📦 Package Development
+## 📐¦ Package Development
 
 Each package can be developed independently:
 
@@ -105,15 +105,15 @@ cd packages/engine && pnpm build
 
 | Package | Purpose | NPM |
 |---|---|---|
-| `@contex/core` | Canonical IR encoder, materializer, TokenMemory, token composition, tokenizer manager | ✅ |
-| `@contex/engine` | Budget engine, `quick()` API, model registry, predictive packer | ✅ |
-| `@contex/middleware` | Drop-in SDK wrappers (OpenAI, Anthropic, Gemini) with IR-backed injection | ✅ |
-| `@contex/cli` | CLI tools, benchmarks, cost analysis | ✅ |
-| `@contex/adapters` | LangChain & LlamaIndex integrations | ✅ |
+| `@contex-llm/core` | Canonical IR encoder, materializer, TokenMemory, token composition, tokenizer manager | ✅ |
+| `@contex-llm/engine` | Budget engine, `quick()` API, model registry, predictive packer | ✅ |
+| `@contex-llm/middleware` | Drop-in SDK wrappers (OpenAI, Anthropic, Gemini) with IR-backed injection | ✅ |
+| `@contex-llm/cli` | CLI tools, benchmarks, cost analysis | ✅ |
+| `@contex-llm/adapters` | LangChain & LlamaIndex integrations | ✅ |
 
 ---
 
-## 📝 Terminology
+## 📐 Terminology
 
 Use these terms consistently across code, docs, and comments:
 
@@ -226,7 +226,7 @@ If you're making significant architectural changes:
 
 ---
 
-## 📜 License
+## 📐œ License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](./LICENSE).
 
@@ -238,6 +238,6 @@ By contributing, you agree that your contributions will be licensed under the [M
 
 **Your contributions make Contex better for everyone.**
 
-[![GitHub Stars](https://img.shields.io/github/stars/kshitijpalsinghtomar/contex?style=social)](https://github.com/kshitijpalsinghtomar/contex)
+[![GitHub Stars](https://img.shields.io/github/stars/kshitijpalsinghtomar/contex-llm?style=social)](https://github.com/kshitijpalsinghtomar/contex-llm)
 
 </div>

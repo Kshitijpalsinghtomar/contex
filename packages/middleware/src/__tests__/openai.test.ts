@@ -63,7 +63,7 @@ const TEST_DATA = [
 // =============================================================================
 // Tests
 // =============================================================================
-describe('@contex/middleware v3 — OpenAI Integration', () => {
+describe('@contex-llm/middleware v3 — OpenAI Integration', () => {
   let tmpDir: string;
 
   beforeEach(() => {

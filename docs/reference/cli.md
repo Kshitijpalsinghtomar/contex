@@ -11,8 +11,13 @@
 ## Installation
 
 ```bash
-pnpm add -g @contex/cli
+pnpm add -g @contex-llm/cli
 ```
+
+### Global Output Flags
+
+- `--ascii`: Force ASCII-only CLI rendering (useful on Windows shells showing garbled box characters)
+- `--unicode`: Force Unicode box rendering
 
 ---
 
@@ -44,6 +49,8 @@ contex analyze data.json
 contex analyze data.json --reality-gate
 contex analyze data.json --strategy contex,csv,toon,markdown,auto --strict-gate --out report.json
 contex analyze data.json --strategy auto --auto-confidence-floor 55 --strict-auto-gate
+contex analyze data.json --fingerprint
+contex analyze data.json --fingerprint --no-watermark
 ```
 
 **Options:**
@@ -59,7 +66,14 @@ contex analyze data.json --strategy auto --auto-confidence-floor 55 --strict-aut
 | `--strict-auto-gate` | Exit non-zero when auto confidence falls below threshold |
 | `--reality-gate` | Show Dynamic/Needed/Correct/Real pass-fail scorecard |
 | `--strict-gate` | Exit non-zero when `real` gate is `FAIL` |
+| `--fingerprint` | Emit pipeline fingerprint metadata (hash chain + complexity) |
+| `--no-watermark` | Disable watermark output when `--fingerprint` is enabled |
 | `--out <file>` | Write benchmark snapshot JSON |
+
+Outputs include:
+- Pipeline resource report (CPU, heap delta, throughput, efficiency score)
+- Structural complexity report (entropy, depth, sparsity, complexity class)
+- Optional fingerprint + watermark boxes (`--fingerprint`)
 
 ---
 
@@ -258,10 +272,19 @@ Roundtrip integrity test.
 ```bash
 contex validate data.json
 contex validate data.json --semantic-guard
+contex validate data.json --fingerprint
+contex validate data.json --fingerprint --no-watermark
 ```
 
 **Options:**
 - `--semantic-guard`: Adds strict relation checks
+- `--fingerprint`: Emit pipeline fingerprint metadata (hash chain + complexity)
+- `--no-watermark`: Disable watermark output when `--fingerprint` is enabled
+
+Validation output now also includes:
+- Pipeline resource report
+- Structural complexity report
+- Optional fingerprint + watermark boxes (`--fingerprint`)
 
 ---
 

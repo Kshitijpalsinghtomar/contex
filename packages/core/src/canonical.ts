@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Canonical Data Normalization
+// @contex-llm/core — Canonical Data Normalization
 // ============================================================================
 //
 // Pure functions that normalize JavaScript values to canonical form.
@@ -27,7 +27,7 @@
  * @returns Canonicalized string
  */
 export function canonicalizeString(s: string): string {
-  // NFKC normalization: ﬁ → fi, ² → 2, etc.
+  // NFKC normalization: fi → fi, ² → 2, etc.
   const normalized = s.normalize('NFKC');
   // Strip trailing whitespace from each line
   return normalized.replace(/[^\S\n]+$/gm, '');

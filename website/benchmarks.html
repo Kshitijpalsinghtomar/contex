@@ -16,7 +16,7 @@
 <body>
 
     <nav class="nav">
-        <a href="/" class="nav-brand">
+        <a href="./" class="nav-brand">
             <div class="logo-icon">C</div>
             Contex
         </a>
@@ -48,7 +48,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+            <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                     <path
@@ -62,16 +62,16 @@
 
     <div class="bench-page">
         <h1>Contex Benchmarks</h1>
-        <p>Verified token reduction results from real test data across 15 dataset types, 5 output formats, and multiple row-counts.</p>
+        <p>Verified token reduction results from real test data across 21 dataset types, 5 output formats, and multiple row-counts.</p>
 
         <!-- Key Takeaways -->
         <div class="takeaways-box">
           <h3>Key Takeaways</h3>
           <ul>
-            <li><strong>43% average pipeline savings</strong> — measured end-to-end including encoding overhead and header bytes.</li>
-            <li><strong>94% peak format savings</strong> — deeply nested JSON benefits most from deep flattening and dictionary compression.</li>
+            <li><strong>72% average token savings</strong> — measured as Contex Compact vs JSON across 21 dataset types at 1,000 rows (46–90% range).</li>
+            <li><strong>90% peak format savings</strong> — nested/repetitive JSON benefits most from template compression and dictionary encoding.</li>
             <li><strong>Zero data loss</strong> — 20/20 fidelity tests confirm lossless roundtrip across all formats and dataset types.</li>
-            <li><strong>Sub-millisecond latency</strong> — encoding adds 1.6–42 μs/row depending on nesting depth; negligible vs API latency.</li>
+            <li><strong>Sub-millisecond latency</strong> — encoding adds 3.8–79 μs/row depending on complexity; negligible vs API latency.</li>
             <li><strong>Deterministic output</strong> — same input always produces identical tokens, maximizing prefix cache hit rates.</li>
           </ul>
         </div>
@@ -79,11 +79,11 @@
         <!-- Verified Results -->
         <div class="bench-cards">
             <div class="bench-card">
-                <div class="value blue">43%</div>
-                <div class="label">Avg Pipeline Savings</div>
+                <div class="value blue">72%</div>
+                <div class="label">Avg Token Savings</div>
             </div>
             <div class="bench-card">
-                <div class="value green">94%</div>
+                <div class="value green">90%</div>
                 <div class="label">Best Format Savings</div>
             </div>
             <div class="bench-card">
@@ -113,20 +113,20 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const ctx = document.getElementById('reductionChart').getContext('2d');
 
-                // Data from Benchmark v7 — format-level savings across dataset types
+                // Data from Benchmark v8 — format-level savings across dataset types (fresh run 2026-02-19)
                 const data = {
-                    labels: ['RealWorld/500', 'DeepNested/100', 'Flat/500', 'Nested/500', 'Repetitive/500'],
+                    labels: ['Flat/1000', 'RealWorld/1000', 'Nested/1000', 'Repetitive/1000', 'Healthcare/1000', 'WideSchema/1000', 'ExtSparse/1000', 'DeepNested/1000'],
                     datasets: [
                         {
                             label: 'JSON Tokens',
-                            data: [100, 100, 100, 100, 100],
+                            data: [100, 100, 100, 100, 100, 100, 100, 100],
                             backgroundColor: 'rgba(239, 68, 68, 0.6)',
                             borderColor: 'rgba(239, 68, 68, 1)',
                             borderWidth: 1
                         },
                         {
                             label: 'Contex Compact',
-                            data: [32, 6, 55, 40, 30],
+                            data: [22, 27, 10, 11, 24, 16, 11, 29],
                             backgroundColor: 'rgba(16, 185, 129, 0.6)',
                             borderColor: 'rgba(16, 185, 129, 1)',
                             borderWidth: 1
@@ -209,8 +209,8 @@
 
         <!-- Token Reduction Table -->
         <div class="bench-section">
-            <h2>Format Savings by Dataset (Benchmark v7)</h2>
-            <p>Results across 15 dataset types, each tested at multiple sizes (10–1000 rows).</p>
+            <h2>Format Savings by Dataset (Benchmark v8)</h2>
+            <p>Results across 21 dataset types, each tested at multiple sizes (10–1000 rows).</p>
 
             <div style="overflow-x: auto;">
                 <table class="benchmark-table">
@@ -224,34 +224,52 @@
                     </thead>
                     <tbody>
                         <tr class="highlight">
-                            <td><strong>DeepNested/100</strong></td>
+                            <td><strong>Nested/1000</strong></td>
                             <td>Contex Compact</td>
-                            <td class="saving">94%</td>
-                            <td class="saving">88%</td>
+                            <td class="saving">90%</td>
+                            <td class="saving">76%</td>
                         </tr>
                         <tr class="highlight">
-                            <td><strong>RealWorld/500</strong></td>
+                            <td><strong>Repetitive/1000</strong></td>
                             <td>Contex Compact</td>
-                            <td class="saving">68%</td>
-                            <td class="saving">52%</td>
+                            <td class="saving">89%</td>
+                            <td class="saving">80%</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td><strong>ExtSparse/1000</strong></td>
+                            <td>Contex Compact</td>
+                            <td class="saving">89%</td>
+                            <td class="saving">85%</td>
                         </tr>
                         <tr>
-                            <td>Flat/500</td>
+                            <td>WideSchema/1000</td>
                             <td>Contex Compact</td>
-                            <td class="saving">45%</td>
-                            <td class="saving">35%</td>
+                            <td class="saving">84%</td>
+                            <td class="saving">79%</td>
                         </tr>
                         <tr>
-                            <td>Nested/500</td>
+                            <td>Flat/1000</td>
                             <td>Contex Compact</td>
+                            <td class="saving">78%</td>
                             <td class="saving">60%</td>
-                            <td class="saving">48%</td>
                         </tr>
                         <tr>
-                            <td>Repetitive/500</td>
+                            <td>Healthcare/1000</td>
                             <td>Contex Compact</td>
-                            <td class="saving">70%</td>
-                            <td class="saving">55%</td>
+                            <td class="saving">76%</td>
+                            <td class="saving">60%</td>
+                        </tr>
+                        <tr>
+                            <td>RealWorld/1000</td>
+                            <td>Contex Compact</td>
+                            <td class="saving">73%</td>
+                            <td class="saving">59%</td>
+                        </tr>
+                        <tr>
+                            <td>DeepNested/1000</td>
+                            <td>Contex Compact</td>
+                            <td class="saving">71%</td>
+                            <td class="saving">43%</td>
                         </tr>
                     </tbody>
                 </table>
@@ -275,8 +293,8 @@
                     <tbody>
                         <tr class="highlight">
                             <td><strong>Contex Compact</strong></td>
-                            <td class="saving">-68%</td>
-                            <td>Dictionary compression + deep flattening</td>
+                            <td class="saving">-73%</td>
+                            <td>Dictionary + template + prefix compression</td>
                         </tr>
                         <tr>
                             <td>TOON</td>
@@ -285,7 +303,7 @@
                         </tr>
                         <tr>
                             <td>CSV</td>
-                            <td class="saving">-54%</td>
+                            <td class="saving">-55%</td>
                             <td>Comma-separated values</td>
                         </tr>
                         <tr>
@@ -322,19 +340,19 @@
                         <tr>
                             <td>Flat</td>
                             <td class="mono">500</td>
-                            <td class="mono">1.6</td>
-                            <td class="saving">Instant</td>
+                            <td class="mono">12.8</td>
+                            <td class="saving">Fast</td>
                         </tr>
                         <tr>
                             <td>RealWorld</td>
                             <td class="mono">500</td>
-                            <td class="mono">8.2</td>
+                            <td class="mono">19.8</td>
                             <td class="saving">Fast</td>
                         </tr>
                         <tr>
                             <td>DeepNested</td>
-                            <td class="mono">100</td>
-                            <td class="mono">42</td>
+                            <td class="mono">500</td>
+                            <td class="mono">47.6</td>
                             <td class="saving">Fast</td>
                         </tr>
                     </tbody>
@@ -345,7 +363,7 @@
         <!-- Cost Savings -->
         <div class="bench-section">
             <h2>Annual Cost Savings (Projected)</h2>
-            <p>Based on 10 million requests/month with 10K token context, using 43% avg savings.</p>
+            <p>Based on 10 million requests/month with 10K token context, using 72% avg savings.</p>
 
             <div style="overflow-x: auto;">
                 <table class="benchmark-table">
@@ -358,19 +376,19 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>OpenAI (gpt-4o)</td>
-                            <td class="mono">$2.50</td>
-                            <td class="saving">$154,800/year</td>
+                            <td>GPT-5.2 ($1.75/1M)</td>
+                            <td class="mono">$1.75</td>
+                            <td class="saving">$151,200/year</td>
                         </tr>
                         <tr>
-                            <td>Claude Sonnet 4</td>
+                            <td>Claude Sonnet 4.6 ($3.00/1M)</td>
                             <td class="mono">$3.00</td>
-                            <td class="saving">$185,760/year</td>
+                            <td class="saving">$259,200/year</td>
                         </tr>
                         <tr>
-                            <td>Gemini 2.5 Flash</td>
-                            <td class="mono">$0.30</td>
-                            <td class="saving">$18,576/year</td>
+                            <td>Gemini 3 Flash ($0.50/1M)</td>
+                            <td class="mono">$0.50</td>
+                            <td class="saving">$43,200/year</td>
                         </tr>
                     </tbody>
                 </table>
@@ -379,7 +397,7 @@
 
         <!-- Data Fidelity -->
         <div class="bench-section">
-            <h2>Data Fidelity (Benchmark v7)</h2>
+            <h2>Data Fidelity (Benchmark v8)</h2>
             <p>Every dataset's output is verified for perfect roundtrip accuracy.</p>
 
             <div style="overflow-x: auto;">
@@ -428,29 +446,34 @@
                     </thead>
                     <tbody>
                         <tr class="highlight">
-                            <td><strong>Deeply nested JSON</strong></td>
-                            <td class="saving">80–94%</td>
-                            <td>Deep flattening eliminates all structural tokens</td>
+                            <td><strong>Nested / repetitive JSON</strong></td>
+                            <td class="saving">88–90%</td>
+                            <td>Template compression (@t) derives values from other columns</td>
                         </tr>
                         <tr class="highlight">
-                            <td><strong>Repetitive values</strong></td>
-                            <td class="saving">55–70%</td>
+                            <td><strong>Sparse data (lots of nulls)</strong></td>
+                            <td class="saving">85–89%</td>
+                            <td>@sparse directive eliminates null columns entirely</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td><strong>Wide schemas (many columns)</strong></td>
+                            <td class="saving">79–84%</td>
+                            <td>Field name compression + constant column elision (@c)</td>
+                        </tr>
+                        <tr>
+                            <td>API responses / healthcare</td>
+                            <td class="saving">60–76%</td>
                             <td>Dictionary encoding replaces repeated strings with @0, @1</td>
                         </tr>
                         <tr>
-                            <td>API responses</td>
-                            <td class="saving">50–65%</td>
-                            <td>Repeated status, date, and enum fields compress heavily</td>
-                        </tr>
-                        <tr>
                             <td>Flat tabular data</td>
-                            <td class="saving">35–45%</td>
-                            <td>Schema deduplication + boolean/null abbreviation</td>
+                            <td class="saving">58–78%</td>
+                            <td>Schema dedup + template + boolean/null abbreviation</td>
                         </tr>
                         <tr>
-                            <td>Unique text data</td>
-                            <td>15–25%</td>
-                            <td>Minimal dictionary opportunity; format savings only</td>
+                            <td>Unique long-string data (e.g. GitHub API)</td>
+                            <td>35–45%</td>
+                            <td>Format savings only — values are unique, less to compress</td>
                         </tr>
                     </tbody>
                 </table>
@@ -520,16 +543,16 @@
         <!-- Methodology -->
         <div class="bench-section">
             <h2>Methodology</h2>
-            <p>Benchmarks are run using the v7 benchmark suite covering 15 dataset types.</p>
+            <p>Benchmarks are run using the v8 benchmark suite covering 21 dataset types.</p>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
               <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px;">
-                <h4 style="margin-bottom: 10px;">Datasets</h4>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">Flat, Nested, DeepNested, Sparse, Repetitive, RealWorld, Wide, Narrow, Mixed, LargeValues, Unicode, ManyColumns, Boolean, IDs, Timestamps</p>
+                <h4 style="margin-bottom: 10px;">Datasets (21 types)</h4>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">Flat, RealWorld, NumericHeavy, Repetitive, Nested, DeepNested, MixedNested, Ecommerce, Healthcare, IoT, Sparse, ExtSparse, WideSchema, ChatMessages, LogEvents, Financial, GeoJSON, Multilingual, SocialGraph, TimeSeries, UserProfiles</p>
               </div>
               <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px;">
                 <h4 style="margin-bottom: 10px;">Row Sizes</h4>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">10, 50, 100, 500, and 1000 rows per dataset type. Each combination run independently to measure scaling characteristics.</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">100 and 1000 rows per dataset type, plus 500 rows for pipeline/latency tests. Each combination run independently to measure scaling characteristics.</p>
               </div>
               <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px;">
                 <h4 style="margin-bottom: 10px;">Output Formats</h4>
@@ -554,8 +577,7 @@ contex analyze data.json --model gpt-4o-mini</pre>
     </div>
 
     <footer class="footer">
-        <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM
-            pipelines</p>
+        <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
     </footer>
 
     <script>

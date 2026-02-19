@@ -1,0 +1,133 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TENS",
+  "scopeName": "source.tens",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#schema-header" },
+    { "include": "#section-header" },
+    { "include": "#field-separator" },
+    { "include": "#numbers" },
+    { "include": "#strings" },
+    { "include": "#booleans" },
+    { "include": "#null" },
+    { "include": "#delimiters" },
+    { "include": "#keys" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.tens",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "schema-header": {
+      "patterns": [
+        {
+          "name": "keyword.control.schema.tens",
+          "match": "^\\s*@(schema|type|version|encoding|model|format|meta)\\b"
+        },
+        {
+          "name": "keyword.control.directive.tens",
+          "match": "^\\s*@[a-zA-Z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "section-header": {
+      "patterns": [
+        {
+          "name": "entity.name.section.tens",
+          "match": "^\\s*\\[[^\\]]+\\]"
+        }
+      ]
+    },
+    "field-separator": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.tens",
+          "match": "\\|"
+        },
+        {
+          "name": "punctuation.separator.record.tens",
+          "match": "^---$"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.tens",
+          "match": "\\b-?[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.tens",
+          "match": "\\b-?[0-9]+\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.tens",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.tens",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.tens",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.tens",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "booleans": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.tens",
+          "match": "\\b(true|false|T|F)\\b"
+        }
+      ]
+    },
+    "null": {
+      "patterns": [
+        {
+          "name": "constant.language.null.tens",
+          "match": "\\b(null|nil|~)\\b"
+        }
+      ]
+    },
+    "delimiters": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.array.tens",
+          "match": "[\\[\\]{}]"
+        },
+        {
+          "name": "punctuation.separator.comma.tens",
+          "match": ","
+        }
+      ]
+    },
+    "keys": {
+      "patterns": [
+        {
+          "name": "variable.other.key.tens",
+          "match": "^\\s*[a-zA-Z_][a-zA-Z0-9_]*(?=\\s*[:|=])"
+        }
+      ]
+    }
+  }
+}

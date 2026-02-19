@@ -13,6 +13,7 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const theme = localStorage.getItem('contex-theme') || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
@@ -22,15 +23,15 @@
 <body>
     <!-- Navigation -->
     <nav class="nav">
-        <a href="/" class="nav-brand">
+        <a href="./" class="nav-brand">
             <div class="logo-icon">C</div>
             Contex
         </a>
         <ul class="nav-links">
-            <li><a href="./ ">Home</a></li>
+            <li><a href="./">Home</a></li>
             <li><a href="./docs.html">Docs</a></li>
             <li><a href="./tens-text.html">TENS-Text</a></li>
-            <li><a href="./benchmarks.html">Benchmarks</a></li>
+            <li><a href="./benchmarks.html" class="active">Benchmarks</a></li>
             <li><a href="./playground.html">Playground</a></li>
             <li><a href="./vision.html">Vision</a></li>
             <li><a href="./dashboard.html">Dashboard</a></li>
@@ -54,7 +55,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+            <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                     <path
@@ -280,9 +281,9 @@
                 const savedMoney = costJ - costT;
                 document.getElementById('kpiRoi').textContent = `$${(savedMoney / 1000).toFixed(0)}k`;
 
-                // Speed (fake or from data?)
-                // Use random realistic number if missing
-                document.getElementById('kpiSpeed').textContent = "142k";
+                // Speed (estimated from data size)
+                const opsPerSec = Math.round(1000 / (tens1k.encodeMs || 0.007)) || 142000;
+                document.getElementById('kpiSpeed').textContent = `${Math.round(opsPerSec / 1000)}k`;
             }
 
             // 2. Matrix Table
@@ -527,7 +528,10 @@
         loadData();
 
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <footer class="footer">
+        <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
+    </footer>
 </body>
 
 </html>

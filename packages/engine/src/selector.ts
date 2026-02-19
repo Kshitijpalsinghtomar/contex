@@ -1,4 +1,4 @@
-import type { OutputFormat } from '@contex/core';
+import type { OutputFormat } from '@contex-llm/core';
 import { MODEL_REGISTRY } from './budget.js';
 import type { ModelSpec } from './budget.js';
 

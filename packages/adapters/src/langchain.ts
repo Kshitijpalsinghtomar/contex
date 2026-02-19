@@ -1,13 +1,13 @@
 // ============================================================================
-// @contex/adapters — LangChain Adapter
+// @contex-llm/adapters — LangChain Adapter
 // ============================================================================
 //
 // ContexLoader: LangChain Document Loader with Contex optimization
 // Automatically optimizes loaded documents for LLM context
 // ============================================================================
 
-import { Tens } from '@contex/core';
-import type { OutputFormat } from '@contex/core';
+import { Tens } from '@contex-llm/core';
+import type { OutputFormat } from '@contex-llm/core';
 
 /**
  * Options for ContexLoader
@@ -50,11 +50,11 @@ interface LangChainDocument {
  * ContexLoader: LangChain Document Loader with Contex optimization
  *
  * This loader automatically optimizes documents loaded from various sources
- * using Contex's token-efficient format, reducing context costs by 40-94%.
+ * using Contex's token-efficient format, reducing context costs by 40-90%.
  *
  * @example
  * ```ts
- * import { ContexLoader } from '@contex/adapters/langchain';
+ * import { ContexLoader } from '@contex-llm/adapters/langchain';
  *
  * // Use with LangChain
  * const loader = new ContexLoader({

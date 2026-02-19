@@ -2,8 +2,8 @@
 // Isolated Metrics — Each metric measured independently
 // ============================================================================
 
-import type { TokenStreamEncoder, TokenizerManager } from '@contex/core';
-import type { TokenizerEncoding } from '@contex/core';
+import type { TokenStreamEncoder, TokenizerManager } from '@contex-llm/core';
+import type { TokenizerEncoding } from '@contex-llm/core';
 import * as transcoders from './transcoders.js';
 import type { SupportedFormat } from './transcoders.js';
 

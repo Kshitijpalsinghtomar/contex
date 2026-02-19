@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Pre-Tokenized Binary Blocks
+// @contex-llm/core — Pre-Tokenized Binary Blocks
 // ============================================================================
 //
 // Stores data with pre-computed token IDs for a target model encoding.

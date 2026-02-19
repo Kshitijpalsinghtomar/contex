@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Cache Metrics & Miss-Reason Taxonomy
+// @contex-llm/core — Cache Metrics & Miss-Reason Taxonomy
 // ============================================================================
 //
 // Tracks cache access patterns and miss reasons for observability and debugging.

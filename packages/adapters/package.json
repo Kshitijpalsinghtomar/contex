@@ -1,12 +1,12 @@
 {
-  "name": "@contex/adapters",
+  "name": "@contex-llm/adapters",
   "version": "0.1.0",
   "description": "Contex adapters for LangChain and LlamaIndex",
   "license": "MIT",
-  "author": "Contex Team",
+  "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/contex/contex.git",
+    "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git",
     "directory": "packages/adapters"
   },
   "publishConfig": {
@@ -51,7 +51,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@contex/core": "workspace:*"
+    "@contex-llm/core": "workspace:*"
   },
   "peerDependencies": {
     "langchain": ">=0.1.0",

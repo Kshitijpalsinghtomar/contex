@@ -1,12 +1,12 @@
 {
-    "name": "@contex/middleware",
+    "name": "@contex-llm/middleware",
     "version": "0.2.0",
     "description": "Contex middleware for OpenAI/Anthropic/Gemini SDKs — v3 IR pipeline",
     "license": "MIT",
-    "author": "Contex Team",
+    "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/contex/contex.git",
+        "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git",
         "directory": "packages/middleware"
     },
     "publishConfig": {
@@ -42,7 +42,7 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@contex/core": "workspace:*"
+        "@contex-llm/core": "workspace:*"
     },
     "peerDependencies": {
         "openai": "^4.0.0",

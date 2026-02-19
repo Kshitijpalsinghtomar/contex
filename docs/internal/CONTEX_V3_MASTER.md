@@ -111,7 +111,7 @@ If you encode data with OpenAI's `o200k_base` tokenizer and store those token ID
 │  → Drop-in SDK wrappers that auto-inject canonical text        │
 │  → Deterministic serialization guarantees provider cache hits  │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 3: COMPOSITION                                          │
 │  ────────────────────                                          │
@@ -120,7 +120,7 @@ If you encode data with OpenAI's `o200k_base` tokenizer and store those token ID
 │  → Validates total fits in model's context window              │
 │  → Deterministic token topology → guaranteed cache hits        │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 2: MEMORY + MATERIALIZATION                             │
 │  ────────────────────────────────                              │
@@ -129,7 +129,7 @@ If you encode data with OpenAI's `o200k_base` tokenizer and store those token ID
 │  → Content-addressed: same data = same hash = skip encoding    │
 │  → Model-specific blobs cached only for hot paths              │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 1: CANONICAL IR ENCODING                                │
 │  ──────────────────────────────                                │
@@ -138,7 +138,7 @@ If you encode data with OpenAI's `o200k_base` tokenizer and store those token ID
 │  → Model-agnostic: no tokenizer dependency                     │
 │  → Schema-aware: field names, types, structure                 │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  INPUT: Structured Data (JSON, objects, database rows)          │
 └────────────────────────────────────────────────────────────────┘
@@ -302,7 +302,7 @@ contex/
 
 ## THE V3 API
 
-### Layer 1: IR Encoding (`@contex/core`)
+### Layer 1: IR Encoding (`@contex-llm/core`)
 
 ```typescript
 // Canonical IR encode (model-agnostic)
@@ -322,7 +322,7 @@ Tens.decode(ir: TensIR): object[]
 Tens.count(data: object[], modelId: string): number
 ```
 
-### Layer 2: Memory (`@contex/engine`)
+### Layer 2: Memory (`@contex-llm/engine`)
 
 ```typescript
 // Store canonical IR persistently (content-addressed)
@@ -338,7 +338,7 @@ Tens.quick(data: object[], model: string): QuickResult
 // → { ir: TensIR, tokens: number[], rows: number, savings: {...} }
 ```
 
-### Layer 3: Composition (`@contex/engine`)
+### Layer 3: Composition (`@contex-llm/engine`)
 
 ```typescript
 // Compose prompt from token blocks
@@ -359,7 +359,7 @@ const prompt = Tens.compose([
 ], 'gpt-4o');
 ```
 
-### Layer 4: Injection (`@contex/middleware`)
+### Layer 4: Injection (`@contex-llm/middleware`)
 
 ```typescript
 // Wrap SDKs — auto-inject tokens where supported, text fallback where not

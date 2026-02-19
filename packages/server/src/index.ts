@@ -1,6 +1,6 @@
-import { TokenMemory, encodeIR } from '@contex/core';
-import { Contex as contex } from '@contex/engine';
-import { createContexAnthropic, createContexGemini, createContexOpenAI } from '@contex/middleware';
+import { TokenMemory, encodeIR } from '@contex-llm/core';
+import { Contex as contex } from '@contex-llm/engine';
+import { createContexAnthropic, createContexGemini, createContexOpenAI } from '@contex-llm/middleware';
 import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
 import { zValidator } from '@hono/zod-validator';
@@ -9,7 +9,7 @@ import { cors } from 'hono/cors';
 import { z } from 'zod';
 
 // ============================================================================
-// @contex/server — Production REST API
+// @contex-llm/server — Production REST API
 // ============================================================================
 //
 // Singleton engine instance, proper validation, CORS, structured errors.

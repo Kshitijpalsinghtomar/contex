@@ -54,8 +54,8 @@ const response = await openai.chat.completions.create({
 ### After (Contex)
 
 ```typescript
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 // Encode once
 const tens = Tens.encode(data);
@@ -82,10 +82,10 @@ const response = await client.chat.completions.create({
 
 ```bash
 # Basic usage
-pnpm add @contex/core @contex/middleware
+pnpm add @contex-llm/core @contex-llm/middleware
 
 # With cost analysis
-pnpm add @contex/engine
+pnpm add @contex-llm/engine
 ```
 
 ### Step 2: Replace JSON Stringification
@@ -101,7 +101,7 @@ const prompt = `Analyze this data: ${JSON.stringify(tickets)}`;
 
 ```typescript
 // ✅ New way
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 // Encode once (at startup/build time)
 const tens = Tens.encode(tickets);
@@ -131,7 +131,7 @@ const response = await openai.chat.completions.create({
 
 ```typescript
 // ✅ New way with middleware
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 // Wrap your client
 const client = createContexOpenAI(openai, {
@@ -159,7 +159,7 @@ Best for: Knowledge bases, system prompts, static context
 
 ```typescript
 // build.ts — Run once during deployment
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const kb = loadKnowledgeBase();
 const tens = Tens.encode(kb);
@@ -181,7 +181,7 @@ Best for: User-specific data, Real-time queries
 
 ```typescript
 // runtime.ts — Run per request
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 export async function handleRequest(userId: string) {
   // Fetch user data
@@ -211,7 +211,7 @@ Best for: RAG, repeated queries
 
 ```typescript
 // cache.ts
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const contextCache = new Map<string, Tens>();
 
@@ -360,7 +360,7 @@ for (const customer of customers) {
 
 ## Migration Checklist
 
-- [ ] Install `@contex/core` and `@contex/middleware`
+- [ ] Install `@contex-llm/core` and `@contex-llm/middleware`
 - [ ] Replace `JSON.stringify(data)` with `Tens.encode(data).toString()`
 - [ ] Or use `Tens.encode(data).materialize(model)` for token injection
 - [ ] Wrap LLM client with `createContexOpenAI()` or `createContexAnthropic()`

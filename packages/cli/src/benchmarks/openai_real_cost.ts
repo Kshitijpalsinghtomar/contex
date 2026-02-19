@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { TensTextEncoder } from '@contex/core';
+import { TensTextEncoder } from '@contex-llm/core';
 import OpenAI from 'openai';
 import { encoding_for_model } from 'tiktoken';
 import { generateRealWorld } from '../generators.js';

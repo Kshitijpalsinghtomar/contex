@@ -1,4 +1,4 @@
-# @contex/middleware
+# @contex-llm/middleware
 
 **Seamless LLM Integration for contex.**
 
@@ -7,7 +7,7 @@ This package provides middleware interceptors for popular AI SDKs, allowing you 
 ## Installation
 
 ```bash
-pnpm add @contex/middleware @contex/engine
+pnpm add @contex-llm/middleware @contex-llm/engine
 ```
 
 ## Supported SDKs
@@ -24,7 +24,7 @@ Wraps the standard OpenAI client.
 
 ```typescript
 import { OpenAI } from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 const client = createContexOpenAI(new OpenAI(), {
   data: { 
@@ -46,7 +46,7 @@ Wraps the Anthropic client.
 
 ```typescript
 import { Anthropic } from '@anthropic-ai/sdk';
-import { createContexAnthropic } from '@contex/middleware';
+import { createContexAnthropic } from '@contex-llm/middleware';
 
 const client = createContexAnthropic(new Anthropic(), {
   data: {
@@ -73,7 +73,7 @@ Wraps the Google Generative AI client.
 
 ```typescript
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createContexGemini } from '@contex/middleware';
+import { createContexGemini } from '@contex-llm/middleware';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 

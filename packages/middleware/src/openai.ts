@@ -25,7 +25,7 @@ type OpenAICreateBody = {
 type DisposableOpenAI = OpenAI & { __contex_dispose?: () => void };
 
 // ============================================================================
-// @contex/middleware v3 — OpenAI Integration
+// @contex-llm/middleware v3 — OpenAI Integration
 // ============================================================================
 // Intercepts OpenAI chat completions to inject canonical IR-backed context.
 // Uses the v3 IR pipeline: data → encodeIR → materialize → canonical JSON.
@@ -40,7 +40,7 @@ type DisposableOpenAI = OpenAI & { __contex_dispose?: () => void };
  * @example
  * ```ts
  * import OpenAI from 'openai';
- * import { createContexOpenAI } from '@contex/middleware';
+ * import { createContexOpenAI } from '@contex-llm/middleware';
  *
  * const openai = createContexOpenAI(new OpenAI(), {
  *   data: {

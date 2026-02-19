@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Type Definitions & TENS Constants
+// @contex-llm/core — Type Definitions & TENS Constants
 // ============================================================================
 //
 // Central type definitions for the Contex pipeline.

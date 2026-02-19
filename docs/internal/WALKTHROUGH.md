@@ -101,7 +101,7 @@ Storing per-model tokens locks you to one model. If OpenAI updates their tokeniz
 
 ### Verification
 
-- 441 total tests across `@contex/core`
+- 441 total tests across `@contex-llm/core`
 - Determinism tests: same data with shuffled keys, 1000 iterations, identical hash every time
 - Roundtrip tests: encode → materialize → verify token counts match direct tokenization
 
@@ -278,12 +278,12 @@ Every external-facing document rewritten to reflect the v3 "token compiler" visi
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐  │
 │  │  LAYER 4: INJECTION                                            │  │
-│  │  @contex/middleware — OpenAI · Anthropic · Gemini             │  │
+│  │  @contex-llm/middleware — OpenAI · Anthropic · Gemini             │  │
 │  └─────────────────────────────────────────────────────────────────┘  │
 │                                    ▲                                    │
 │  ┌─────────────────────────────────────────────────────────────────┐  │
 │  │  LAYER 3: BUDGET + QUICK                                       │  │
-│  │  @contex/engine — quick() · calculateBudget() · analyzeSavings │  │
+│  │  @contex-llm/engine — quick() · calculateBudget() · analyzeSavings │  │
 │  └─────────────────────────────────────────────────────────────────┘  │
 │                                    ▲                                    │
 │  ┌─────────────────────────────────────────────────────────────────┐  │
@@ -307,9 +307,9 @@ Every external-facing document rewritten to reflect the v3 "token compiler" visi
 
 | Package | Tests | Status |
 |---|---|---|
-| `@contex/core` | 441 | ✅ All passing |
-| `@contex/engine` (quick) | 10 | ✅ All passing |
-| `@contex/middleware` | 20 | ✅ All passing |
+| `@contex-llm/core` | 441 | ✅ All passing |
+| `@contex-llm/engine` (quick) | 10 | ✅ All passing |
+| `@contex-llm/middleware` | 20 | ✅ All passing |
 | **Total** | **471+** | ✅ |
 
 All three active packages build clean with `tsc`.

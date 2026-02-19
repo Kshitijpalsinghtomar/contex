@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — TENS String Dictionary
+// @contex-llm/core — TENS String Dictionary
 // ============================================================================
 //
 // Dictionary encoding for TENS binary format. All unique strings (both keys

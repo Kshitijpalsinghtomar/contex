@@ -1,14 +1,14 @@
-import type { TokenizerEncoding } from '@contex/core';
+import type { TokenizerEncoding } from '@contex-llm/core';
 
 // ============================================================================
-// @contex/middleware v3 — Types
+// @contex-llm/middleware v3 — Types
 // ============================================================================
 
 /**
  * Options for configuring the Contex middleware wrapper.
  * Data can be registered either as raw objects or pre-stored IR hashes.
  */
-import type { Tens } from '@contex/core';
+import type { Tens } from '@contex-llm/core';
 
 // ...
 

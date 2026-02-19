@@ -1,12 +1,12 @@
 {
-    "name": "@contex/cli",
+    "name": "@contex-llm/cli",
     "version": "0.1.0",
     "description": "Contex CLI — encode, decode, stats, benchmark",
     "license": "MIT",
-    "author": "Contex Team",
+    "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/contex/contex.git",
+        "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git",
         "directory": "packages/cli"
     },
     "publishConfig": {
@@ -31,7 +31,7 @@
     "scripts": {
         "build": "tsc",
         "prepublishOnly": "pnpm build",
-        "pretest": "pnpm --filter @contex/core build",
+        "pretest": "pnpm --filter @contex-llm/core build",
         "test": "node --import tsx --test \"tests/**/*.test.ts\"",
         "benchmark": "tsx src/benchmark.ts",
         "clean": "rimraf dist"
@@ -39,9 +39,9 @@
     "dependencies": {
         "@ai-sdk/openai": "^3.0.29",
         "@anthropic-ai/sdk": "^0.33.1",
-        "@contex/core": "workspace:*",
-        "@contex/engine": "workspace:*",
-        "@contex/middleware": "workspace:*",
+        "@contex-llm/core": "workspace:*",
+        "@contex-llm/engine": "workspace:*",
+        "@contex-llm/middleware": "workspace:*",
         "@google/generative-ai": "^0.24.1",
         "ai": "^6.0.86",
         "js-yaml": "^4.1.1",

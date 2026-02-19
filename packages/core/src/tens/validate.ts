@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Input Validation
+// @contex-llm/core — Input Validation
 // ============================================================================
 //
 // Validates data before TENS encoding to catch unsupported types early

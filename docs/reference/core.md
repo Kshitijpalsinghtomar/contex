@@ -1,10 +1,10 @@
 <div align="center">
 
-# @contex/core API Reference
+# @contex-llm/core API Reference
 
 > **The Token-Native Data Infrastructure for AI Systems**
 >
-> Contex transforms structured data into optimized, deterministic representations that reduce token volume by **40-94%** before the tokenizer runs.
+> Contex transforms structured data into optimized, deterministic representations that reduce token volume by **46-90%** before the tokenizer runs.
 
 </div>
 
@@ -13,7 +13,7 @@
 
 ```bash
 # Install
-pnpm add @contex/core
+pnpm add @contex-llm/core
 ```
 
 ### Core Classes
@@ -45,7 +45,7 @@ pnpm add @contex/core
 ## 🚀 Getting Started
 
 ```typescript
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 // Encode once, use everywhere
 const tens = Tens.encode([
@@ -63,7 +63,7 @@ const text = tens.toString();
 
 ---
 
-## 📦 Tens — The Main API
+## 📐¦ Tens — The Main API
 
 The `Tens` class is your primary interface to Contex.
 
@@ -72,7 +72,7 @@ The `Tens` class is your primary interface to Contex.
 Encodes structured data into the TENS canonical intermediate representation.
 
 ```typescript
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const tens = Tens.encode(myData, {
   memory: new TokenMemory('./.contex')
@@ -121,7 +121,7 @@ Returns human-readable representation.
 const canonical = tens.toString();
 
 // For alternate formats use formatOutput on canonical data
-import { formatOutput } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
 const csv = formatOutput(tens.fullIR.data, 'csv');
 const markdown = formatOutput(tens.fullIR.data, 'markdown');
 const json = formatOutput(tens.fullIR.data, 'json');
@@ -172,7 +172,7 @@ const loaded = Tens.deserialize(serialized);
 Low-level API for manual token caching.
 
 ```typescript
-import { TokenMemory } from '@contex/core';
+import { TokenMemory } from '@contex-llm/core';
 
 const memory = new TokenMemory('./.contex');
 
@@ -202,7 +202,7 @@ const memory = new TokenMemory('./.contex');
 For advanced use cases requiring detailed control.
 
 ```typescript
-import { createMaterializer, encodeIR } from '@contex/core';
+import { createMaterializer, encodeIR } from '@contex-llm/core';
 
 const materializer = createMaterializer();
 const ir = encodeIR(data);
@@ -218,7 +218,7 @@ const result = materializer.materialize(ir, 'gpt-4o');
 Legacy one-shot compile to text.
 
 ```typescript
-import { compile } from '@contex/core';
+import { compile } from '@contex-llm/core';
 
 const text = compile(myData, {
   model: 'gpt-4o'
@@ -232,7 +232,7 @@ console.log(text);
 Convert data to canonical form.
 
 ```typescript
-import { canonicalize } from '@contex/core';
+import { canonicalize } from '@contex-llm/core';
 
 const canonical = canonicalize({
   b: { z: 1, a: 2 },
@@ -246,7 +246,7 @@ const canonical = canonicalize({
 Format tokens for output.
 
 ```typescript
-import { formatOutput } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
 
 const formatted = formatOutput(tens.fullIR.data, 'markdown');
 // Returns beautifully formatted markdown table
@@ -335,7 +335,7 @@ const tens = Tens.encode(data);
 ## 🐛 Error Handling
 
 ```typescript
-import { Tens, ContexValidationError, ContexModelNotFoundError } from '@contex/core';
+import { Tens, ContexValidationError, ContexModelNotFoundError } from '@contex-llm/core';
 
 try {
   const tens = Tens.encode(data);
@@ -352,7 +352,7 @@ try {
 
 ---
 
-## 📝 TypeScript Support
+## 📐 TypeScript Support
 
 Full TypeScript support with comprehensive types:
 
@@ -361,7 +361,7 @@ import {
   Tens, 
   OutputFormat,
   MaterializedTokens
-} from '@contex/core';
+} from '@contex-llm/core';
 
 const tens = Tens.encode(data);
 ```
@@ -374,3 +374,125 @@ const tens = Tens.encode(data);
 - [CLI Reference](../reference/cli.md) — Command-line tools
 - [Architecture](../architecture.md) — Deep dive into TENS
 - [Benchmarks](../benchmarks.md) — Performance benchmarks
+
+---
+
+## ⚡ Resource Metrics & Pipeline Profiling
+
+Track CPU time, memory usage, throughput, and resource efficiency during every stage of the Contex pipeline.
+
+### Inline Profiling
+
+```typescript
+import { profileSync, profileAsync } from '@contex-llm/core';
+
+// Profile any synchronous function
+const { result, snapshot } = profileSync('encode', () => encoder.encode(data), {
+  inputBytes: JSON.stringify(data).length,
+  rowCount: data.length,
+});
+
+console.log(snapshot.durationMs);             // Wall-clock time (ms)
+console.log(snapshot.cpuUserUs);              // CPU user time (µs)
+console.log(snapshot.throughputBytesPerSec);  // Throughput (B/s)
+console.log(snapshot.heapDelta);              // Memory allocated (bytes)
+```
+
+### Pipeline Profiler
+
+Track multiple stages with aggregate reporting:
+
+```typescript
+import { PipelineProfiler, formatPipelineReport } from '@contex-llm/core';
+import { canonicalize, encodeIR } from '@contex-llm/core';
+
+const profiler = new PipelineProfiler();
+
+const canonical = profiler.stage('canonicalize', () => canonicalize(data), {
+  inputBytes: JSON.stringify(data).length,
+  rowCount: data.length,
+});
+
+const ir = profiler.stage('encode', () => encodeIR(data));
+
+const report = profiler.report();
+console.log(report.efficiencyScore);   // 0–100
+console.log(report.efficiencyGrade);   // 'excellent' | 'good' | 'fair' | 'poor'
+console.log(report.totalDurationMs);   // Total wall-clock time
+console.log(report.compressionRatio);  // Output/input ratio
+
+// Beautiful ASCII table
+console.log(formatPipelineReport(report));
+```
+
+### Efficiency Scoring
+
+The efficiency score (0–100) is computed from four weighted components:
+
+| Component | Weight | Max Score |
+|-----------|--------|-----------|
+| Throughput (MB/s) | 30% | 30 pts (≥ 10 MB/s) |
+| Compression ratio | 30% | 30 pts (≤ 0.4 ratio) |
+| CPU time | 20% | 20 pts (< 100ms total) |
+| Memory efficiency | 20% | 20 pts (< 10MB heap delta) |
+
+| Grade | Score Range |
+|-------|-------------|
+| **Excellent** | 85–100 |
+| **Good** | 65–84 |
+| **Fair** | 40–64 |
+| **Poor** | 0–39 |
+
+---
+
+## 🔐 Structural Fingerprint & Encoding Protection
+
+Multi-layer complexity analysis and pipeline fingerprinting that make it computationally infeasible to replicate Contex encoding behavior without the canonical library.
+
+### Structural Complexity Analysis
+
+```typescript
+import { analyzeComplexity, formatComplexityReport } from '@contex-llm/core';
+
+const complexity = analyzeComplexity(data);
+console.log(complexity.score);              // 0–100
+console.log(complexity.complexityClass);    // 'trivial' | 'simple' | 'moderate' | 'complex' | 'extreme'
+console.log(complexity.fieldEntropy);       // Shannon entropy (bits)
+console.log(complexity.maxDepth);           // Nesting depth
+console.log(complexity.schemaPolymorphism); // Unique shapes / total rows
+console.log(complexity.sparsityRatio);      // Null/missing cell ratio
+
+console.log(formatComplexityReport(complexity));
+```
+
+### Pipeline Fingerprint & Watermark
+
+```typescript
+import { buildHashChain, generateWatermark, verifyWatermark } from '@contex-llm/core';
+
+// Build salted hash chain across pipeline stages
+const fingerprint = buildHashChain([
+  { label: 'canonicalize', data: Buffer.from(JSON.stringify(canonical)) },
+  { label: 'encode',       data: binary },
+  { label: 'hash',         data: Buffer.from(hash) },
+], complexity);
+
+console.log(fingerprint.fingerprint);  // Composite SHA-256 hash
+console.log(fingerprint.buildTag);     // Build-specific tag
+
+// Generate watermark for verification
+const watermark = generateWatermark(irBytes, fingerprint);
+
+// Verify watermark
+const isValid = verifyWatermark(irBytes, watermark, fingerprint);
+```
+
+### Entropy-Weighted Field Ordering
+
+```typescript
+import { entropyWeightedFieldOrder } from '@contex-llm/core';
+
+// Fields ordered by value entropy (high-entropy first)
+const order = entropyWeightedFieldOrder(data, ['id', 'status', 'name']);
+// → ['id', 'name', 'status'] (id/name have more unique values)
+```

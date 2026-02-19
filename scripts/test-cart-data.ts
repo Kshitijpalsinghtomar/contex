@@ -1,4 +1,4 @@
-import { compile } from '@contex/core';
+import { compile } from '@contex-llm/core';
 
 const data = [{
   carts: [

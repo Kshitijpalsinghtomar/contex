@@ -22,8 +22,8 @@
 ## P0 — Blocker
 
 - [x] **Lockfile/workspace wiring for adapters**
-  - Regenerated install/lock state so `packages/adapters` is included as an importer and `@contex/adapters` resolves workspace deps correctly.
-  - Build currently fails resolving `@contex/core` in:
+  - Regenerated install/lock state so `packages/adapters` is included as an importer and `@contex-llm/adapters` resolves workspace deps correctly.
+  - Build currently fails resolving `@contex-llm/core` in:
     - `packages/adapters/src/langchain.ts`
     - `packages/adapters/src/llamaindex.ts`
 

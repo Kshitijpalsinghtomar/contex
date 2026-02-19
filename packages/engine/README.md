@@ -1,4 +1,4 @@
-# @contex/engine
+# @contex-llm/engine
 
 **The Brain of contex.**
 
@@ -16,7 +16,7 @@ The Engine is responsible for packing structured data into the limited context w
 ## Usage
 
 ```typescript
-import { contex } from '@contex/engine';
+import { contex } from '@contex-llm/engine';
 
 const db = new contex();
 
@@ -64,7 +64,7 @@ Optimally packs heterogeneous context items within a token budget.
   - `strategy`: `'greedy'` | `'density'` | `'knapsack'`
 
 ```typescript
-import { packContext } from '@contex/engine';
+import { packContext } from '@contex-llm/engine';
 
 const result = packContext(items, { budget: 4000, strategy: 'knapsack' });
 console.log(result.selected);    // IDs of selected items
@@ -74,7 +74,7 @@ console.log(result.utilization);  // Budget utilization (0-1)
 ### Cross-Session Dedup
 
 ```typescript
-import { StructuralDedupCache } from '@contex/engine';
+import { StructuralDedupCache } from '@contex-llm/engine';
 
 const cache = new StructuralDedupCache();
 const r1 = cache.encode([{ id: 1, name: 'Alice' }]); // Full encode

@@ -58,7 +58,7 @@ const response = await openai.chat.completions.create({
 ### After Contex
 
 ```typescript
-import { quick } from '@contex/engine';
+import { quick } from '@contex-llm/engine';
 
 const docs = await vectorDB.search(query, { limit: 50 });
 
@@ -100,7 +100,7 @@ async function fetchTickets(customerId: string) {
 ### After Contex
 
 ```typescript
-import { quick } from '@contex/engine';
+import { quick } from '@contex-llm/engine';
 
 async function fetchTickets(customerId: string) {
   const tickets = await db.getTickets(customerId);
@@ -120,7 +120,7 @@ async function fetchTickets(customerId: string) {
 ### After Contex
 
 ```typescript
-import { encodeIR, TokenMemory } from '@contex/core';
+import { encodeIR, TokenMemory } from '@contex-llm/core';
 
 const memory = new TokenMemory('.contex');
 const { hash } = memory.store(myData); // Store once (model-agnostic)
@@ -144,7 +144,7 @@ console.log(`GPT-4o: ${gpt.tokenCount}, Claude: ${claude.tokenCount}, Gemini: ${
 ### After Contex
 
 ```typescript
-import { quick } from '@contex/engine';
+import { quick } from '@contex-llm/engine';
 
 // 1,000 transactions: ~25,000 tokens (was ~60,000 as JSON)
 // GPT-4o: $2.50/1M input → $0.06/call (was $0.15)
@@ -169,7 +169,7 @@ const response = await openai.chat.completions.create({
 **The Pain:** You don't want to refactor your existing LLM code.
 
 ```typescript
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 // Wrap once, save everywhere
 const openai = createContexOpenAI(new OpenAI(), {
@@ -212,7 +212,7 @@ Contex analyzes your data and shows:
 
 ---
 
-## 📚 Related Documentation
+## 📐š Related Documentation
 
 - [Getting Started](./docs/guide/getting-started.md) — Quick tutorial
 - [API Reference](./docs/reference/core.md) — Full API docs

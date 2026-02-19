@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Logging & Observability
+// @contex-llm/core — Logging & Observability
 // ============================================================================
 
 import process from 'node:process';

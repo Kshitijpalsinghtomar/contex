@@ -1,10 +1,20 @@
-import { compressFieldNames } from './schema.js';
+import { compressFieldNames, flattenObject } from './schema.js';
 import { TensTextEncoder } from './tens_text.js';
 import type { OutputFormat } from './types.js';
 
 // ── Cached instances (avoid per-call allocation) ────────────────────────────
 const cachedTensTextEncoder = new TensTextEncoder();
 const cachedByteEncoder = new TextEncoder();
+
+// ── CSV Escape Helper ──────────────────────────────────────────────────────
+
+/** Escape a value for CSV: wrap in quotes if it contains comma, quote, or newline. */
+function csvEscape(val: string): string {
+  if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+    return `"${val.replace(/"/g, '""')}"`;
+  }
+  return val;
+}
 
 // ── P2-2: Array Optimization Helpers ───────────────────────────────────────
 
@@ -153,19 +163,22 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
 
   if (format === 'csv') {
     if (rows.length === 0) return '';
-    const keys = Object.keys(rows[0]);
-    const header = keys.join(',');
-    const csvRows = rows.map((row) =>
+    // Flatten nested objects so CSV preserves all data (avoids [object Object])
+    const flatRows = rows.map((r) => flattenObject(r));
+    // Collect all keys from all rows (flattening can produce different key sets)
+    const keySet = new Set<string>();
+    for (const r of flatRows) for (const k of Object.keys(r)) keySet.add(k);
+    const keys = Array.from(keySet);
+    const header = keys.map((k) => csvEscape(k)).join(',');
+    const csvRows = flatRows.map((row) =>
       keys
         .map((k) => {
           const val = row[k];
           if (val === null || val === undefined) return '';
-          if (
-            typeof val === 'string' &&
-            (val.includes(',') || val.includes('"') || val.includes('\n'))
-          ) {
-            return `"${val.replace(/"/g, '""')}"`;
+          if (Array.isArray(val) || (typeof val === 'object' && val !== null)) {
+            return csvEscape(JSON.stringify(val));
           }
+          if (typeof val === 'string') return csvEscape(val);
           return String(val);
         })
         .join(','),
@@ -175,16 +188,27 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
 
   if (format === 'markdown') {
     if (rows.length === 0) return '';
-    const keys = Object.keys(rows[0]);
+    // Flatten nested objects so Markdown preserves all data (avoids [object Object])
+    const flatRows = rows.map((r) => flattenObject(r));
+    const keySet = new Set<string>();
+    for (const r of flatRows) for (const k of Object.keys(r)) keySet.add(k);
+    const keys = Array.from(keySet);
     const header = `| ${keys.join(' | ')} |`;
     const separator = `| ${keys.map(() => '---').join(' | ')} |`;
-    const markdownRows = rows.map(
+    const markdownRows = flatRows.map(
       (row) =>
         `| ${keys
           .map((k) => {
             const val = row[k];
             if (val === null || val === undefined) return '';
-            return String(val);
+            let cell: string;
+            if (Array.isArray(val) || (typeof val === 'object' && val !== null)) {
+              cell = JSON.stringify(val);
+            } else {
+              cell = String(val);
+            }
+            // Escape pipe and newline chars that break Markdown table structure
+            return cell.replace(/\|/g, '\\|').replace(/\n/g, ' ').replace(/\r/g, '');
           })
           .join(' | ')} |`,
     );
@@ -195,14 +219,16 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
     // TOON: Tab-separated header + rows
     // Most token-efficient text format for structured data going to LLMs
     if (rows.length === 0) return '';
-    const keys = Object.keys(rows[0]);
+    const flatRows = rows.map((r) => flattenObject(r));
+    const keySet = new Set<string>();
+    for (const row of flatRows) for (const k of Object.keys(row)) keySet.add(k);
+    const keys = Array.from(keySet);
     const header = keys.join('\t');
-    const toonRows = rows.map((row) =>
+    const toonRows = flatRows.map((row) =>
       keys
         .map((k) => {
-          const val = row[k];
+          const val = (row as Record<string, unknown>)[k];
           if (val === null || val === undefined) return '';
-          if (typeof val === 'object') return JSON.stringify(val);
           return String(val);
         })
         .join('\t'),
@@ -213,23 +239,32 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
   if (format === 'contex') {
     // Contex Compact: Ultra-efficient format for LLM context injection
     // - Deep flattening: nested objects → dot-notation keys (readings.value)
-    // - Field name compression: shortest unique prefix for each field
+    // - Constant column elision: columns identical across all rows → @c preamble
+    // - Column-level string prefix compression: shared prefixes stripped → @p preamble
+    // - Field name compression: shortest unique prefix (only when net-positive)
     // - Tab-separated header + values (schema declared once)
-    // - Dictionary compression for repeated string AND numeric values (@0, @1, ...)
-    // - Boolean abbreviation (T/F instead of true/false)
-    // - Null abbreviation (_ instead of null/empty)
-    // - Integer shortening (no trailing .0)
+    // - Dictionary compression for repeated values (cost-benefit gated)
+    // - Boolean abbreviation (T/F), Null abbreviation (_), Integer shortening
     // - Array compaction: [a, b, c] → "a b c" (space-separated)
-    // - Sparse mode: when >50% of cells are null, emit only non-null values with column indices
+    // - Sparse mode: when >50% of cells are null, emit only non-null values
     // - No brackets, no quotes, no colons, no commas
     if (rows.length === 0) return '';
 
     // Helper: serialize any value for embedding inside a cell
+    // Escapes tabs, newlines, and @N-like strings to prevent structural ambiguity
     const serializeVal = (v: unknown): string => {
       if (v === null || v === undefined) return '_';
       if (v === true) return 'T';
       if (v === false) return 'F';
-      if (typeof v === 'string') return v;
+      if (typeof v === 'string') {
+        let s = v;
+        if (s.includes('\t') || s.includes('\n')) {
+          s = s.replace(/\t/g, '\\t').replace(/\n/g, '\\n');
+        }
+        // Escape literal @N strings that would be misread as dictionary refs
+        if (/^@\d+$/.test(s)) return `\\${s}`;
+        return s;
+      }
       if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(v);
       if (Array.isArray(v)) {
         if (v.length > 0 && typeof v[0] === 'object' && v[0] !== null) {
@@ -296,118 +331,278 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
         if (!key.endsWith('@')) allKeys.add(key); // Skip sub-schema keys
       }
     }
-    const keys = Array.from(allKeys);
 
-    // Step 1c: Field name compression — shorten to shortest unique prefix
-    // e.g. customer_shipping_address → shipping, customer_billing_address → billing
-    const fieldCompression = compressFieldNames(keys);
-    const shortKeys = keys.map(k => fieldCompression.get(k) ?? k);
-    // Build reverse map for header (compressed names)
-    // Only emit @f mapping line if any key was actually shortened
-    const anyCompressed = keys.some((k, i) => shortKeys[i] !== k && shortKeys[i].length < k.length);
+    // ── Step 1b: Constant column elision ─────────────────────────────────
+    // Detect columns where every row has the identical value (including all-null).
+    // These are emitted once as @c key=value and removed from the per-row grid.
+    const constantCols = new Map<string, string>();  // key → serialized constant value
+    const nRows = flatRows.length;
+    for (const key of allKeys) {
+      // Serialize the canonical form for comparison (using serializeVal for consistency)
+      let isConstant = true;
+      const firstVal = flatRows[0][key];
+      const firstSerialized = serializeVal(firstVal);
+      for (let i = 1; i < nRows; i++) {
+        const val = flatRows[i][key];
+        if (serializeVal(val) !== firstSerialized) {
+          isConstant = false;
+          break;
+        }
+      }
+      if (isConstant) {
+        constantCols.set(key, firstSerialized);
+      }
+    }
 
-    // Step 1d: Sparsity detection — count null/undefined/empty cells
+    // Build the variable-column key list (non-constant columns only)
+    const keys: string[] = [];
+    for (const key of allKeys) {
+      if (!constantCols.has(key)) keys.push(key);
+    }
+
+    // ── Step 1c: Template column detection (run FIRST, before prefix compression) ──
+    // Detect columns derivable as: prefix + otherCol_value + suffix.
+    // Example: comments_url = url + "/comments" → @t entry, column removed from grid.
+    // Supports both string and numeric source columns.
+    const templateCols = new Map<number, { srcIdx: number; prefix: string; suffix: string }>();
+    for (let ci = 0; ci < keys.length; ci++) {
+      const k = keys[ci];
+      const stringVals: { val: string; rowIdx: number }[] = [];
+      for (let ri = 0; ri < nRows; ri++) {
+        const v = flatRows[ri][k];
+        if (typeof v === 'string' && v.length > 5) stringVals.push({ val: v, rowIdx: ri });
+      }
+      if (stringVals.length < nRows * 0.7) continue;
+
+      for (let si = 0; si < keys.length; si++) {
+        if (si === ci || templateCols.has(si)) continue;
+        const sk = keys[si];
+        let matched = true;
+        let commonPrefix = '';
+        let commonSuffix = '';
+        let firstChecked = false;
+
+        for (const { val, rowIdx } of stringVals) {
+          const rawSrc = flatRows[rowIdx][sk];
+          // Support string and numeric source columns
+          const srcVal = (typeof rawSrc === 'string' && rawSrc.length >= 2) ? rawSrc
+            : (typeof rawSrc === 'number') ? String(rawSrc)
+            : null;
+          if (!srcVal || srcVal.length < 1) { matched = false; break; }
+          const srcPos = val.indexOf(srcVal);
+          if (srcPos < 0) { matched = false; break; }
+          const pre = val.substring(0, srcPos);
+          const suf = val.substring(srcPos + srcVal.length);
+          if (!firstChecked) {
+            commonPrefix = pre;
+            commonSuffix = suf;
+            firstChecked = true;
+          } else if (pre !== commonPrefix || suf !== commonSuffix) {
+            matched = false; break;
+          }
+        }
+
+        if (matched && firstChecked) {
+          const removedChars = stringVals.reduce((sum, { val }) => sum + val.length + 1, 0) + k.length + 1;
+          const declCost = k.length + keys[si].length + commonPrefix.length + commonSuffix.length + 10;
+          if (removedChars > declCost * 1.5) {
+            templateCols.set(ci, { srcIdx: si, prefix: commonPrefix, suffix: commonSuffix });
+            break;
+          }
+        }
+      }
+    }
+
+    // Remove template columns from the active key list
+    const activeKeys: string[] = [];
+    const activeKeyOrigIndices: number[] = [];
+    for (let ci = 0; ci < keys.length; ci++) {
+      if (!templateCols.has(ci)) {
+        activeKeyOrigIndices.push(ci);
+        activeKeys.push(keys[ci]);
+      }
+    }
+
+    // ── Step 1c-ii: Column-level string prefix compression ────────────────
+    // For each remaining string-dominated column, find the longest common prefix
+    // shared by ≥60% of non-null values and factor it out.
+    const remappedPrefixes = new Map<number, string>();  // activeIndex → common prefix
+    for (let ai = 0; ai < activeKeys.length; ai++) {
+      const k = activeKeys[ai];
+      const stringVals: string[] = [];
+      for (const row of flatRows) {
+        const v = row[k];
+        if (typeof v === 'string' && v.length > 10) stringVals.push(v);
+      }
+      if (stringVals.length < nRows * 0.6) continue;
+
+      let prefix = stringVals[0];
+      for (let i = 1; i < stringVals.length; i++) {
+        while (prefix.length > 0 && !stringVals[i].startsWith(prefix)) {
+          prefix = prefix.substring(0, prefix.length - 1);
+        }
+        if (prefix.length <= 5) break;
+      }
+      if (prefix.length <= 8) continue;
+
+      const declCost = prefix.length + 6 + String(ai).length;
+      const savings = stringVals.length * prefix.length;
+      if (savings > declCost * 2) {
+        remappedPrefixes.set(ai, prefix);
+      }
+    }
+
+    // ── Step 1d: Field name compression (conditional) ────────────────────
+    // Only emit @f mapping when the header savings exceed the @f line cost
+    const fieldCompression = compressFieldNames(activeKeys);
+    const shortKeys = activeKeys.map(k => fieldCompression.get(k) ?? k);
+    const headerSavings = activeKeys.reduce((sum, k, i) => sum + (k.length - shortKeys[i].length), 0);
+    const mappingEntries = activeKeys
+      .map((k, i) => (shortKeys[i] !== k && shortKeys[i].length < k.length ? `${shortKeys[i]}=${k}` : ''))
+      .filter(Boolean);
+    const mappingLineCost = mappingEntries.length > 0 ? 3 + mappingEntries.join('\t').length : 0;
+    const useFieldCompression = mappingLineCost > 0 && headerSavings > mappingLineCost;
+    const headerKeys = useFieldCompression ? shortKeys : activeKeys;
+
+    // ── Step 1e: Sparsity detection ──────────────────────────────────────
     let nullCells = 0;
-    const totalCells = flatRows.length * keys.length;
+    const totalCells = flatRows.length * activeKeys.length;
     for (const row of flatRows) {
-      for (const k of keys) {
+      for (const k of activeKeys) {
         const val = row[k];
         if (val === null || val === undefined || val === '') nullCells++;
       }
     }
     const sparsityRatio = totalCells > 0 ? nullCells / totalCells : 0;
 
-    // Step 2: Build dictionary — collect all string AND numeric values and their frequencies
+    // ── Step 2: Build dictionary (cost-benefit gated) ────────────────────
     const valueCounts = new Map<string, number>();
     for (const row of flatRows) {
-      for (const k of keys) {
+      for (let ai = 0; ai < activeKeys.length; ai++) {
+        const k = activeKeys[ai];
         const val = row[k];
-        if (typeof val === 'string' && val.length > 1) {
-          valueCounts.set(val, (valueCounts.get(val) || 0) + 1);
-        }
-        // Also track repeated numbers — their string representations can be dictionary-compressed
-        if (typeof val === 'number') {
-          const numStr = Number.isInteger(val) ? String(val) : String(val);
-          if (numStr.length > 2) { // Only worth dict-encoding if 3+ chars (e.g. "100", "3.14")
-            valueCounts.set(numStr, (valueCounts.get(numStr) || 0) + 1);
-          }
-        }
-        if (Array.isArray(val)) {
-          for (const elem of val) {
-            if (typeof elem === 'string' && elem.length > 1) {
-              valueCounts.set(elem, (valueCounts.get(elem) || 0) + 1);
-            }
+        const serialized = serializeVal(val);
+        if (serialized !== '_' && serialized !== 'T' && serialized !== 'F' && serialized.length > 2) {
+          const prefix = remappedPrefixes.get(ai);
+          const effective = (prefix && typeof val === 'string' && val.startsWith(prefix))
+            ? val.substring(prefix.length)
+            : serialized;
+          if (effective.length > 2) {
+            valueCounts.set(effective, (valueCounts.get(effective) || 0) + 1);
           }
         }
       }
     }
 
-    // Dictionary-encode strings appearing 2+ times
-    // Sort by (frequency × length) for maximum token savings
-    // Also force-add strings that look like dictionary references (@0, @1, ...)
-    // to avoid ambiguity — without this, a literal "@0" value would be
-    // indistinguishable from a dictionary reference to index 0.
+    // Dictionary-encode values appearing 2+ times with positive cost-benefit
+    // Sort by (frequency × length) for maximum savings
+    // Cap at 10,000 entries to prevent pathological dictionary bloat
+    const MAX_DICT_SIZE = 10_000;
     const dictionary: string[] = [];
     const dictMap = new Map<string, number>();
-    const candidates = [...valueCounts.entries()]
-      .filter(([val, count]) => {
-        // Always include strings that look like dictionary refs to avoid ambiguity
+    const maxDictSize = Math.min(valueCounts.size, MAX_DICT_SIZE);
+    const candidates: [string, number][] = [...valueCounts.entries()]
+      .filter(([val, count]: [string, number]): boolean => {
         if (/^@\d+$/.test(val)) return true;
-        return count >= 2 && val.length > 1;
+        const refLen: number = 1 + String(maxDictSize).length;
+        const savingsPerRef: number = val.length - refLen;
+        const totalSavings: number = count * savingsPerRef;
+        const entryCost: number = val.length + 1;
+        return count >= 2 && totalSavings > entryCost;
       })
       .sort((a, b) => (b[1] * b[0].length) - (a[1] * a[0].length));
     for (const [val] of candidates) {
+      if (dictionary.length >= MAX_DICT_SIZE) break;
       dictMap.set(val, dictionary.length);
       dictionary.push(val);
     }
 
-    // Step 3: Value formatter with dictionary lookup + integer shortening
-    const formatVal = (val: unknown): string => {
+    // ── Step 3: Value formatter with prefix stripping + dictionary lookup ─
+    const formatVal = (val: unknown, colIdx?: number): string => {
       if (val === null || val === undefined) return '_';
       if (val === true) return 'T';
       if (val === false) return 'F';
       if (typeof val === 'string') {
         if (val.length === 0) return '_';
-        const dictIdx = dictMap.get(val);
-        if (dictIdx !== undefined) return `@${dictIdx}`;
-        if (val.includes('\t') || val.includes('\n')) {
-          return val.replace(/\t/g, '\\t').replace(/\n/g, '\\n');
+        // Apply column prefix stripping first
+        let effective = val;
+        if (colIdx !== undefined) {
+          const prefix = remappedPrefixes.get(colIdx);
+          if (prefix && val.startsWith(prefix)) {
+            effective = val.substring(prefix.length);
+          }
         }
-        // Safety: if a string looks like a dictionary reference but wasn't
-        // dictionary-encoded (should not happen with force-add above, but
-        // belt-and-suspenders), escape the leading @
-        if (/^@\d+$/.test(val)) return `\\${val}`;
-        return val;
+        const dictIdx = dictMap.get(effective);
+        if (dictIdx !== undefined) return `@${dictIdx}`;
+        if (effective.includes('\t') || effective.includes('\n')) {
+          return effective.replace(/\t/g, '\\t').replace(/\n/g, '\\n');
+        }
+        if (/^@\d+$/.test(effective)) return `\\${effective}`;
+        return effective;
       }
       if (typeof val === 'number') {
-        // Integer shortening: 42.0 → "42", but 3.14 stays "3.14"
         const numStr = Number.isInteger(val) ? String(val) : String(val);
-        // Check dictionary for repeated numbers
         const dictIdx = dictMap.get(numStr);
         if (dictIdx !== undefined) return `@${dictIdx}`;
         return numStr;
       }
       if (Array.isArray(val)) {
-        return val.map(formatVal).join(' ');
+        return val.map(v => formatVal(v)).join(' ');
       }
       if (typeof val === 'object') return JSON.stringify(val);
       return String(val);
     };
 
-    // Step 4: Build output — choose dense vs sparse mode
+    // ── Step 4: Build output ─────────────────────────────────────────────
     const lines: string[] = [];
 
-    if (sparsityRatio > 0.5) {
-      // SPARSE MODE: Only emit non-null values with column index prefix
-      // Format: @sparse\nheader\n[@f mapping]\n[@d dict]\ncol:val\tcol:val ...
-      lines.push('@sparse');
-      lines.push(shortKeys.join('\t'));
-
-      // Field name mapping (if compression was applied)
-      if (anyCompressed) {
-        const mapping = keys.map((k, i) => shortKeys[i] !== k ? `${shortKeys[i]}=${k}` : '').filter(Boolean);
-        if (mapping.length > 0) lines.push('@f\t' + mapping.join('\t'));
+    // Constant column preamble
+    if (constantCols.size > 0) {
+      const cParts: string[] = [];
+      for (const [k, v] of constantCols) {
+        cParts.push(`${k}=${v}`);
       }
+      lines.push('@c\t' + cParts.join('\t'));
+    }
+
+    // Template column declarations (@t)
+    if (templateCols.size > 0) {
+      const tParts: string[] = [];
+      for (const [ci, tmpl] of templateCols) {
+        // Map srcIdx through to activeKeys index for the source column name
+        const srcKey = keys[tmpl.srcIdx];
+        const colKey = keys[ci];
+        tParts.push(`${colKey}=${tmpl.prefix}{${srcKey}}${tmpl.suffix}`);
+      }
+      lines.push('@t\t' + tParts.join('\t'));
+    }
+
+    // Helper: build grouped @p line (columns sharing the same prefix → "c1,c2=prefix")
+    const buildGroupedPrefixLine = (): string | null => {
+      if (remappedPrefixes.size === 0) return null;
+      const byPrefix = new Map<string, number[]>();
+      for (const [ai, prefix] of remappedPrefixes) {
+        if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+        byPrefix.get(prefix)!.push(ai);
+      }
+      const pParts: string[] = [];
+      for (const [prefix, colIndices] of byPrefix) {
+        pParts.push(`${colIndices.join(',')}=${prefix}`);
+      }
+      return '@p\t' + pParts.join('\t');
+    };
+
+    if (sparsityRatio > 0.5) {
+      // SPARSE MODE
+      lines.push('@sparse');
+      lines.push(headerKeys.join('\t'));
+
+      if (useFieldCompression) {
+        lines.push('@f\t' + mappingEntries.join('\t'));
+      }
+
+      const pLine = buildGroupedPrefixLine();
+      if (pLine) lines.push(pLine);
 
       if (dictionary.length > 0) {
         lines.push('@d\t' + dictionary.join('\t'));
@@ -415,33 +610,31 @@ export function formatOutput(data: unknown[], format: OutputFormat): string {
 
       for (const row of flatRows) {
         const parts: string[] = [];
-        for (let i = 0; i < keys.length; i++) {
-          const val = row[keys[i]];
+        for (let i = 0; i < activeKeys.length; i++) {
+          const val = row[activeKeys[i]];
           if (val !== null && val !== undefined && val !== '') {
-            parts.push(`${i}:${formatVal(val)}`);
+            parts.push(`${i}:${formatVal(val, i)}`);
           }
         }
         lines.push(parts.join('\t'));
       }
     } else {
-      // DENSE MODE: Standard contex compact format
-      // Header: compressed field names (tab-separated)
-      lines.push(shortKeys.join('\t'));
+      // DENSE MODE
+      lines.push(headerKeys.join('\t'));
 
-      // Field name mapping (if compression was applied)
-      if (anyCompressed) {
-        const mapping = keys.map((k, i) => shortKeys[i] !== k ? `${shortKeys[i]}=${k}` : '').filter(Boolean);
-        if (mapping.length > 0) lines.push('@f\t' + mapping.join('\t'));
+      if (useFieldCompression) {
+        lines.push('@f\t' + mappingEntries.join('\t'));
       }
 
-      // Dictionary (if any repeated values)
+      const pLine = buildGroupedPrefixLine();
+      if (pLine) lines.push(pLine);
+
       if (dictionary.length > 0) {
         lines.push('@d\t' + dictionary.join('\t'));
       }
 
-      // Data rows: tab-separated values in schema order
       for (const row of flatRows) {
-        const vals = keys.map((k) => formatVal(row[k]));
+        const vals = activeKeys.map((k, i) => formatVal(row[k], i));
         lines.push(vals.join('\t'));
       }
     }

@@ -1,10 +1,10 @@
 // ============================================================================
-// @contex/engine — quick() v3 One-Shot API
+// @contex-llm/engine — quick() v3 One-Shot API
 // ============================================================================
 //
 // The "3-line" experience, now powered by the v3 IR pipeline.
 //
-//   import { quick } from '@contex/engine';
+//   import { quick } from '@contex-llm/engine';
 //   const result = quick(myData, 'gpt-4o');
 //   console.log(result.tokens);        // number[] — direct token array
 //   console.log(result.asText());      // string — backward-compatible text
@@ -20,7 +20,7 @@ import {
   TokenizerManager,
   encodeIR,
   formatOutput,
-} from '@contex/core';
+} from '@contex-llm/core';
 import { MODEL_REGISTRY } from './budget.js';
 import type { ModelSpec } from './budget.js';
 
@@ -83,7 +83,7 @@ export interface QuickResult {
  *
  * @example
  * ```ts
- * import { quick } from '@contex/engine';
+ * import { quick } from '@contex-llm/engine';
  *
  * const result = quick(myData, 'gpt-4o');
  * console.log(result.tens.hash);         // TENS Hash

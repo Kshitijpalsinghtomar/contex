@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { Tens } from '@contex/core';
-import { injectContexContent } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { injectContexContent } from '@contex-llm/middleware';
 
 // Mock performance if not available (e.g. some node envs)
 const now = () => performance.now();

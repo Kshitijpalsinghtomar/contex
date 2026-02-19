@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Persistent Storage
+// @contex-llm/engine — Persistent Storage
 // ============================================================================
 //
 // Block-based storage engine with WAL for crash safety.

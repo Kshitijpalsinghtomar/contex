@@ -39,7 +39,7 @@ export interface CompileOptions {
  *
  * @example
  * ```typescript
- * import { compile } from '@contex/core';
+ * import { compile } from '@contex-llm/core';
  *
  * const data = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }];
  * const prompt = compile(data, { model: 'gpt-4o' });

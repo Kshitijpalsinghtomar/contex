@@ -1,13 +1,13 @@
 // ============================================================================
-// @contex/adapters — LlamaIndex Adapter
+// @contex-llm/adapters — LlamaIndex Adapter
 // ============================================================================
 //
 // ContexReader: LlamaIndex Data Reader with Contex optimization
 // Automatically optimizes indexed data for LLM context
 // ============================================================================
 
-import { Tens } from '@contex/core';
-import type { OutputFormat } from '@contex/core';
+import { Tens } from '@contex-llm/core';
+import type { OutputFormat } from '@contex-llm/core';
 
 /**
  * Options for ContexReader
@@ -58,11 +58,11 @@ interface LlamaIndexNode {
  * ContexReader: LlamaIndex Data Reader with Contex optimization
  *
  * This reader automatically optimizes data retrieved from LlamaIndex indexes
- * using Contex's token-efficient format, reducing context costs by 40-94%.
+ * using Contex's token-efficient format, reducing context costs by 40-90%.
  *
  * @example
  * ```ts
- * import { ContexReader } from '@contex/adapters/llamaindex';
+ * import { ContexReader } from '@contex-llm/adapters/llamaindex';
  *
  * // Use with LlamaIndex
  * const reader = new ContexReader({

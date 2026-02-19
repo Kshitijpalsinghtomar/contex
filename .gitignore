@@ -35,6 +35,7 @@ benchmark_v2.txt
 *.tens
 *.tens.ir
 *.tokens.bin
+packages/tens-wasm/target/
 
 # Token Memory storage
 .contex/

@@ -69,7 +69,7 @@ tens.hash;  // → "abc123..." (SHA-256)
 **Code:** `packages/core/src/tens_text.ts` (TensTextEncoder / TensTextDecoder)
 
 ```typescript
-import { formatOutput } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
 const tensText = formatOutput(data, 'tens-text');
 // → @version 1
 //   @encoding o200k_base
@@ -113,7 +113,7 @@ const compact = tens.toString(); // Always Contex Compact
 // Charlie	35	@1
 ```
 
-**Savings:** 40-94% token reduction vs JSON (43% average across 15 dataset types).
+**Savings:** 46-90% token reduction vs JSON (72% average across 21 dataset types).
 
 ---
 
@@ -145,7 +145,7 @@ const compact = tens.toString(); // Always Contex Compact
 ## API Quick Reference
 
 ```typescript
-import { Tens, formatOutput } from '@contex/core';
+import { Tens, formatOutput } from '@contex-llm/core';
 
 // Encode once
 const tens = Tens.encode(data);
@@ -169,7 +169,7 @@ const tokens = tens.materialize('gpt-4o');
 The engine's `selectBestFormat()` automatically picks the optimal format:
 
 ```typescript
-import { selectBestFormat } from '@contex/engine';
+import { selectBestFormat } from '@contex-llm/engine';
 
 const { format, reason, providerNote, estimatedSavings } = selectBestFormat({
   model: 'gpt-4o',

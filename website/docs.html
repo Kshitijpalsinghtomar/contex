@@ -125,7 +125,7 @@
 <body>
 
     <nav class="nav">
-        <a href="/" class="nav-brand">
+        <a href="./" class="nav-brand">
             <div class="logo-icon">C</div>
             Contex
         </a>
@@ -157,7 +157,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+            <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                     <path
@@ -213,7 +213,7 @@
                 <a href="#tens-api">Tens Class</a>
                 <a href="#format-output">formatOutput()</a>
                 <a href="#token-memory">TokenMemory</a>
-                <a href="#engine">@contex/engine</a>
+                <a href="#engine">@contex-llm/engine</a>
             </div>
             <div class="sidebar-section">
                 <h4>CLI</h4>
@@ -230,26 +230,33 @@
                 <a href="#benchmarks">Benchmarks</a>
                 <a href="#architecture">Architecture</a>
             </div>
+            <div class="sidebar-section">
+                <h4>Advanced</h4>
+                <a href="#edge-cases">Edge Cases</a>
+                <a href="#performance">Performance Tips</a>
+                <a href="#dictionary-tuning">Dictionary Tuning</a>
+                <a href="#troubleshooting">Troubleshooting</a>
+            </div>
         </aside>
 
         <main class="docs-content">
             <h1>Contex Documentation</h1>
             <p>Contex is an intelligent context engine for LLMs. It stores structured data as canonical IR (TENS) and
                 serves it in the most token-efficient format — <strong>Contex Compact</strong> — saving
-                <strong>40-94% of context window costs</strong>.</p>
+                <strong>46-90% of context window costs</strong>.</p>
 
             <!-- ═══════════════ GETTING STARTED ═══════════════ -->
 
             <h2 id="installation">Installation</h2>
 
             <h3>Package Manager</h3>
-            <pre>pnpm add @contex/core @contex/middleware</pre>
+            <pre>pnpm add @contex-llm/core @contex-llm/middleware</pre>
 
             <h3>With Engine (cost analysis, auto-selection)</h3>
-            <pre>pnpm add @contex/core @contex/engine @contex/middleware</pre>
+            <pre>pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware</pre>
 
             <h3>CLI (Optional)</h3>
-            <pre>pnpm add -g @contex/cli</pre>
+            <pre>pnpm add -g @contex-llm/cli</pre>
 
             <div class="callout info">
                 <strong>Requirements:</strong> Node.js 18+ · TypeScript 5+
@@ -260,7 +267,7 @@
             <h2 id="quick-start">Quick Start — 3 Lines</h2>
 
             <h3>1. Encode Your Data</h3>
-            <pre>import { Tens } from '@contex/core';
+            <pre>import { Tens } from '@contex-llm/core';
 
 const tens = Tens.encode([
   { id: 1, name: 'Alice', role: 'admin', city: 'New York' },
@@ -282,7 +289,7 @@ const text = tens.toString();
 const tokens = tens.materialize('gpt-4o');</pre>
 
             <h3>3. Use Middleware (Recommended)</h3>
-            <pre>import { createContexOpenAI } from '@contex/middleware';
+            <pre>import { createContexOpenAI } from '@contex-llm/middleware';
 
 const client = createContexOpenAI(new OpenAI(), {
   data: { users: myUserData }
@@ -294,7 +301,7 @@ await client.chat.completions.create({
 });</pre>
 
             <div class="callout tip">
-                <strong>Result:</strong> 40-94% token reduction, deterministic output (100% cache hit rate), faster responses.
+                <strong>Result:</strong> 46-90% token reduction, deterministic output (100% cache hit rate), faster responses.
             </div>
 
             <hr class="divider">
@@ -310,27 +317,27 @@ await client.chat.completions.create({
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>@contex/core</code></td>
+                        <td><code>@contex-llm/core</code></td>
                         <td>Most users — encoding, formatting, tokenization</td>
                         <td><code>Tens</code>, <code>formatOutput</code>, <code>TokenMemory</code></td>
                     </tr>
                     <tr>
-                        <td><code>@contex/engine</code></td>
+                        <td><code>@contex-llm/engine</code></td>
                         <td>Budget analysis, auto format selection, multi-model</td>
                         <td><code>quick()</code>, <code>selectBestFormat()</code></td>
                     </tr>
                     <tr>
-                        <td><code>@contex/middleware</code></td>
+                        <td><code>@contex-llm/middleware</code></td>
                         <td>Drop-in SDK integration (OpenAI, Anthropic, Gemini)</td>
                         <td><code>createContexOpenAI()</code>, <code>createContexAnthropic()</code></td>
                     </tr>
                     <tr>
-                        <td><code>@contex/cli</code></td>
+                        <td><code>@contex-llm/cli</code></td>
                         <td>CLI tools, benchmarking, analysis</td>
                         <td><code>contex analyze</code>, <code>contex bench</code></td>
                     </tr>
                     <tr>
-                        <td><code>@contex/adapters</code></td>
+                        <td><code>@contex-llm/adapters</code></td>
                         <td>LangChain / LlamaIndex integration</td>
                         <td><code>ContexCallbackHandler</code>, <code>ContexNodePostprocessor</code></td>
                     </tr>
@@ -353,17 +360,17 @@ Tens.encode()  →  TENS Binary (Uint8Array)
                     │  SHA-256 content hash for dedup
                     │  Never sent to LLMs directly
                     │
-    ┌───────────────┼───────────────────┐
-    ▼               ▼                   ▼
-Contex Compact    TENS-Text (.tens)    Token Array
-tens.toString()   formatOutput(        tens.materialize(
-                    data,'tens-text')    'gpt-4o')
-
-│                 │                     │
-▼                 ▼                     ▼
-SEND TO LLM      DEBUG / INSPECT      DIRECT TOKEN
-@d, @f, tabs     @dict, @schema       INJECTION
-40-94% savings   Human-readable       Raw token IDs</div>
+    ┌───────────────┼───────────────┐
+    ▼               ▼               ▼
+Contex Compact   TENS-Text        Token Array
+tens.toString()  formatOutput(    tens.materialize(
+                  data,             'gpt-4o')
+                  'tens-text')
+│                │                 │
+▼                ▼                 ▼
+SEND TO LLM     DEBUG / INSPECT   DIRECT TOKEN
+@d, @f, tabs    @dict, @schema    INJECTION
+46-90% savings  Human-readable    Raw token IDs</div>
 
             <div class="callout warn">
                 <strong>Key insight:</strong> TENS, TENS-Text, and Contex Compact are <em>different layers</em> of the same pipeline, not competing formats.
@@ -427,7 +434,7 @@ tens.hash; // "abc123..."</pre>
             <div class="format-card">
                 <h4>Contex Compact <span class="tag tag-default">Default — Send to LLMs</span></h4>
                 <p>The ultra-efficient output format. Uses <code>@d</code> (dictionary), <code>@f</code> (field map). Tab-separated, no brackets, no quotes.</p>
-                <p><strong>This is what you send to LLMs.</strong> 40-94% token savings vs JSON.</p>
+                <p><strong>This is what you send to LLMs.</strong> 46-90% token savings vs JSON.</p>
                 <pre>tens.toString(); // or formatOutput(data, 'contex')
 // n	r	c
 // @f	n=name	r=role	c=city
@@ -490,7 +497,7 @@ i	n	r	c
             <p>The human-readable serialization of the TENS binary IR. Lossless 1:1 roundtrip with TENS Binary.</p>
             <p>Full documentation: <a href="./tens-text.html">TENS-Text Reference →</a></p>
 
-            <pre>import { formatOutput } from '@contex/core';
+            <pre>import { formatOutput } from '@contex-llm/core';
 
 const tensText = formatOutput(data, 'tens-text');
 // @version 1
@@ -524,7 +531,7 @@ const tensText = formatOutput(data, 'tens-text');
                         <td><strong>Contex Compact</strong></td>
                         <td><code>'contex'</code></td>
                         <td>Everything — best overall for LLMs</td>
-                        <td class="saving">43%</td>
+                        <td class="saving">72%</td>
                     </tr>
                     <tr>
                         <td>TOON</td>
@@ -565,7 +572,7 @@ const tensText = formatOutput(data, 'tens-text');
                 </tbody>
             </table>
 
-            <pre>import { formatOutput } from '@contex/core';
+            <pre>import { formatOutput } from '@contex-llm/core';
 
 const compact = formatOutput(data, 'contex');   // Best overall
 const csv     = formatOutput(data, 'csv');       // Flat data
@@ -597,7 +604,7 @@ Tens.encode(data1).toString() === Tens.encode(data2).toString();
 
             <h2 id="openai">OpenAI Middleware</h2>
             <pre>import OpenAI from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 const client = createContexOpenAI(new OpenAI(), {
   data: { tickets: ticketData }
@@ -614,7 +621,7 @@ const response = await client.chat.completions.create({
             <h2 id="anthropic">Anthropic Middleware</h2>
             <p>Contex automatically adds <code>cache_control</code> breakpoints for Anthropic's prompt caching.</p>
             <pre>import Anthropic from '@anthropic-ai/sdk';
-import { createContexAnthropic } from '@contex/middleware';
+import { createContexAnthropic } from '@contex-llm/middleware';
 
 const client = createContexAnthropic(new Anthropic(), {
   data: { context: kbData }
@@ -627,7 +634,7 @@ const message = await client.messages.create({
 });</pre>
 
             <h2 id="gemini">Gemini Middleware</h2>
-            <pre>import { createContexGemini } from '@contex/middleware';
+            <pre>import { createContexGemini } from '@contex-llm/middleware';
 
 const client = createContexGemini(genai, {
   data: { documents: docsData }
@@ -653,7 +660,7 @@ const result = await client.models.generateContent({
             <hr class="divider">
 
             <h2 id="langchain">LangChain Adapter</h2>
-            <pre>import { ContexCallbackHandler } from '@contex/adapters';
+            <pre>import { ContexCallbackHandler } from '@contex-llm/adapters';
 
 const handler = new ContexCallbackHandler({
   data: { docs: myDocs },
@@ -668,7 +675,7 @@ const result = await chain.call(
 );</pre>
 
             <h2 id="llamaindex">LlamaIndex Adapter</h2>
-            <pre>import { ContexNodePostprocessor } from '@contex/adapters';
+            <pre>import { ContexNodePostprocessor } from '@contex-llm/adapters';
 
 const postprocessor = new ContexNodePostprocessor({
   format: 'contex'
@@ -684,7 +691,7 @@ const engine = index.asQueryEngine({
             <hr class="divider">
 
             <h2 id="tens-api">Tens Class</h2>
-            <pre>import { Tens } from '@contex/core';
+            <pre>import { Tens } from '@contex-llm/core';
 
 // Encode data → TENS Binary
 const tens = Tens.encode(data);
@@ -700,7 +707,7 @@ console.log(result.tokenCount);
 const hash = tens.hash; // SHA-256</pre>
 
             <h2 id="format-output">formatOutput()</h2>
-            <pre>import { formatOutput } from '@contex/core';
+            <pre>import { formatOutput } from '@contex-llm/core';
 
 // Format to any output format
 const contex   = formatOutput(data, 'contex');    // Contex Compact
@@ -715,7 +722,7 @@ formatOutput(null, 'contex');    // → ''
 formatOutput([], 'contex');      // → ''</pre>
 
             <h2 id="token-memory">TokenMemory</h2>
-            <pre>import { TokenMemory } from '@contex/core';
+            <pre>import { TokenMemory } from '@contex-llm/core';
 
 const memory = new TokenMemory('./.contex');
 
@@ -726,8 +733,8 @@ const tokens = memory.materializeAndCache(hash, 'gpt-4o');
 // Retrieve cached tokens (instant)
 const cached = memory.getCached(hash, 'gpt-4o');</pre>
 
-            <h2 id="engine">@contex/engine</h2>
-            <pre>import { quick, selectBestFormat } from '@contex/engine';
+            <h2 id="engine">@contex-llm/engine</h2>
+            <pre>import { quick, selectBestFormat } from '@contex-llm/engine';
 
 // One-shot encode + materialize
 const result = quick(data, 'gpt-4o');
@@ -745,9 +752,14 @@ const decision = selectBestFormat({ model: 'gpt-4o', data });
             <h2 id="cli-commands">CLI Commands</h2>
             <pre># Analyze savings across formats
 contex analyze data.json --model gpt-4o
+            contex analyze data.json --fingerprint
 
 # Check estimated token savings
 contex savings data.json
+
+            # Validate roundtrip with structural checks + fingerprint
+            contex validate data.json --semantic-guard --fingerprint
+            contex validate data.json --fingerprint --no-watermark
 
 # Materialize tokens (creates .contex/ cache)
 contex materialize data.json --model gpt-4o
@@ -762,6 +774,14 @@ contex bench
 contex cache-diagnose
 contex cache-stats
 contex cache-warm data.json --model gpt-4o</pre>
+
+            <p style="color: var(--text-secondary); margin-top: 12px;">
+                <strong>New observability output:</strong> <code>analyze</code> and <code>validate</code> now print pipeline CPU/heap/throughput reports,
+                structural complexity scoring, and optional fingerprint/watermark metadata.
+            </p>
+            <p style="color: var(--text-secondary); margin-top: 8px;">
+                If your terminal shows garbled box characters, add <code>--ascii</code> to any command.
+            </p>
 
             <!-- ═══════════════ STRATEGY ═══════════════ -->
 
@@ -880,7 +900,7 @@ const response = await openai.chat.completions.create({
 });
 
 // After: Contex middleware (3-line change)
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 const client = createContexOpenAI(openai, { data: { context: myData } });
 
@@ -897,7 +917,7 @@ const response = await client.chat.completions.create({
             <hr class="divider">
 
             <h2 id="benchmarks">Benchmark Results</h2>
-            <p>Benchmark v7 — 15 dataset types, 36/36 tests passing, 20/20 data fidelity.</p>
+            <p>Benchmark v8 — 21 dataset types, 36/36 tests passing, 20/20 data fidelity.</p>
 
             <table class="benchmark-table">
                 <thead>
@@ -910,12 +930,12 @@ const response = await client.chat.completions.create({
                 <tbody>
                     <tr>
                         <td>Avg Pipeline Savings</td>
-                        <td class="saving">43%</td>
-                        <td>Across 15 dataset types</td>
+                        <td class="saving">72%</td>
+                        <td>Across 21 dataset types</td>
                     </tr>
                     <tr>
                         <td>Best (DeepNested)</td>
-                        <td class="saving">94%</td>
+                        <td class="saving">90%</td>
                         <td>Format-level savings</td>
                     </tr>
                     <tr>
@@ -941,7 +961,7 @@ const response = await client.chat.completions.create({
             <hr class="divider">
 
             <h2 id="architecture">Architecture</h2>
-            <pre>@contex/
+            <pre>@contex-llm/
 ├── core/           # Tens encoder, IR, formatters, tokenization
 ├── engine/         # Budget engine, quick() API, model registry
 ├── middleware/     # OpenAI, Anthropic, Gemini SDK wrappers
@@ -952,19 +972,214 @@ const response = await client.chat.completions.create({
 
             <div class="callout info">
                 <strong>More detailed docs (Markdown):</strong>
-                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/architecture.md">Architecture Deep Dive</a> ·
-                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/tens-specification.md">TENS Specification</a> ·
-                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/guide/examples.md">Examples</a> ·
-                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/guide/migration-from-json.md">Migration Guide</a> ·
-                <a href="https://github.com/kshitijpalsinghtomar/contex/blob/main/docs/reference/formats.md">Format Reference</a>
+                <a href="https://github.com/kshitijpalsinghtomar/contex-llm/blob/main/docs/architecture.md">Architecture Deep Dive</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex-llm/blob/main/docs/tens-specification.md">TENS Specification</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex-llm/blob/main/docs/guide/examples.md">Examples</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex-llm/blob/main/docs/guide/migration-from-json.md">Migration Guide</a> ·
+                <a href="https://github.com/kshitijpalsinghtomar/contex-llm/blob/main/docs/reference/formats.md">Format Reference</a>
             </div>
+
+            <!-- ═══════════════ ADVANCED ═══════════════ -->
+
+            <hr class="divider">
+
+            <h2 id="edge-cases">Edge Cases & Safety</h2>
+            <p>Contex handles 47 edge-case scenarios out of the box. Here are the most important ones:</p>
+
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Edge Case</th>
+                        <th>How Contex Handles It</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Circular references in objects</td>
+                        <td><code>flattenObject</code> uses cycle detection with a visited <code>Set</code> — circular paths are truncated safely</td>
+                    </tr>
+                    <tr>
+                        <td>Unicode strings (emoji, CJK, RTL)</td>
+                        <td>Fully supported — UTF-8 encoding preserved, no mojibake. Tab/newline characters in values are escaped (<code>\t</code>, <code>\n</code>)</td>
+                    </tr>
+                    <tr>
+                        <td>Values that look like dictionary refs (<code>@0</code>, <code>@1</code>)</td>
+                        <td>Automatically escaped with backslash prefix (<code>\@0</code>) to prevent ambiguity</td>
+                    </tr>
+                    <tr>
+                        <td>Markdown pipe characters in values</td>
+                        <td>Escaped in Markdown format output to prevent table corruption</td>
+                    </tr>
+                    <tr>
+                        <td>Empty arrays / null datasets</td>
+                        <td>Returns empty string gracefully — no crashes, no exceptions</td>
+                    </tr>
+                    <tr>
+                        <td>Deeply nested objects (10+ levels)</td>
+                        <td>Deep flattening with dot-notation handles arbitrary depth. Cycle detection prevents stack overflow</td>
+                    </tr>
+                    <tr>
+                        <td>Mixed types in same column</td>
+                        <td>Values are serialized to their string representation — type heterogeneity is safe</td>
+                    </tr>
+                    <tr>
+                        <td>Very large datasets (10K+ rows)</td>
+                        <td>Dictionary capped at MAX_DICT_SIZE=10,000 entries with cost-benefit gating to prevent bloated headers</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <h2 id="performance">Performance Tips</h2>
+
+            <h3>1. Pre-compile with TokenMemory</h3>
+            <p>For data that doesn't change between requests (product catalogs, knowledge bases), compile once and cache:</p>
+            <pre>const memory = new TokenMemory('./.contex');
+const { hash } = memory.store(productCatalog);
+
+// Every subsequent request: ~5ms instead of ~200ms
+const tokens = memory.materializeAndCache(hash, 'gpt-4o');</pre>
+
+            <h3>2. Use the Engine for Auto-Selection</h3>
+            <p>Don't guess the format — let the engine pick the optimal one for your data shape and model:</p>
+            <pre>import { selectBestFormat } from '@contex-llm/engine';
+
+const decision = selectBestFormat({ model: 'gpt-4o', data: myData });
+// → { format: 'contex', reason: 'Nested data benefits from dict+flatten' }</pre>
+
+            <h3>3. Batch Similar Data</h3>
+            <p>Contex's dictionary compression works best when rows share values. Group similar records together for maximum savings — e.g., all users from the same department, all products in the same category.</p>
+
+            <h3>4. Leverage Incremental Encoding</h3>
+            <p>For multi-turn conversations, use <code>encodeIncremental()</code> to send only new rows:</p>
+            <pre>import { StructuralDedupCache } from '@contex-llm/core';
+
+const cache = new StructuralDedupCache();
+const result1 = cache.encodeIncremental(batch1);
+// Later: only new rows are encoded
+const result2 = cache.encodeIncremental(batch2);
+// result2.deltaRows = only the new rows</pre>
+
+            <h3>5. WASM for CPU-Bound Encoding</h3>
+            <p>If you're encoding large datasets on the hot path, the WASM encoder (when available) provides near-native speed in Node.js and browser environments.</p>
+
+            <hr class="divider">
+
+            <h2 id="dictionary-tuning">Dictionary Configuration</h2>
+            <p>The dictionary is the biggest lever for token savings. Understanding how it works helps you structure data for maximum compression.</p>
+
+            <h3>How Dictionary Compression Works</h3>
+            <pre>// Input: 3 users, all from "New York", 2 are "admin"
+// Dictionary detects repeated values and assigns short codes:
+// @d  New York  admin
+//
+// Each occurrence of "New York" becomes @0 (saves 7 chars per use)
+// Each occurrence of "admin" becomes @1 (saves 4 chars per use)</pre>
+
+            <h3>When Dictionary Helps Most</h3>
+            <table class="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>Data Pattern</th>
+                        <th>Dictionary Savings</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Enum-like columns (status, role, type)</td>
+                        <td class="saving">High</td>
+                        <td>50 rows × "active"/"inactive" → @0/@1</td>
+                    </tr>
+                    <tr>
+                        <td>Shared references (city, country, department)</td>
+                        <td class="saving">High</td>
+                        <td>100 users in 5 cities → 5 dict entries</td>
+                    </tr>
+                    <tr>
+                        <td>Repeated numeric values</td>
+                        <td>Medium</td>
+                        <td>Price tiers: 9.99, 19.99, 29.99</td>
+                    </tr>
+                    <tr>
+                        <td>All unique strings</td>
+                        <td>None</td>
+                        <td>UUIDs, timestamps — no repetition</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Scalability Safeguards</h3>
+            <p>To prevent dictionary headers from consuming more tokens than they save:</p>
+            <ul>
+                <li><strong>MAX_DICT_SIZE = 10,000</strong> — Hard cap on dictionary entries</li>
+                <li><strong>Cost-benefit gate</strong> — A value only enters the dictionary if <code>(occurrences × value.length) > (referenceLength + headerCost)</code></li>
+                <li><strong>Minimum frequency</strong> — Values appearing only once are never added to the dictionary</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2 id="troubleshooting">Troubleshooting</h2>
+
+            <h3>Common Issues</h3>
+
+            <details class="faq-item" style="margin-bottom: 16px;">
+                <summary class="faq-question">The LLM doesn't understand the Contex Compact format</summary>
+                <div class="faq-answer">
+                    This is rare with modern models (GPT-4o, Claude 3.5+, Gemini 2+). If it happens:
+                    <ol>
+                        <li>Add a brief instruction: <em>"The data below uses Contex Compact format. @d is the dictionary, @f maps short field names to full names. Each row is tab-separated."</em></li>
+                        <li>Try <code>formatOutput(data, 'csv')</code> as a fallback — slightly less savings but universally understood</li>
+                        <li>For older/smaller models, use <code>formatOutput(data, 'markdown')</code></li>
+                    </ol>
+                </div>
+            </details>
+
+            <details class="faq-item" style="margin-bottom: 16px;">
+                <summary class="faq-question">Token count doesn't match what I expect</summary>
+                <div class="faq-answer">
+                    Contex uses real tokenizer models (o200k_base for GPT-4o, cl100k for GPT-3.5). Token counts are exact for supported models. For unsupported models, counts are estimated. Use the <a href="./playground.html">Playground</a> to verify, or paste the output into <a href="https://platform.openai.com/tokenizer" target="_blank">OpenAI's Tokenizer</a>.
+                </div>
+            </details>
+
+            <details class="faq-item" style="margin-bottom: 16px;">
+                <summary class="faq-question">My data has very low savings (&lt;20%)</summary>
+                <div class="faq-answer">
+                    Low savings usually means:
+                    <ul>
+                        <li><strong>Few rows</strong> — Header overhead is fixed. Below ~5 rows, the header eats into savings</li>
+                        <li><strong>All unique values</strong> — No dictionary opportunity. Try CSV format instead</li>
+                        <li><strong>Mostly string content</strong> — Long unique strings can't be compressed further. Contex optimizes <em>structure</em>, not content</li>
+                    </ul>
+                    Run <code>contex analyze data.json</code> to see a per-format breakdown and savings recommendation.
+                </div>
+            </details>
+
+            <details class="faq-item" style="margin-bottom: 16px;">
+                <summary class="faq-question">CLI shows garbled box-drawing characters</summary>
+                <div class="faq-answer">
+                    Your terminal may not support Unicode box-drawing characters. Add <code>--ascii</code> to any CLI command to use plain ASCII borders instead.
+                </div>
+            </details>
+
+            <details class="faq-item" style="margin-bottom: 16px;">
+                <summary class="faq-question">Middleware placeholder isn't being replaced</summary>
+                <div class="faq-answer">
+                    Check that:
+                    <ol>
+                        <li>The placeholder matches exactly: <code>{{CONTEX:keyName}}</code> (case-sensitive)</li>
+                        <li>The key is registered in the <code>data</code> option: <code>data: { keyName: myData }</code></li>
+                        <li>You're using the wrapped client (e.g., <code>createContexOpenAI()</code>), not the original</li>
+                    </ol>
+                </div>
+            </details>
 
         </main>
     </div>
 
     <footer class="footer">
-        <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM
-            pipelines</p>
+        <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
     </footer>
 
     <script>
@@ -1059,3 +1274,4 @@ const response = await client.chat.completions.create({
 </body>
 
 </html>
+

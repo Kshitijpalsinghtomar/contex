@@ -1,6 +1,6 @@
 <div align="center">
 
-# @contex/middleware API Reference
+# @contex-llm/middleware API Reference
 
 > Drop-in wrappers for OpenAI, Anthropic, and Gemini with `{{CONTEX:name}}` injection.
 
@@ -11,7 +11,7 @@
 ## Installation
 
 ```bash
-pnpm add @contex/middleware
+pnpm add @contex-llm/middleware
 ```
 
 ---
@@ -30,7 +30,7 @@ pnpm add @contex/middleware
 ## Shared Types
 
 ```ts
-import type { Tens } from '@contex/core';
+import type { Tens } from '@contex-llm/core';
 
 interface ContexMiddlewareOptions {
   data?: Record<string, Record<string, unknown>[] | Tens>;
@@ -57,7 +57,7 @@ interface InjectionInfo {
 
 ```ts
 import OpenAI from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 const client = createContexOpenAI(new OpenAI(), {
   data: {
@@ -82,7 +82,7 @@ const res = await client.chat.completions.create({
 
 ```ts
 import Anthropic from '@anthropic-ai/sdk';
-import { createContexAnthropic } from '@contex/middleware';
+import { createContexAnthropic } from '@contex-llm/middleware';
 
 const client = createContexAnthropic(new Anthropic(), {
   data: { tickets }
@@ -107,7 +107,7 @@ Notes:
 
 ```ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createContexGemini } from '@contex/middleware';
+import { createContexGemini } from '@contex-llm/middleware';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 const baseModel = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });

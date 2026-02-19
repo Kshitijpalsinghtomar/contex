@@ -8,13 +8,16 @@ pub type SchemaId = u32;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Schema {
     pub id: SchemaId,
+    /// Sorted field names (canonical order)
     pub keys: Vec<String>,
+    /// Parallel array of inferred type labels
+    pub field_types: Vec<String>,
 }
 
 pub struct SchemaRegistry {
-    // fast lookup: hash(sorted_keys) -> SchemaId
+    /// hash(sorted_keys) → SchemaId
     lookup: HashMap<u64, SchemaId>,
-    // storage: SchemaId -> Schema
+    /// SchemaId → Schema
     schemas: BTreeMap<SchemaId, Schema>,
     next_id: SchemaId,
 }
@@ -24,21 +27,27 @@ impl SchemaRegistry {
         SchemaRegistry {
             lookup: HashMap::new(),
             schemas: BTreeMap::new(),
-            next_id: 1, // Start at 1, 0 is reserved/null
+            next_id: 1,
         }
     }
 
-    pub fn get_or_register(&mut self, keys: &[String]) -> (SchemaId, bool) {
-        // Sort keys to ensure canonical representation
-        // Note: In TENS v2, input keys are assumed sorted by the flattener?
-        // Or should we sort here? To be safe and canonical, we sort here.
-        let mut sorted_keys = keys.to_vec();
-        sorted_keys.sort();
+    /// Register or retrieve a schema for the given (unsorted) keys.
+    /// Returns (schema_id, is_new).
+    pub fn get_or_register(&mut self, keys: &[String], types: &[String]) -> (SchemaId, bool) {
+        let mut sorted: Vec<(String, String)> = keys
+            .iter()
+            .cloned()
+            .zip(types.iter().cloned())
+            .collect();
+        sorted.sort_by(|a, b| a.0.cmp(&b.0));
 
-        let hash = self.calculate_hash(&sorted_keys);
+        let sorted_keys: Vec<String> = sorted.iter().map(|p| p.0.clone()).collect();
+        let sorted_types: Vec<String> = sorted.iter().map(|p| p.1.clone()).collect();
+
+        let hash = Self::calculate_hash(&sorted_keys);
 
         if let Some(&id) = self.lookup.get(&hash) {
-            return (id, false); // Existing
+            return (id, false);
         }
 
         let id = self.next_id;
@@ -47,26 +56,29 @@ impl SchemaRegistry {
         let schema = Schema {
             id,
             keys: sorted_keys,
+            field_types: sorted_types,
         };
 
         self.lookup.insert(hash, id);
         self.schemas.insert(id, schema);
 
-        (id, true) // New
+        (id, true)
     }
 
     pub fn get(&self, id: SchemaId) -> Option<&Schema> {
         self.schemas.get(&id)
     }
 
-    fn calculate_hash(&self, keys: &[String]) -> u64 {
+    pub fn all(&self) -> impl Iterator<Item = &Schema> {
+        self.schemas.values()
+    }
+
+    fn calculate_hash(keys: &[String]) -> u64 {
         let mut hasher = DefaultHasher::new();
-        // Hash the joined keys to simulate what we did in TS (SHA-256 is overkill here, FNV/SipHash is fine for HashMap)
-        // But for persistent stability across runs/languages, we might want SHA-256. 
-        // For the in-memory registry, standard hash is sufficient.
         for key in keys {
             key.hash(&mut hasher);
         }
         hasher.finish()
     }
 }
+

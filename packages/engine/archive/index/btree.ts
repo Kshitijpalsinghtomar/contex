@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — B-Tree Index (Archived)
+// @contex-llm/engine — B-Tree Index (Archived)
 // ============================================================================
 //
 // Archived from src/index/btree.ts during structural consolidation.

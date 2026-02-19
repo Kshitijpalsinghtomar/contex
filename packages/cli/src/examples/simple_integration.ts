@@ -1,4 +1,4 @@
-import { compile } from '@contex/core';
+import { compile } from '@contex-llm/core';
 
 // 1. Your Data (e.g. from Database)
 const users = [

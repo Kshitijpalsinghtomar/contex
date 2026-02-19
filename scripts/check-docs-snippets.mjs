@@ -4,7 +4,7 @@ import path from 'node:path';
 const root = process.cwd();
 
 const docTargets = [
-  'docs/guide/quickstart.md',
+  'docs/guide/getting-started.md',
   'docs/guide/migration-from-json.md',
   'docs/guide/examples.md',
 ];

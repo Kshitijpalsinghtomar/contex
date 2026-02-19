@@ -17,7 +17,7 @@ This guide compares the practical data-prompt strategies available in this repo.
 ## API-Accurate Usage
 
 ```ts
-import { Tens, formatOutput } from '@contex/core';
+import { Tens, formatOutput } from '@contex-llm/core';
 
 const tens = Tens.encode(rows);
 

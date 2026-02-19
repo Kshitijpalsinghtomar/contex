@@ -15,9 +15,9 @@
 // The benchmark measures how many tokens of prefix overlap exist between
 // consecutive queries — simulating KV cache reuse in production.
 
-import { formatOutput } from '@contex/core';
-import type { TokenizerManager } from '@contex/core';
-import type { OutputFormat, TokenizerEncoding } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
+import type { TokenizerManager } from '@contex-llm/core';
+import type { OutputFormat, TokenizerEncoding } from '@contex-llm/core';
 
 // ---- Prefix-aware formatting ----
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/adapters — LangChain & LlamaIndex Adapters
+// @contex-llm/adapters — LangChain & LlamaIndex Adapters
 // ============================================================================
 //
 // adapters for popular RAG frameworks:
@@ -7,7 +7,7 @@
 // - LlamaIndex: Data readers with Contex optimization
 //
 // These adapters automatically optimize documents for LLM context,
-// reducing token usage by 40-94%.
+// reducing token usage by 40-90%.
 // ============================================================================
 
 export { ContexLoader } from './langchain.js';

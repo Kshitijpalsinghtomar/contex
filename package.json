@@ -1,12 +1,12 @@
 {
-    "name": "contex",
+    "name": "contex-llm",
     "version": "0.1.0",
     "private": true,
     "license": "MIT",
-    "author": "Contex Team",
+    "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/contex/contex.git"
+        "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git"
     },
     "description": "The token compiler for LLMs — canonical IR, deterministic tokens, prefix cache hits",
     "packageManager": "pnpm@9.15.4",
@@ -26,7 +26,7 @@
         "check:stabilization-freeze": "node scripts/check-stabilization-freeze.mjs",
         "generate:ci-scorecard-artifacts": "node scripts/generate-ci-scorecard-artifacts.mjs",
         "generate:week4-proof-pack": "node scripts/generate-week4-proof-pack.mjs",
-        "cli:status:ci": "pnpm --filter @contex/cli exec node --import tsx src/cli.ts status --json",
+        "cli:status:ci": "pnpm --filter @contex-llm/cli exec node --import tsx src/cli.ts status --json",
         "benchmark": "turbo run benchmark",
         "clean": "turbo run clean"
     },

@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Schema Registry (Archived)
+// @contex-llm/engine — Schema Registry (Archived)
 // ============================================================================
 //
 // Archived from src/schema/registry.ts during structural consolidation.

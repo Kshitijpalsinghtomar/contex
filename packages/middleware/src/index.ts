@@ -1,4 +1,4 @@
-export { createContexOpenAI } from './openai.js'; // @contex/middleware Public API
+export { createContexOpenAI } from './openai.js'; // @contex-llm/middleware Public API
 
 export { createContexAnthropic } from './anthropic.js';
 export { createContexGemini } from './gemini.js';

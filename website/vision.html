@@ -505,12 +505,12 @@
 
   <!-- Navigation -->
   <nav class="nav">
-    <a href="/" class="nav-brand">
+    <a href="./" class="nav-brand">
       <div class="logo-icon">C</div>
       Contex
     </a>
     <ul class="nav-links">
-      <li><a href="/">Home</a></li>
+      <li><a href="./">Home</a></li>
       <li><a href="./docs.html">Docs</a></li>
       <li><a href="./tens-text.html">TENS-Text</a></li>
       <li><a href="./benchmarks.html">Benchmarks</a></li>
@@ -530,14 +530,20 @@
           <line x1="1" y1="12" x2="3" y2="12"></line>
           <line x1="21" y1="12" x2="23" y2="12"></line>
           <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
         <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
         </svg>
       </button>
-      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-primary btn-sm" target="_blank">
+      <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+          <path
+            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+          </path>
+        </svg>
         GitHub
       </a>
     </div>
@@ -557,7 +563,7 @@
       <span class="gradient-text">JSON in AI Pipelines</span>
     </h1>
     <p class="hero-sub">
-      Contex already saves 40–94% of context tokens. But we're not stopping there.
+      Contex already saves 46–90% of context tokens. But we're not stopping there.
       These are the concepts that will define the next era of LLM data infrastructure —
       from a compiled context database to a binary protocol that eliminates text entirely.
     </p>
@@ -567,6 +573,9 @@
       <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-green);"></span> Python SDK</div>
       <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-amber);"></span> Semantic Fingerprinting</div>
       <div class="vision-pill"><span class="pill-dot" style="background: var(--accent-red);"></span> Edge Runtime</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: #06b6d4;"></span> MCP Server</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: #f97316;"></span> Crawl Bot Pipeline</div>
+      <div class="vision-pill"><span class="pill-dot" style="background: #ec4899;"></span> Contex Cloud</div>
     </div>
   </section>
 
@@ -851,7 +860,7 @@ Just raw token IDs, directly into the model.</div>
         <div class="dd-label">Proposed API</div>
         <h3>What It Would Look Like</h3>
 
-        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7; font-size: 0.82rem;">import { Tens } from '@contex/core';
+        <div class="code-block" style="text-align: left; white-space: pre; line-height: 1.7; font-size: 0.82rem;">import { Tens } from '@contex-llm/core';
 
 const tens = Tens.encode(userData);
 const tokenArray = tens.materialize('gpt-4o');
@@ -928,7 +937,7 @@ const res = await openai.chat.completions.create({
           </tbody>
         </table>
 
-        <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">* Tokens average 3–4 characters each. 1000 tokens ≈ 3500 chars (3500 bytes UTF-8) vs 1000 × 4 bytes = 4000 bytes Int32. But with varint encoding: 1000 × ~2 bytes = 2000 bytes. Add Contex compression (43% fewer tokens) and total payload drops dramatically.</p>
+        <p style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">* Tokens average 3–4 characters each. 1000 tokens ≈ 3500 chars (3500 bytes UTF-8) vs 1000 × 4 bytes = 4000 bytes Int32. But with varint encoding: 1000 × ~2 bytes = 2000 bytes. Add Contex compression (72% fewer tokens) and total payload drops dramatically.</p>
       </div>
 
       <!-- Why it doesn't exist yet -->
@@ -1059,7 +1068,7 @@ Offset    Size       Field
         </div>
         <h4>Vercel AI SDK Integration</h4>
         <div class="sc-status-badge blue">Pre-Alpha Shipped</div>
-        <p><strong>Already shipped:</strong> Core middleware in <code>@contex/core/vercel</code> with <code>contex()</code> function that maps Vercel <code>CoreMessage</code> objects. Basic integration tests passing.</p>
+        <p><strong>Already shipped:</strong> Core middleware in <code>@contex-llm/core/vercel</code> with <code>contex()</code> function that maps Vercel <code>CoreMessage</code> objects. Basic integration tests passing.</p>
         <p><strong>Next layer:</strong> Full <code>useContex()</code> React hook for streaming state management and automatic client-side context re-hydration.</p>
         <span class="sc-tag">Ecosystem</span>
       </div>
@@ -1090,7 +1099,7 @@ Offset    Size       Field
         </div>
         <h4>Adaptive Budget Engine</h4>
         <div class="sc-status-badge amber">Core Logic Built</div>
-        <p><strong>Already shipped:</strong> <code>maxToken</code> awareness in <code>packages/engine/src/budget.ts</code>. Budget-aware formatting tests in <code>quick.test.ts</code>.</p>
+        <p><strong>Already shipped:</strong> <code>maxToken</code> awareness in <code>packages/engine/src/budget.ts</code>. Budget-aware formatting tests in <code>quick.test.ts</code>. Dictionary scalability safeguards with MAX_DICT_SIZE=10,000 and cost-benefit gate.</p>
         <p><strong>Next layer:</strong> Dynamic prioritization policies. Tell the engine: <em>"Prioritize 'recent' items, drop 'meta' fields if budget tight, switch to 'min' format if over 4k tokens."</em> The engine solves the constraint satisfaction problem per request.</p>
         <span class="sc-tag">Core</span>
       </div>
@@ -1100,9 +1109,9 @@ Offset    Size       Field
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         </div>
         <h4>WASM Encoder</h4>
-        <div class="sc-status-badge blue">In Progress</div>
-        <p><strong>Already shipped:</strong> Rust crate initialized in <code>packages/tens-wasm</code> with Cargo configuration and basic lib structure.</p>
-        <p><strong>Next layer:</strong> Porting core TS encoding logic to Rust for near-native perforamance in environments where JS is CPU-constrained. Will enable browser-side encoding 100x faster than current JS implementation.</p>
+        <div class="sc-status-badge">Shipped</div>
+        <p><strong>Fully implemented:</strong> 1,264-line Rust encoder in <code>packages/tens-wasm/src/encoder.rs</code> compiled to WebAssembly. 43 inline Rust tests passing. Compiled <code>.wasm</code> binary in <code>pkg/</code> with JS/TS bindings. Auto-detection bridge falls back to JS when WASM is unavailable.</p>
+        <p><strong>Next layer:</strong> Streaming WASM encoder for incremental encoding of large datasets without buffering. SIMD-optimized dictionary compression. Browser-side encoding via CDN-distributed WASM bundles.</p>
         <span class="sc-tag">Performance</span>
       </div>
 
@@ -1127,6 +1136,68 @@ Offset    Size       Field
         <span class="sc-tag">Observability</span>
       </div>
 
+      <!-- ─── NEW FUTURE CONCEPTS ─── -->
+
+      <div class="showcase-card blue">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </div>
+        <h4>MCP Server for AI Tools</h4>
+        <p>Expose Contex as a <strong>Model Context Protocol (MCP) server</strong> that any AI tool chain can discover and invoke. Agents call <code>contex.encode</code>, <code>contex.materialize</code>, and <code>contex.analyze</code> as first-class tool skills — no SDK integration required. Compatible with Claude Desktop, Cursor, Windsurf, and any MCP-aware agent.</p>
+        <p style="margin-top: 8px;"><strong>Impact:</strong> Contex becomes a capability any agent can use without code changes. Download the server, register it, done.</p>
+        <span class="sc-tag">Agent Ecosystem</span>
+      </div>
+
+      <div class="showcase-card amber">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h4>Crawl Bot Integration Pipeline</h4>
+        <p>First-class adapters for <strong>Firecrawl</strong> (83.6k ★), <strong>Crawl4AI</strong> (60.4k ★), and <strong>Jina Reader</strong> (9.8k ★). Crawl bots extract structured data from the web — Contex compresses it before the LLM sees it. One unified <code>@contex-llm/crawl</code> package with provider-agnostic pipeline.</p>
+        <p style="margin-top: 8px;"><strong>Impact:</strong> 66% cost reduction end-to-end. Crawl → Compress → LLM in 3 lines.</p>
+        <span class="sc-tag">Integration</span>
+      </div>
+
+      <div class="showcase-card purple">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        </div>
+        <h4>Contex Cloud</h4>
+        <p>A <strong>hosted compression proxy</strong> that sits between your app and LLM providers. Route API calls through <code>api.contex.dev</code> — it intercepts context, compresses with Contex, forwards, and streams back. Zero code changes: just swap the base URL. Metered billing by tokens saved.</p>
+        <p style="margin-top: 8px;"><strong>Tiers:</strong> Free (10K req/mo) → Developer $29 → Team $99 → Enterprise custom.</p>
+        <span class="sc-tag">Cloud Service</span>
+      </div>
+
+      <div class="showcase-card green">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h4>Academic Paper &amp; Standard Proposal</h4>
+        <p>Formal research paper targeting <strong>ACL, EMNLP, or MLSys</strong>: <em>"TENS: A Canonical Intermediate Representation for Token-Efficient LLM Context Injection."</em> Includes formal proofs of determinism, compression ratio analysis across 21 datasets, and comparison with prompt compression baselines (LLMLingua, Selective Context).</p>
+        <p style="margin-top: 8px;"><strong>Goal:</strong> Establish Contex as an academic reference point. Propose TENS as a community standard for structured LLM input.</p>
+        <span class="sc-tag">Research</span>
+      </div>
+
+      <div class="showcase-card blue">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+        </div>
+        <h4>Context-Aware Model Routing</h4>
+        <p>Automatic model selection based on compressed context characteristics. The engine analyzes your data shape, token count, and budget — then routes to the <strong>cheapest model that can handle it</strong>. Small context? Use Flash. Complex schema? Use Opus. Budget tight? Downgrade format + model together.</p>
+        <p style="margin-top: 8px;"><strong>Impact:</strong> Additional 30-50% cost savings on top of compression by avoiding model over-provisioning.</p>
+        <span class="sc-tag">Intelligence</span>
+      </div>
+
+      <div class="showcase-card amber">
+        <div class="sc-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <h4>Agent Skill System</h4>
+        <p>Contex capabilities as <strong>installable agent skills</strong>: <code>npx skills add contex/compress</code>, <code>contex/analyze</code>, <code>contex/budget</code>. Each skill is a self-contained tool with JSON Schema input/output contracts. Compatible with OpenAI function calling, LangChain tools, and CrewAI skill packs.</p>
+        <p style="margin-top: 8px;"><strong>Impact:</strong> Any autonomous agent can learn to compress context without human integration work.</p>
+        <span class="sc-tag">Agent Ecosystem</span>
+      </div>
+
     </div>
   </section>
 
@@ -1149,26 +1220,26 @@ Offset    Size       Field
         <div class="timeline-dot" style="background: var(--accent-green);"></div>
         <div class="timeline-content">
           <div class="timeline-label" style="color: var(--accent-green);">Completed — Q1 2026</div>
-          <h4>Contex Core v1</h4>
-          <p>TENS IR encoding, Contex Compact format (40–94% savings), middleware for OpenAI/Anthropic/Gemini, CLI, 600+ tests, benchmark v7. Production-ready.</p>
+          <h4>Contex Core v3</h4>
+          <p>TENS IR encoding, Contex Compact format (46–90% savings), WASM acceleration, middleware for OpenAI/Anthropic/Gemini, CLI, 600+ tests, 21 benchmark datasets, full observability dashboard. Production-ready.</p>
         </div>
       </div>
 
       <div class="timeline-item">
-        <div class="timeline-dot" style="background: var(--accent-blue);"></div>
+        <div class="timeline-dot" style="background: var(--accent-green);"></div>
         <div class="timeline-content">
-          <div class="timeline-label" style="color: var(--accent-blue);">In Progress — Q1-Q2 2026</div>
+          <div class="timeline-label" style="color: var(--accent-green);">Completed — Q1 2026</div>
           <h4>Reality Sprint &amp; Hardening</h4>
-          <p>Edge-case robustness (47 tests), scorecard cadence, worst-case floor improvements, npm publishing readiness. Vercel AI SDK adapter.</p>
+          <p>47 edge-case tests, 5 critical bug fixes (cycle detection, escaping, Markdown pipes), dictionary scalability safeguards (MAX_DICT_SIZE=10,000), MODEL_REGISTRY expanded to 39 models with Feb 2026 pricing, interactive dashboard with real data rendering, scorecard cadence established.</p>
         </div>
       </div>
 
       <div class="timeline-item">
         <div class="timeline-dot" style="background: var(--accent-purple);"></div>
         <div class="timeline-content">
-          <div class="timeline-label" style="color: var(--accent-purple);">Planned — Q3 2026</div>
-          <h4>ContexDB &amp; Python SDK</h4>
-          <p>Content-addressed compiled context store. Python-native encoder. WASM encoder for browser/edge. Context diffing and versioning.</p>
+          <div class="timeline-label" style="color: var(--accent-purple);">Next Up — Q2-Q3 2026</div>
+          <h4>ContexDB, Python SDK &amp; npm Publish</h4>
+          <p>Content-addressed compiled context store. Python-native encoder (<code>pip install contex</code>). MCP server for AI tool chains. Crawl bot integration adapters (Firecrawl, Crawl4AI, Jina). Context diffing and versioning. First npm publish of all packages.</p>
         </div>
       </div>
 
@@ -1185,8 +1256,8 @@ Offset    Size       Field
         <div class="timeline-dot" style="background: var(--accent-red);"></div>
         <div class="timeline-content">
           <div class="timeline-label" style="color: var(--accent-red);">Vision — 2027+</div>
-          <h4>Universal Token Transport</h4>
-          <p>TNP support from major providers. Semantic fingerprinting. Adaptive budget engine. Edge-distributed compiled context networks. The fully compiled AI data stack.</p>
+          <h4>Universal Token Transport &amp; Cloud</h4>
+          <p>TNP support from major providers. Contex Cloud hosted proxy. Context-aware model routing. Agent skill system. Semantic fingerprinting. Academic paper (ACL/EMNLP). Edge-distributed compiled context networks. The fully compiled AI data stack.</p>
         </div>
       </div>
 
@@ -1230,14 +1301,14 @@ Offset    Size       Field
 <span class="hl-purple">└─────────────┬────────────────────────┬──────────────────────┘</span>
               │                        │
               ▼                        ▼
-<span class="hl-blue">┌──────────────────────┐  ┌──────────────────────────────────┐</span>
-<span class="hl-blue">│  CONTEXDB            │  │  TOKEN MATERIALIZER              │</span>
-<span class="hl-blue">│  ─────────           │  │  ──────────────────              │</span>
-<span class="hl-blue">│  Compiled IR storage │  │  IR → model-specific tokens      │</span>
-<span class="hl-blue">│  Token cache per     │  │  Per-model cache (Int32Array)    │</span>
-<span class="hl-blue">│  model, hash index,  │  │  Lazy materialization            │</span>
-<span class="hl-blue">│  versioned artifacts │  │  Tokenizer version tracking      │</span>
-<span class="hl-blue">└──────────┬───────────┘  └────────────────┬─────────────────┘</span>
+<span class="hl-blue">┌──────────────────────┐  ┌───────────────────────────────────┐</span>
+<span class="hl-blue">│  CONTEXDB            │  │  TOKEN MATERIALIZER               │</span>
+<span class="hl-blue">│  ─────────           │  │  ──────────────────               │</span>
+<span class="hl-blue">│  Compiled IR storage │  │  IR → model-specific tokens       │</span>
+<span class="hl-blue">│  Token cache per     │  │  Per-model cache (Int32Array)     │</span>
+<span class="hl-blue">│  model, hash index,  │  │  Lazy materialization             │</span>
+<span class="hl-blue">│  versioned artifacts │  │  Tokenizer version tracking       │</span>
+<span class="hl-blue">└──────────┬───────────┘  └─────────────────┬─────────────────┘</span>
            │                                │
            ▼                                ▼
 <span class="hl-amber">┌─────────────────────────────────────────────────────────────┐</span>
@@ -1270,13 +1341,13 @@ Offset    Size       Field
     <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
       <a href="./playground.html" class="btn btn-primary">Try the Playground</a>
       <a href="./docs.html" class="btn btn-ghost">Read the Docs</a>
-      <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost" target="_blank">Contribute on GitHub</a>
+      <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost" target="_blank">Contribute on GitHub</a>
     </div>
   </section>
 
 
   <footer class="footer">
-    <p>MIT © <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> · Built for production LLM pipelines</p>
+    <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
   </footer>
 
 

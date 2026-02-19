@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Cross-Session Structural Dedup
+// @contex-llm/engine — Cross-Session Structural Dedup
 // ============================================================================
 //
 // Enables schema and dictionary state to persist across sessions,
@@ -14,8 +14,8 @@
 //
 // ============================================================================
 
-import { TokenStreamEncoder, TokenizerManager, formatOutput } from '@contex/core';
-import type { OutputFormat, TokenizerEncoding } from '@contex/core';
+import { TokenStreamEncoder, TokenizerManager, formatOutput } from '@contex-llm/core';
+import type { OutputFormat, TokenizerEncoding } from '@contex-llm/core';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
-import type { TokenizerManager } from '@contex/core';
-import { formatOutput } from '@contex/core';
-import { formatPrefixAware } from '@contex/engine';
+import type { TokenizerManager } from '@contex-llm/core';
+import { formatOutput } from '@contex-llm/core';
+import { formatPrefixAware } from '@contex-llm/engine';
 import { seededRandom } from './generators.js';
 
 export type MutationType =

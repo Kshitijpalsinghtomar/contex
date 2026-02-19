@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Token Memory
+// @contex-llm/core — Token Memory
 // ============================================================================
 //
 // Persistent storage for Canonical IR files with content-hash deduplication.

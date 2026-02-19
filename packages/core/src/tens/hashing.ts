@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — TENS Structural Hashing
+// @contex-llm/core — TENS Structural Hashing
 // ============================================================================
 //
 // Computes SHA-256 hashes of TENS binary data for content-addressable caching.

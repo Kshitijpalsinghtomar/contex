@@ -1,4 +1,4 @@
-# @contex/cli
+# @contex-llm/cli
 
 **CLI tools and research benchmark suite for Contex.**
 
@@ -17,7 +17,7 @@
 ## Installation
 
 ```bash
-pnpm add -g @contex/cli
+pnpm add -g @contex-llm/cli
 ```
 
 ## CLI Commands
@@ -50,8 +50,17 @@ contex decode data.tens
 # Analyze savings
 contex savings data.json
 
+# Analyze with pipeline fingerprint + watermark
+contex analyze data.json --fingerprint
+
+# Validate roundtrip + semantic guard + fingerprint (watermark disabled)
+contex validate data.json --semantic-guard --fingerprint --no-watermark
+
 # Run benchmarks
 contex bench
+
+# If your shell shows garbled Unicode boxes, force ASCII rendering
+contex analyze data.json --ascii
 ```
 
 ## Benchmark Suite (v4.0)

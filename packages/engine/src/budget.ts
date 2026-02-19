@@ -9,9 +9,9 @@
 // This is the killer feature that makes contex an intelligent context engine
 // rather than a dumb data pipe.
 
-import type { TokenizerManager } from '@contex/core';
-import { TokenStreamEncoder, formatOutput } from '@contex/core';
-import type { OutputFormat, TokenizerEncoding } from '@contex/core';
+import type { TokenizerManager } from '@contex-llm/core';
+import { TokenStreamEncoder, formatOutput } from '@contex-llm/core';
+import type { OutputFormat, TokenizerEncoding } from '@contex-llm/core';
 
 // Shared encoder for budget calculations to avoid re-instantiation
 const budgetEncoder = new TokenStreamEncoder();

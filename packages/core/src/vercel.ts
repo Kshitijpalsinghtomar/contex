@@ -19,7 +19,7 @@ export interface VercelMessage {
  * @example
  * ```typescript
  * import { streamText } from 'ai';
- * import { contex } from '@contex/core/vercel';
+ * import { contex } from '@contex-llm/core/vercel';
  *
  * await streamText({
  *   model: openai('gpt-4o'),

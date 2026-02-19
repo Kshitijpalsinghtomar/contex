@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Predictive Packer (Budget-Constrained Optimal Packing)
+// @contex-llm/engine — Predictive Packer (Budget-Constrained Optimal Packing)
 // ============================================================================
 //
 // Given N context items with priorities and a token budget, finds the
@@ -12,8 +12,8 @@
 //
 // ============================================================================
 
-import { type TokenizerManager, formatOutput } from '@contex/core';
-import type { OutputFormat, TokenizerEncoding } from '@contex/core';
+import { type TokenizerManager, formatOutput } from '@contex-llm/core';
+import type { OutputFormat, TokenizerEncoding } from '@contex-llm/core';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

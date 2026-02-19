@@ -1,0 +1,115 @@
+[
+  {
+    "name": "null",
+    "input": null,
+    "expected_hex": "54454e53020000",
+    "expected_hash": "a04c3a062b632dac22d9dfb104f90b963745db3f3aada5524ab2c4e49354300f",
+    "byte_length": 7
+  },
+  {
+    "name": "true",
+    "input": true,
+    "expected_hex": "54454e53020001",
+    "expected_hash": "7e15404f07a5941c2d932a2c0e834b23bfd2633b7eb396f99174c8f5ffd8bbcf",
+    "byte_length": 7
+  },
+  {
+    "name": "false",
+    "input": false,
+    "expected_hex": "54454e53020002",
+    "expected_hash": "0cb7a6f7a3aecda5c1b47800d9bc1c47afafe561e03f30854bc999e0ce4cac0e",
+    "byte_length": 7
+  },
+  {
+    "name": "int_42",
+    "input": 42,
+    "expected_hex": "54454e530200032a",
+    "expected_hash": "abb784f86ab5879b09c7a9df3e113e55765edd75408c22051b1684028e209625",
+    "byte_length": 8
+  },
+  {
+    "name": "int_neg1",
+    "input": -1,
+    "expected_hex": "54454e53020003ff",
+    "expected_hash": "190bafa5f582527e6f9165941a7140f68eadd6c74f7f2e889f1d6a30cac609e9",
+    "byte_length": 8
+  },
+  {
+    "name": "int_1000",
+    "input": 1000,
+    "expected_hex": "54454e53020005e8030000",
+    "expected_hash": "9f794fce54209bf99e356f747af1b6738ac22a3bd80029f7b36061fe646c6b61",
+    "byte_length": 11
+  },
+  {
+    "name": "float_3_14",
+    "input": 3.14,
+    "expected_hex": "54454e530200061f85eb51b81e0940",
+    "expected_hash": "0c1c4df795049c8c16b45f8cb46d426844cd3e76c3f153323b277ea419ccaea0",
+    "byte_length": 15
+  },
+  {
+    "name": "string_hello",
+    "input": "hello",
+    "expected_hex": "54454e5302010568656c6c6f0700",
+    "expected_hash": "0ca5c74c3fbbbf1248c8f376bba8d4a09df4c8d7c0a4ac5363ac703471deae72",
+    "byte_length": 14
+  },
+  {
+    "name": "empty_array",
+    "input": [],
+    "expected_hex": "54454e5302000800",
+    "expected_hash": "8ecf15142d9a391d2d055f8aac68ac5498f1140d028bff2ac0bd0d1454db7fca",
+    "byte_length": 8
+  },
+  {
+    "name": "empty_object",
+    "input": {},
+    "expected_hex": "54454e5302000900",
+    "expected_hash": "70d479e9030b636d395c0cd88e5e7a84ddcf2b0810fbdf11a345a47357240426",
+    "byte_length": 8
+  },
+  {
+    "name": "simple_object",
+    "input": { "a": 1, "b": 2 },
+    "expected_hex": "54454e530202016101620902000301010302",
+    "expected_hash": "cf4785d63e7f6b0da1e3e62490d57583db0f6f441c3a56a41e53a244d16b6867",
+    "byte_length": 18
+  },
+  {
+    "name": "key_order_invariant",
+    "input": { "z": 1, "a": 2 },
+    "expected_hex": "54454e5302020161017a0902000302010301",
+    "expected_hash": "9d55204d9709d106c8c12f27335b09c8b4cdb2b63eb49aed2f5d362f638067fd",
+    "byte_length": 18
+  },
+  {
+    "name": "mixed_types",
+    "input": { "active": true, "deleted": false, "note": null },
+    "expected_hex": "54454e530203066163746976650764656c65746564046e6f74650903000101020200",
+    "expected_hash": "ed6df1bb193d952b78ba1e7dfd84fc22f1e8e3812a52e5a831e9f515d1a7bd72",
+    "byte_length": 34
+  },
+  {
+    "name": "array_of_objects",
+    "input": [{ "id": 1, "name": "Alice" }, { "id": 2, "name": "Bob" }],
+    "expected_hex": "54454e530204026964046e616d6505416c69636503426f62080209020003010107020902000302010703",
+    "expected_hash": "af35e5cb274d28b4abcb7823a8266ad41bb376783916f2e74b0f4d24e786dace",
+    "byte_length": 42
+  },
+  {
+    "name": "nested_object",
+    "input": { "user": { "name": "test", "age": 30 } },
+    "expected_hex": "54454e530204047573657203616765046e616d650474657374090100090201031e020703",
+    "expected_hash": "4a10fc1f5b0372941bc1c684265abf341975664c876c3359275648c939d9b24c",
+    "byte_length": 36
+  },
+  {
+    "name": "neg_zero_canonicalized",
+    "input": 0,
+    "description": "-0 must be canonicalized to 0; both produce identical bytes",
+    "expected_hex": "54454e5302000300",
+    "expected_hash": "de45cf62e37a22bea3a9424722c0b1b8982398213122ef59a0fb3724c74a1ff2",
+    "byte_length": 8
+  }
+]

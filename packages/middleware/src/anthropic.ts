@@ -27,7 +27,7 @@ type AnthropicCreateBody = {
 type DisposableAnthropic = Anthropic & { __contex_dispose?: () => void };
 
 // ============================================================================
-// @contex/middleware v3 — Anthropic Integration
+// @contex-llm/middleware v3 — Anthropic Integration
 // ============================================================================
 // Intercepts Anthropic message creation to inject canonical IR-backed context.
 // Handles Anthropic-specific patterns:
@@ -43,7 +43,7 @@ type DisposableAnthropic = Anthropic & { __contex_dispose?: () => void };
  * @example
  * ```ts
  * import Anthropic from '@anthropic-ai/sdk';
- * import { createContexAnthropic } from '@contex/middleware';
+ * import { createContexAnthropic } from '@contex-llm/middleware';
  *
  * const client = createContexAnthropic(new Anthropic(), {
  *   data: { tickets: myTickets },

@@ -1,4 +1,4 @@
-# @contex/core
+# @contex-llm/core
 
 **The format engine for Contex.**
 
@@ -20,7 +20,7 @@ Zero storage dependencies. Pure format operations: encode, decode, tokenize, and
 ## Installation
 
 ```bash
-pnpm add @contex/core
+pnpm add @contex-llm/core
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ pnpm add @contex/core
 The `Tens` class is the recommended way to work with Contex IR. It handles hashing, storage, and materialization automatically.
 
 ```typescript
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 // 1. Encode (Synchronous)
 const tens = Tens.encode([{ id: 1, name: 'Alice' }]);
@@ -45,7 +45,7 @@ const tokens = tens.materialize('gpt-4o');
 ### Low-Level: TENS Encode / Decode
 
 ```typescript
-import { TokenStreamEncoder, TokenStreamDecoder } from '@contex/core';
+import { TokenStreamEncoder, TokenStreamDecoder } from '@contex-llm/core';
 
 const encoder = new TokenStreamEncoder();
 const binary = encoder.encode([{ id: 1, name: 'Alice' }]);
@@ -58,7 +58,7 @@ const data = decoder.decode(binary);
 ### Token Counting
 
 ```typescript
-import { TokenizerManager } from '@contex/core';
+import { TokenizerManager } from '@contex-llm/core';
 
 const tm = new TokenizerManager();
 const count = tm.countTokens('Hello world', 'o200k_base');
@@ -70,7 +70,7 @@ tm.dispose(); // Clean up
 ### Format Output
 
 ```typescript
-import { formatOutput } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
 
 const data = [{ id: 1, name: 'Alice', role: 'admin' }];
 
@@ -96,7 +96,7 @@ Key properties:
 PTOK stores data with embedded token IDs for near-zero latency on repeated serves:
 
 ```typescript
-import { createPreTokenizedBlock, readPreTokenizedBlock } from '@contex/core';
+import { createPreTokenizedBlock, readPreTokenizedBlock } from '@contex-llm/core';
 
 const block = createPreTokenizedBlock({ id: 1, name: 'Alice' }, 'o200k_base');
 const result = readPreTokenizedBlock(block);

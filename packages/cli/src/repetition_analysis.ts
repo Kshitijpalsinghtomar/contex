@@ -1,4 +1,4 @@
-import type { TokenizerManager } from '@contex/core';
+import type { TokenizerManager } from '@contex-llm/core';
 
 export interface RepetitionStats {
   uniqueStrings: number;

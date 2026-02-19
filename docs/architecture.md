@@ -77,7 +77,7 @@ App encodes data ONCE as canonical IR
 │  → Drop-in SDK wrappers that auto-inject canonical text        │
 │  → Deterministic serialization guarantees provider cache hits  │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 3: COMPOSITION                                          │
 │  ────────────────────                                          │
@@ -86,7 +86,7 @@ App encodes data ONCE as canonical IR
 │  → Validates total fits in model's context window              │
 │  → Deterministic token topology → guaranteed cache hits        │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 2: MEMORY + MATERIALIZATION                             │
 │  ────────────────────────────────                              │
@@ -95,7 +95,7 @@ App encodes data ONCE as canonical IR
 │  → Content-addressed: same data = same hash = skip encoding    │
 │  → Model-specific blobs cached only for hot paths              │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  LAYER 1: CANONICAL IR ENCODING                                │
 │  ──────────────────────────────                                │
@@ -104,7 +104,7 @@ App encodes data ONCE as canonical IR
 │  → Model-agnostic: no tokenizer dependency                     │
 │  → Schema-aware: field names, types, structure                 │
 └────────────────────────────────────────────────────────────────┘
-                              ↑
+                              ←'
 ┌────────────────────────────────────────────────────────────────┐
 │  INPUT: Structured Data (JSON, objects, database rows)         │
 └────────────────────────────────────────────────────────────────┘
@@ -133,10 +133,10 @@ contex/
 
 | Package | Layer | Responsibility |
 |---------|-------|----------------|
-| `@contex/core` | Layer 1 | Canonical IR encoder, materializer, tokenizer manager |
-| `@contex/engine` | Layers 2-3 | Budget engine, `quick()` API, model registry |
-| `@contex/middleware` | Layer 4 | OpenAI, Anthropic, Gemini SDK wrappers |
-| `@contex/cli` | Tools | CLI tools, benchmarks, cost analysis |
+| `@contex-llm/core` | Layer 1 | Canonical IR encoder, materializer, tokenizer manager |
+| `@contex-llm/engine` | Layers 2-3 | Budget engine, `quick()` API, model registry |
+| `@contex-llm/middleware` | Layer 4 | OpenAI, Anthropic, Gemini SDK wrappers |
+| `@contex-llm/cli` | Tools | CLI tools, benchmarks, cost analysis |
 
 ---
 

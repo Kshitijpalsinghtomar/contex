@@ -1,4 +1,4 @@
-import { TokenizerManager } from '@contex/core';
+import { TokenizerManager } from '@contex-llm/core';
 import { describe, expect, it } from 'vitest';
 import { MODEL_REGISTRY, calculateBudget } from '../budget.js';
 

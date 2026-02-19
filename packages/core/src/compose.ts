@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Token Composition
+// @contex-llm/core — Token Composition
 // ============================================================================
 //
 // Composes prompts from reusable token blocks with budget validation.

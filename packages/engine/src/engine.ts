@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Contex Context Packing Engine
+// @contex-llm/engine — Contex Context Packing Engine
 // ============================================================================
 //
 // The main entry point for the Contex pipeline. Provides:
@@ -22,7 +22,7 @@ import {
   TokenizerManager,
   analyzeFormats,
   formatOutput,
-} from '@contex/core';
+} from '@contex-llm/core';
 
 import { type BudgetResult, calculateBudget } from './budget.js';
 import { formatPrefixAware } from './prefix.js';

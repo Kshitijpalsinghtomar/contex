@@ -3,11 +3,11 @@
 
 # The Intelligent Context Engine for LLMs
 
-**Contex stores structured data as a canonical intermediate representation (TENS) and serves it in the most token-efficient format for any LLM — saving 40-94% of context costs.**
+**Contex stores structured data as a canonical intermediate representation (TENS) and serves it in the most token-efficient format for any LLM — saving 46-90% of context costs.**
 
-[![npm version](https://img.shields.io/npm/v/@contex/core.svg)](https://www.npmjs.com/package/@contex/core)
+[![npm version](https://img.shields.io/npm/v/@contex-llm/core.svg)](https://www.npmjs.com/package/@contex-llm/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Test Status](https://img.shields.io/badge/Tests-560%2B%20Passed-10b981.svg)]()
+[![Test Status](https://img.shields.io/badge/Tests-600%2B%20Passed-10b981.svg)]()
 
 </div>
 
@@ -17,11 +17,11 @@
 
 ```bash
 # Install
-pnpm add @contex/core @contex/middleware
+pnpm add @contex-llm/core @contex-llm/middleware
 
 # Encode and materialize
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 const tens = Tens.encode(myData);
 const tokens = tens.materialize('gpt-4o');
@@ -35,7 +35,7 @@ const client = createContexOpenAI(new OpenAI(), {
 
 ---
 
-## 📖 Documentation Navigation
+## 📐– Documentation Navigation
 
 ### Getting Started
 
@@ -70,7 +70,7 @@ const client = createContexOpenAI(new OpenAI(), {
 
 | Guide | Description |
 |:------|:------------|
-| [Core API](./reference/core.md) | Complete API reference for @contex/core |
+| [Core API](./reference/core.md) | Complete API reference for @contex-llm/core |
 | [Middleware API](./reference/middleware.md) | OpenAI/Anthropic/Gemini SDK integration |
 | [CLI Reference](./reference/cli.md) | All CLI commands, options, and examples |
 | [Format Hierarchy](./reference/formats.md) | TENS binary vs .tens-text vs Contex Compact |
@@ -81,7 +81,7 @@ const client = createContexOpenAI(new OpenAI(), {
 
 | Feature | Description |
 |---------|-------------|
-| **40-94% Token Reduction** | Avg 43% pipeline savings, up to 94% on nested data |
+| **46-90% Token Reduction** | Avg 72% token savings, up to 90% on nested data |
 | **Deterministic Output** | Stable hashes for prefix caching |
 | **Multi-Model Support** | OpenAI, Anthropic, Gemini |
 | **Zero Config** | Works out of the box |
@@ -108,12 +108,12 @@ Contex doesn't pick one format. It stores data canonically and serves the **chea
 
 ---
 
-## 🏆 Benchmark Results (v7)
+## 🏆 Benchmark Results (v8)
 
 | Metric | Value | Details |
 |----------|-------|----------------|
-| **Avg Pipeline Savings** | **43%** | Across 15 dataset types |
-| **Best Format Savings** | **94%** | DeepNested data (Contex Compact) |
+| **Avg Pipeline Savings** | **72%** | Across 21 dataset types |
+| **Best Format Savings** | **90%** | DeepNested data (Contex Compact) |
 | **RealWorld Savings** | **68%** | Production-like ticket data |
 | **Data Fidelity** | **20/20** | Perfect roundtrip accuracy |
 | **Benchmark Tests** | **36/36** | All pass |
@@ -122,6 +122,6 @@ Contex doesn't pick one format. It stores data canonically and serves the **chea
 
 ## 🔗 Related
 
-- [GitHub](https://github.com/kshitijpalsinghtomar/contex)
+- [GitHub](https://github.com/kshitijpalsinghtomar/contex-llm)
 - [NPM Packages](./packages/)
 - [Contributing](../CONTRIBUTING.md)

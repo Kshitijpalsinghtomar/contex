@@ -14,8 +14,8 @@
  *  6. Engine quick() API works end-to-end
  */
 
-import { compile, formatOutput, Tens, analyzeFormats } from '@contex/core';
-import { contex as vercelContex } from '@contex/core/vercel';
+import { compile, formatOutput, Tens, analyzeFormats } from '@contex-llm/core';
+import { contex as vercelContex } from '@contex-llm/core/vercel';
 
 // ── Test Data ──────────────────────────────────────────────────
 const testData = [

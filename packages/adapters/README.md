@@ -1,17 +1,17 @@
-# @contex/adapters
+# @contex-llm/adapters
 
 LangChain and LlamaIndex adapters for Contex — automatically optimize your data for LLM context windows.
 
 ## Installation
 
 ```bash
-pnpm add @contex/adapters
+pnpm add @contex-llm/adapters
 ```
 
 ## LangChain
 
 ```typescript
-import { ContexLoader } from '@contex/adapters/langchain';
+import { ContexLoader } from '@contex-llm/adapters/langchain';
 
 const loader = new ContexLoader({ model: 'gpt-4o' });
 
@@ -28,7 +28,7 @@ const compressed = loader.optimizeDocuments(existingDocs);
 ## LlamaIndex
 
 ```typescript
-import { ContexReader } from '@contex/adapters/llamaindex';
+import { ContexReader } from '@contex-llm/adapters/llamaindex';
 
 const reader = new ContexReader({ model: 'gpt-4o' });
 
@@ -56,7 +56,7 @@ Both adapters accept:
 
 ## Token Savings
 
-Contex Compact format delivers **40-94% token reduction** vs raw JSON, with 43% average across 15 dataset types.
+Contex Compact format delivers **46-90% token reduction** vs raw JSON, with 72% average across 21 dataset types.
 
 ## License
 

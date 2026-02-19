@@ -1,4 +1,4 @@
-# @contex/server
+# @contex-llm/server
 
 REST API for Contex canonical IR and engine operations.
 
@@ -78,15 +78,15 @@ Returns format analyses for a collection.
 
 ### `POST /v1/providers/openai/chat`
 
-Calls OpenAI Chat Completions through `@contex/middleware` injection.
+Calls OpenAI Chat Completions through `@contex-llm/middleware` injection.
 
 ### `POST /v1/providers/anthropic/messages`
 
-Calls Anthropic Messages API through `@contex/middleware` injection.
+Calls Anthropic Messages API through `@contex-llm/middleware` injection.
 
 ### `POST /v1/providers/gemini/generate`
 
-Calls Gemini `generateContent` through `@contex/middleware` injection.
+Calls Gemini `generateContent` through `@contex-llm/middleware` injection.
 
 ### `GET /health`
 

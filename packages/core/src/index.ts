@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Public API
+// @contex-llm/core — Public API
 // ============================================================================
 
 // Core classes
@@ -112,6 +112,8 @@ export {
   canonicalizeNumber,
 } from './canonical.js';
 export { encodeIR, IR_VERSION, CANONICALIZATION_VERSION } from './ir_encoder.js';
+export { isWasmAvailable, wasmUnavailableReason, createWasmEncoder } from './wasm_bridge.js';
+export type { WasmTensEncoder } from './wasm_bridge.js';
 export {
   materialize,
   createMaterializer,
@@ -167,3 +169,36 @@ export {
   ARRAY_LEN_BASE,
   DICT_REF_BASE,
 } from './types.js';
+
+// Resource Metrics & Pipeline Profiling
+export {
+  profileSync,
+  profileAsync,
+  PipelineProfiler,
+  formatSnapshot,
+  formatPipelineReport,
+} from './resource_metrics.js';
+export type {
+  ResourceSnapshot,
+  PipelineReport,
+  FormatOptions,
+} from './resource_metrics.js';
+
+// Structural Fingerprint & Anti-Copy Protection
+export {
+  analyzeComplexity,
+  buildHashChain,
+  generateWatermark,
+  verifyWatermark,
+  entropyWeightedFieldOrder,
+  fingerprintSimilarity,
+  formatComplexityReport,
+} from './structural_fingerprint.js';
+export type {
+  StructuralComplexity,
+  PipelineFingerprint,
+  EncodingWatermark,
+} from './structural_fingerprint.js';
+
+// Schema utilities (also re-export unflattenObject)
+export { unflattenObject } from './schema.js';

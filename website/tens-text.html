@@ -21,7 +21,7 @@
 <body>
 
     <nav class="nav">
-        <a href="/" class="nav-brand">
+        <a href="./" class="nav-brand">
             <div class="logo-icon">C</div>
             Contex
         </a>
@@ -53,7 +53,7 @@
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
             </button>
-            <a href="https://github.com/kshitijpalsinghtomar/contex" class="btn btn-ghost btn-sm" target="_blank">
+            <a href="https://github.com/kshitijpalsinghtomar/contex-llm" class="btn btn-ghost btn-sm" target="_blank">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                     <path
@@ -150,24 +150,22 @@
             <ul>
                 <li>Not a replacement for JSON in APIs (use JSON for that)</li>
                 <li>Not a config file format (use YAML/TOML for human editing)</li>
-                <li>Not the LLM output format (use <strong>Contex Compact</strong> for that — 43% avg savings)</li>
+                <li>Not the LLM output format (use <strong>Contex Compact</strong> for that — 72% avg savings)</li>
             </ul>
 
             <!-- Where It Fits -->
             <h2 id="where-it-fits">Where It Fits in the Pipeline</h2>
 
             <pre>
-                 ┌──────────┐      ┌──────────┐     ┌──────────────────┐
-                 │   Input  │─────►│   TENS   │────►│    LLM Output    │
-                 │ JSON/CSV │      │ Canon IR │     │  Contex Compact  │
-                 └──────────┘      └─────┬────┘     └──────────────────┘
-                                         │
-                                ┌────────┼────────┐
-                                ▼        ▼        ▼
-                             Binary   TENS-Text   Hash
-                             (cache)  (inspect)   (dedup)
-                            
-            </pre>
+┌──────────┐      ┌──────────┐     ┌──────────────────┐
+│   Input  │─────►│   TENS   │────►│    LLM Output    │
+│ JSON/CSV │      │ Canon IR │     │  Contex Compact  │
+└──────────┘      └─────┬────┘     └──────────────────┘
+                        │
+               ┌────────┼────────┐
+               ▼        ▼        ▼
+            Binary   TENS-Text   Hash
+            (cache)  (inspect)   (dedup)</pre>
 
             <p>TENS-Text is the <strong>human-readable view</strong> of the TENS intermediate representation. Use it
                 for:</p>
@@ -687,7 +685,7 @@ user
             <!-- Encoding -->
             <h2 id="encoding">Encoding (TypeScript)</h2>
 
-            <pre>import { TensTextEncoder } from '@contex/core';
+            <pre>import { TensTextEncoder } from '@contex-llm/core';
 
 const data = [
   { id: 1, name: 'Alice', role: 'admin' },
@@ -721,7 +719,7 @@ console.log(text);
             <!-- Decoding -->
             <h2 id="decoding">Decoding (TypeScript)</h2>
 
-            <pre>import { TensTextDecoder } from '@contex/core';
+            <pre>import { TensTextDecoder } from '@contex-llm/core';
 
 const decoder = new TensTextDecoder();
 const { data, document } = decoder.decode(text);
@@ -745,13 +743,13 @@ const { data, document } = decoder.decode(text);
 
             <p>You can also generate TENS-Text via the <code>formatOutput()</code> function:</p>
 
-            <pre>import { formatOutput } from '@contex/core';
+            <pre>import { formatOutput } from '@contex-llm/core';
 
 // Generate TENS-Text format
 const tensText = formatOutput(data, 'tens-text');
 
 // Compare with other formats
-const contex  = formatOutput(data, 'contex');   // Best for LLMs (43% avg savings)
+const contex  = formatOutput(data, 'contex');   // Best for LLMs (72% avg savings)
 const csv     = formatOutput(data, 'csv');       // Flat tabular
 const toon    = formatOutput(data, 'toon');      // Tab-separated</pre>
 
@@ -946,8 +944,7 @@ const toon    = formatOutput(data, 'toon');      // Tab-separated</pre>
     </div>
 
     <footer class="footer">
-        <p>MIT &copy; <a href="https://github.com/kshitijpalsinghtomar/contex">Contex</a> &middot; Built for
-            production LLM pipelines</p>
+        <p>MIT © 2026 <a href="https://github.com/kshitijpalsinghtomar/contex-llm">Contex</a> · Created by <strong>Kshitij Pal Singh Tomar</strong> · Built for production LLM pipelines</p>
     </footer>
 
     <script>

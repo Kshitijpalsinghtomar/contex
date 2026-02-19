@@ -12,8 +12,8 @@ import {
   MASK_CHUNK_BITS,
   TokenStreamEncoder,
   TokenizerManager,
-} from '@contex/core';
-import { formatOutput } from '@contex/core';
+} from '@contex-llm/core';
+import { formatOutput } from '@contex-llm/core';
 import {
   generateApiResponses,
   generateChatMessages,

@@ -3,7 +3,7 @@
 // ============================================================================
 // Syntax: GET <collection> [WHERE <field> = <value>] [LIMIT <n>] [FORMAT <fmt>]
 
-import type { OutputFormat } from '@contex/core';
+import type { OutputFormat } from '@contex-llm/core';
 
 export interface PqlQuery {
   collection: string;

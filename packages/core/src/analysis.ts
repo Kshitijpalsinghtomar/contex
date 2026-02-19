@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Dataset Structure Analysis
+// @contex-llm/core — Dataset Structure Analysis
 // ============================================================================
 //
 // Analyzes dataset structure to enable smart strategy selection.

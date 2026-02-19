@@ -2,7 +2,7 @@
 // Predictive Packer — Tests
 // ============================================================================
 
-import { TokenizerManager } from '@contex/core';
+import { TokenizerManager } from '@contex-llm/core';
 import { afterAll, describe, expect, it } from 'vitest';
 import { packContext } from '../packer.js';
 import type { ContextItem, PackerConfig } from '../packer.js';

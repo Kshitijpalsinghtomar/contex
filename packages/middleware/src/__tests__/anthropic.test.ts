@@ -57,7 +57,7 @@ const TEST_DATA = [
   { id: 2, title: 'Signup crash', priority: 'critical' },
 ];
 
-describe('@contex/middleware v3 — Anthropic Integration', () => {
+describe('@contex-llm/middleware v3 — Anthropic Integration', () => {
   let tmpDir: string;
 
   beforeEach(() => {

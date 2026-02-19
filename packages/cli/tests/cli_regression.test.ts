@@ -148,7 +148,7 @@ test('analyze contex token count is consistent with stats token count', () => {
   assert.equal(stats.code, 0, stats.stderr || stats.stdout);
   assert.equal(analyze.code, 0, analyze.stderr || analyze.stdout);
 
-  const statsTokens = extractTokenCount(stats.stdout, 'Total tokens');
+  const statsTokens = extractTokenCount(stats.stdout, 'Contex tokens');
   const analyzeTokens = extractTokenCount(analyze.stdout, 'Contex Tokens');
 
   assert.ok(statsTokens > 0, `Failed to parse stats tokens from output:\n${stats.stdout}`);
@@ -414,7 +414,7 @@ test('cache-diagnose output contains expected metrics', () => {
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
   // Should contain both readiness status and recommendation
-  assert.match(result.stdout, /(✅ READY|⚠️  NOT READY)/i);
+  assert.match(result.stdout, /(READY|NOT READY)/i);
   assert.match(result.stdout, /Recommendation:/i);
 });
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/engine — Write-Ahead Log (WAL)
+// @contex-llm/engine — Write-Ahead Log (WAL)
 // ============================================================================
 //
 // Provides crash-safe writes to the Contex database. All mutations are first

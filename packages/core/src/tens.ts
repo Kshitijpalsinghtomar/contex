@@ -14,12 +14,12 @@ import type { MaterializedTokens, TensIR, TensSchema, TokenizerEncoding } from '
  * - **Immutable**: Represents a specific version of data
  * - **Deterministic**: Same data → Same Hash → 100% cache hit rate
  * - **Portable**: Can be injected into any LLM context
- * - **Efficient**: Reduces token volume by 40-94% before tokenization
+ * - **Efficient**: Reduces token volume by 40-90% before tokenization
  *
  * ## Quick Start
  *
  * ```typescript
- * import { Tens } from '@contex/core';
+ * import { Tens } from '@contex-llm/core';
  *
  * // Encode once
  * const tens = Tens.encode(myData);
@@ -33,7 +33,7 @@ import type { MaterializedTokens, TensIR, TensSchema, TokenizerEncoding } from '
  * ## With Persistent Storage
  *
  * ```typescript
- * import { Tens, TokenMemory } from '@contex/core';
+ * import { Tens, TokenMemory } from '@contex-llm/core';
  *
  * const memory = new TokenMemory('./.contex');
  * const tens = Tens.encode(myData, { memory });

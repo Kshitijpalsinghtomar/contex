@@ -27,8 +27,8 @@ Build a chatbot that has access to ticket history and knowledge base.
 ```typescript
 // support-bot.ts
 import OpenAI from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 
 // Fetch customer data (simulated)
 const tickets = await fetchCustomerTickets(customerId);
@@ -73,20 +73,20 @@ Knowledge: {{CONTEX:kb}}`
 ```
 
 **Result:**
-- ✅ 43% avg token reduction (up to 94% on nested data)
+- ✅ 72% avg token reduction (up to 90% on nested data)
 - ✅ Cache hit on repeated tickets
 - ✅ Faster response times
 
 ---
 
-## 📚 RAG with Knowledge Base
+## 📐š RAG with Knowledge Base
 
 Build a Retrieval-Augmented Generation system with context optimization.
 
 ```typescript
 // rag.ts
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 import { Chroma } from 'langchain/vectorstores/chroma';
 
 // 1. Build Knowledge Base
@@ -153,8 +153,8 @@ Analyze code changes with context about the codebase.
 
 ```typescript
 // code-review.ts
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 import { getDiff, getFileContext } from './git';
 
 interface ReviewRequest {
@@ -219,8 +219,8 @@ Create dashboards that analyze data with AI assistance.
 
 ```typescript
 // analytics.ts
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens, formatOutput } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens, formatOutput } from '@contex-llm/core';
 
 interface DashboardRequest {
   metrics: Metric[];
@@ -282,8 +282,8 @@ Generate content using structured data as context.
 
 ```typescript
 // content-generator.ts
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 
 interface Product {
   name: string;
@@ -356,8 +356,8 @@ export async function generateCatalog(products: Product[]) {
 
 ```typescript
 // tenant-context.ts
-import { createContexOpenAI } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 
 // Per-tenant cache
 const tenantCache = new Map<string, Tens>();
@@ -396,8 +396,8 @@ app.get('/ai/chat', async (req, res) => {
 
 ```typescript
 // finance.ts
-import { createContexAnthropic } from '@contex/middleware';
-import { Tens } from '@contex/core';
+import { createContexAnthropic } from '@contex-llm/middleware';
+import { Tens } from '@contex-llm/core';
 
 interface Transaction {
   date: string;
@@ -452,7 +452,7 @@ Provide:
 
 ```typescript
 // Build script - run at deployment
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const data = require('./data.json');
 const tens = Tens.encode(data);
@@ -468,7 +468,7 @@ console.log('Cache warmed!');
 
 ```typescript
 // Process multiple items efficiently
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const items = loadItems(); // 1000 items
 
@@ -519,7 +519,7 @@ Use Contex with LangChain for RAG pipelines.
 
 ```typescript
 // langchain-rag.ts
-import { ContexLoader } from '@contex/adapters';
+import { ContexLoader } from '@contex-llm/adapters';
 import { Chroma } from 'langchain/vectorstores/chroma';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
@@ -559,7 +559,7 @@ Use Contex with LlamaIndex for advanced indexing.
 
 ```typescript
 // llamaindex-rag.ts
-import { ContexReader } from '@contex/adapters';
+import { ContexReader } from '@contex-llm/adapters';
 import { VectorStoreIndex } from 'llamaindex';
 import { OpenAI } from 'llm';
 

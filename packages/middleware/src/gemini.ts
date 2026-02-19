@@ -37,7 +37,7 @@ type DisposableGeminiModel = GeminiModel & {
 };
 
 // ============================================================================
-// @contex/middleware v3 — Google Gemini Integration
+// @contex-llm/middleware v3 — Google Gemini Integration
 // ============================================================================
 // Intercepts Gemini API calls to inject canonical IR-backed context.
 // Handles Gemini's unique `parts`-based content format.
@@ -55,7 +55,7 @@ type DisposableGeminiModel = GeminiModel & {
  * @example
  * ```ts
  * import { GoogleGenerativeAI } from '@google/generative-ai';
- * import { createContexGemini } from '@contex/middleware';
+ * import { createContexGemini } from '@contex-llm/middleware';
  *
  * const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
  * const model = createContexGemini(

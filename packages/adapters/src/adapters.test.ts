@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ContexLoader } from './langchain.js';
 import { ContexReader } from './llamaindex.js';
 
-describe('@contex/adapters', () => {
+describe('@contex-llm/adapters', () => {
   it('ContexLoader optimizes structured rows', () => {
     const loader = new ContexLoader({ model: 'gpt-4o-mini' });
     const result = loader.optimize([

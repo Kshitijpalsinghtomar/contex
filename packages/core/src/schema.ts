@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — Schema Registry
+// @contex-llm/core — Schema Registry
 // ============================================================================
 //
 // Deduplicates object shapes: if two objects have the same sorted field names
@@ -32,13 +32,32 @@ export function inferType(value: unknown): TensType {
  *
  * Arrays are NOT flattened — they remain as values.
  * Null values are preserved as null (handled by presence mask).
+ * Circular references are detected and emitted as null.
+ * Maximum depth is capped at 50 levels to prevent stack overflow.
  */
-export function flattenObject(obj: Record<string, unknown>, prefix = ''): Record<string, unknown> {
+const MAX_FLATTEN_DEPTH = 50;
+
+export function flattenObject(
+  obj: Record<string, unknown>,
+  prefix = '',
+  _depth = 0,
+  _visited?: WeakSet<object>,
+): Record<string, unknown> {
+  const visited = _visited ?? new WeakSet<object>();
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      Object.assign(result, flattenObject(value as Record<string, unknown>, path));
+      if (_depth >= MAX_FLATTEN_DEPTH || visited.has(value as object)) {
+        // Depth exceeded or circular reference — emit null to prevent stack overflow
+        result[path] = null;
+      } else {
+        visited.add(value as object);
+        Object.assign(
+          result,
+          flattenObject(value as Record<string, unknown>, path, _depth + 1, visited),
+        );
+      }
     } else {
       result[path] = value;
     }

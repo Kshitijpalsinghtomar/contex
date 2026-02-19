@@ -1,12 +1,12 @@
 {
-    "name": "@contex/engine",
+    "name": "@contex-llm/engine",
     "version": "0.1.0",
     "description": "Context packing engine for Contex (Budget, Models, Format Selection)",
     "license": "MIT",
-    "author": "Contex Team",
+    "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/contex/contex.git",
+        "url": "https://github.com/kshitijpalsinghtomar/contex-llm.git",
         "directory": "packages/engine"
     },
     "publishConfig": {
@@ -41,7 +41,7 @@
         "clean": "rimraf dist"
     },
     "dependencies": {
-        "@contex/core": "workspace:*",
+        "@contex-llm/core": "workspace:*",
         "js-tiktoken": "^1.0.10"
     },
     "devDependencies": {

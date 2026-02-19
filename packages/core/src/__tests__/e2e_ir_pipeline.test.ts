@@ -128,9 +128,14 @@ describe('E2E IR Pipeline — Full Phase 1 Flow', () => {
       const tokenizer = new TokenizerManager('o200k_base');
       const detokenized = tokenizer.detokenize(result.tokens, result.encoding);
       // Should contain field names header and values from dataset
+      // Note: username/email columns are template-compressed (@t username=user_{id})
+      // so literal "user_1" won't appear — the id column values are present instead
+      expect(detokenized).toContain('id');
+      expect(detokenized).toContain('age');
+      expect(detokenized).toContain('department');
+      // Template declarations for derived columns
+      expect(detokenized).toContain('@t');
       expect(detokenized).toContain('username');
-      expect(detokenized).toContain('user_1');
-      expect(detokenized).toContain('user_100');
       // Contex format should have dictionary entries for repeated values
       expect(detokenized).toContain('@d');
       tokenizer.dispose();

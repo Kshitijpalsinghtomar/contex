@@ -1,5 +1,5 @@
 {
-    "name": "@contex/tens-wasm",
+    "name": "@contex-llm/tens-wasm",
     "version": "0.1.0",
     "description": "High-performance TENS encoder/decoder for contex (WASM)",
     "main": "pkg/contex_tens_wasm.js",
@@ -18,6 +18,6 @@
         "rust",
         "tens"
     ],
-    "author": "contex Team",
+    "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
     "license": "MIT"
 }

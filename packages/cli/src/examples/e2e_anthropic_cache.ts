@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
-import { TokenMemory, encodeIR } from '@contex/core';
-import { createContexAnthropic } from '@contex/middleware';
+import { TokenMemory, encodeIR } from '@contex-llm/core';
+import { createContexAnthropic } from '@contex-llm/middleware';
 
 // Check API Key
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -59,7 +59,7 @@ async function main() {
   // We encode the data to a TENS object *before* creating the client.
   // This TENS object is immutable, deterministic, and model-agnostic.
   console.log('   [Contex] Pre-encoding data using TENS Protocol...');
-  const { quick } = await import('@contex/engine'); // Dynamic import to simulate app usage
+  const { quick } = await import('@contex-llm/engine'); // Dynamic import to simulate app usage
   const result = quick(data, MODEL);
   const tensTickets = result.tens;
   console.log(`   [Contex] TENS Hash: ${tensTickets.hash.slice(0, 12)}...`);

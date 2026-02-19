@@ -14,8 +14,8 @@
 
 ```bash
 # Install CLI and SDK
-pnpm add -g @contex/cli
-pnpm add @contex/core @contex/engine @contex/middleware
+pnpm add -g @contex-llm/cli
+pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware
 ```
 
 
@@ -36,10 +36,10 @@ pnpm add @contex/core @contex/engine @contex/middleware
 
 ```bash
 # Install CLI globally or locally
-pnpm add -g @contex/cli
+pnpm add -g @contex-llm/cli
 
 # Install SDK packages in your project
-pnpm add @contex/core @contex/engine @contex/middleware
+pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware
 ```
 
 ---
@@ -98,7 +98,7 @@ Use the middleware to inject the materialized data.
 
 ```typescript
 import OpenAI from 'openai';
-import { createContexOpenAI } from '@contex/middleware';
+import { createContexOpenAI } from '@contex-llm/middleware';
 import ticketData from './data.json';
 
 // 1. Wrap the client
@@ -124,7 +124,7 @@ Contex automatically adds `cache_control` breakpoints for large payloads.
 
 ```typescript
 import Anthropic from '@anthropic-ai/sdk';
-import { createContexAnthropic } from '@contex/middleware';
+import { createContexAnthropic } from '@contex-llm/middleware';
 
 const client = createContexAnthropic(new Anthropic(), {
   data: { 
@@ -152,7 +152,7 @@ For dynamic data or custom pipelines, use the Engine API directly.
 ### One-Shot `quick()`
 
 ```typescript
-import { quick } from '@contex/engine';
+import { quick } from '@contex-llm/engine';
 
 const result = quick(myData, 'gpt-4o');
 console.log(result.tokens);   // [102, 492, ...]
@@ -162,7 +162,7 @@ console.log(result.asText()); // Canonical text
 ### Token Memory (Low Level)
 
 ```typescript
-import { TokenMemory } from '@contex/core';
+import { TokenMemory } from '@contex-llm/core';
 
 const memory = new TokenMemory('.contex');
 const { hash } = memory.store(myData);

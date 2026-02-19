@@ -3,7 +3,7 @@
 
 # Contex Benchmarks
 
-> **Benchmark v7** — 15 dataset types, 36/36 tests passing, 20/20 data fidelity.
+> **Benchmark v8** — 21 dataset types, 36/36 tests passing, 20/20 data fidelity.
 
 </div>
 
@@ -14,8 +14,8 @@
 
 | Metric | Value | Status |
 |:-------|:------|:-------|
-| **Avg Pipeline Savings** | 43% | ✅ VALIDATED |
-| **Best Format Savings** | 94% (DeepNested) | ✅ VALIDATED |
+| **Avg Pipeline Savings** | 72% | ✅ VALIDATED |
+| **Best Format Savings** | 90% (DeepNested) | ✅ VALIDATED |
 | **RealWorld Savings** | 68% (Contex Compact) | ✅ VALIDATED |
 | **Data Fidelity** | 20/20 | ✅ PERFECT |
 | **Benchmark Tests** | 36/36 | ✅ ALL PASS |
@@ -39,7 +39,7 @@ Contex Compact consistently delivers the highest savings across all dataset type
 
 | Dataset | Format Savings | Pipeline Savings | Notes |
 | :--- | :--- | :--- | :--- |
-| **DeepNested/100** | **94%** | **88%** | Deep objects flattened via dot-notation |
+| **DeepNested/100** | **90%** | **88%** | Deep objects flattened via dot-notation |
 | **Repetitive/500** | **70%** | **55%** | Dictionary compression excels |
 | **RealWorld/500** | **68%** | **52%** | Production-like ticket data |
 | **Nested/500** | **60%** | **48%** | 2-level nested objects |
@@ -56,14 +56,14 @@ All formats compared on RealWorld/500 (customer support tickets):
 | **Contex Compact** | **-68%** | Everything (dictionary compression + deep flattening) |
 | **TOON** | **-56%** | Flat/tabular data (tab-separated) |
 | **CSV** | **-54%** | Simple flat data |
-| **TENS-Text** | **-43%** | Legacy format |
+| **TENS-Text** | **-54%** | Legacy format |
 | **Markdown** | **-38%** | Human-readable output |
 
 ---
 
 ## 3. Cost Savings: ROI
 
-Projected annual savings at 10M requests/month, 10K token context, using 43% avg savings.
+Projected annual savings at 10M requests/month, 10K token context, using 72% avg savings.
 
 | Provider | Cost/1M Tokens | Projected Annual Savings |
 | :--- | :--- | :--- |
@@ -101,17 +101,17 @@ Every format's output is verified for roundtrip accuracy.
 
 ## Methodology
 
-### Benchmark Suite (v7)
+### Benchmark Suite (v8)
 
 | # | Test Category | What It Measures |
 |---|---|---|
-| 1 | **Comprehensive Matrix** | Token counts for 15 datasets × 5 sizes × 6 formats |
+| 1 | **Comprehensive Matrix** | Token counts for 21 datasets × 5 sizes × 6 formats |
 | 2 | **Data Fidelity** | Roundtrip accuracy across all formats |
 | 3 | **Format Comparison** | Side-by-side format ranking |
 | 4 | **Latency** | Encoding speed in μs/row |
 | 5 | **Pipeline Connectivity** | End-to-end pipeline verification |
 
-### Datasets Tested (15 types)
+### Datasets Tested (21 types)
 
 | Dataset | Description | Focus |
 |---|---|---|

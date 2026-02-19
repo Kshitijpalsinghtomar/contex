@@ -1,6 +1,6 @@
 # Contex Roadmap & Vision
 
-> **Last Updated:** February 16, 2026
+> **Last Updated:** February 17, 2026
 
 ---
 
@@ -19,7 +19,7 @@
 | **P0: Foundation** | ✅ Complete | Production-ready core infrastructure |
 | **P1: Developer Experience** | ✅ Complete | CLI polish, unified API, documentation |
 | **P2: Performance** | ✅ Complete | Token-aware APIs, field compression |
-| **P1-R: Reality Sprint** | 🚧 In Progress | Hardening for production workloads |
+| **P1-R: Reality Sprint** | ✅ Complete | Hardening for production workloads |
 
 </div>
 
@@ -29,7 +29,7 @@
 
 **Objective:** Sustain worst-case dataset reduction at 50%+ while keeping median ≥60% on the fixed-set cadence.
 
-**Status:** 🚧 In Progress
+**Status:** ✅ Complete
 
 ---
 
@@ -61,18 +61,21 @@
 | **Budget Engine** | ✅ Stable | Context window budget calculations |
 | **Prefix Cache Optimization** | ✅ Stable | Deterministic output for vLLM cache reuse |
 | **Middleware (OpenAI/Anthropic/Gemini)** | ✅ Stable | SDK wrappers with auto-injection |
+| **WASM Acceleration** | ✅ Stable | Rust-compiled encoder via WebAssembly |
+| **Model Registry** | ✅ Stable | 39 models across 9 providers with per-model tokenizer configs |
 
-### 📊 Verified Benchmarks (v7 — Contex Compact)
+### 📊 Verified Benchmarks (v8 — Contex Compact)
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| **Average Pipeline Savings** | **43%** | Across 15 dataset types |
-| **Best Format Savings** | **94%** | DeepNested via Contex Compact |
+| **Average Pipeline Savings** | **72%** | Across 21 dataset types |
+| **Best Format Savings** | **90%** | DeepNested via Contex Compact |
 | **RealWorld Compact Savings** | **68%** | Production-like mixed data |
 | **Data Fidelity** | **20/20** | All round-trip tests pass |
-| **Total Tests** | **560+** | Core + Engine + Middleware + CLI + Server |
+| **WASM Acceleration** | **Active** | Rust-compiled encoder |
+| **Total Tests** | **600+** | Core + Engine + Middleware + CLI + Server |
 
-> **Note:** Benchmark v7 uses 15 dataset types (Flat, Nested, DeepNested, Wide, Sparse, Repetitive, Mixed, RealWorld, etc.) with Contex Compact format (dictionary compression, deep flattening, tab-separated values).
+> **Note:** Benchmark v8 uses 21 dataset types (Flat, Nested, DeepNested, Wide, Sparse, Repetitive, Mixed, RealWorld, GitHub API, TimeSeries, Financial, etc.) with Contex Compact format (7+ compression directives, dictionary compression, deep flattening, tab-separated values, WASM acceleration).
 
 ---
 
@@ -104,7 +107,7 @@ const stream = await openai.chat.completions.create({
 **Solution:** IMPLEMENTED - Comprehensive error types:
 
 ```typescript
-import { ContexValidationError, ContexModelNotFoundError } from '@contex/core';
+import { ContexValidationError, ContexModelNotFoundError } from '@contex-llm/core';
 
 try {
   Tens.encode(data);
@@ -146,10 +149,12 @@ const client = createContexOpenAI(openai, {
 
 #### ✅ P0-4: Test Coverage at 100%
 
-**Result:** 560+ tests passing (100%)
+**Result:** 600+ tests passing (100%)
 
 ```
-Core        446 passed (2 skipped)
+Core        532 passed (2 skipped)
+Protocol     86 passed
+Benchmark    36 passed
 Engine       64 passed
 Middleware   20 passed
 CLI          23 passed
@@ -167,14 +172,14 @@ Adapters      2 passed
 
 ```typescript
 // Simple (recommended)
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const tens = Tens.encode(data);           // Compile once
 const tokens = tens.materialize('gpt-4o'); // Get tokens
 const text = tens.toString();              // Get canonical text
 
 // Advanced (when needed)
-import { TokenMemory } from '@contex/core';
+import { TokenMemory } from '@contex-llm/core';
 const memory = new TokenMemory('./.contex');
 memory.store(data);
 memory.materializeAndCache(hash, 'gpt-4o');
@@ -187,20 +192,20 @@ memory.materializeAndCache(hash, 'gpt-4o');
 ```bash
 $ npx contexto analyze data.json
 
-╔═══════════════════════════════════════════════════════════════════╗
+╔══════════════════════════════════════════════════════════════════╗
 ║                    CONTEXT ANALYSIS                               ║
-╠═══════════════════════════════════════════════════════════════════╣
+╠══════════════════════════════════════════════════════════════════╣
 ║  Input:        data.json                                          ║
 ║  JSON Tokens:  39,605                                             ║
-║  Contex Tokens: 22,570  ████████████░░░░░░  43%                   ║
-║  Savings:      $3.40 per 1M requests                              ║
-╠═══════════════════════════════════════════════════════════════════╣
+║  Contex Tokens: 18,218  ████████████░░░░░░  54%                   ║
+║  Savings:      $5.47 per 1M requests                              ║
+╠════════════════════════════════════════════════════════════════╣
 ║  Format Ranking:                                                  ║
-║    contex (Compact)  43% saved   ★ Best                           ║
+║    contex (Compact)  54% saved   ★ Best                           ║
 ║    csv               38% saved                                    ║
 ║    markdown           6% saved                                    ║
 ║    json                0% saved   (baseline)                      ║
-╚═══════════════════════════════════════════════════════════════════╝
+╚══════════════════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -228,7 +233,7 @@ $ npx contexto analyze data.json
 ```bash
 $ npx contexto guard data.json
 
-╭──────────────────────────────────────────────────────╮
+═­──────────────────────────────────────────────────────═®
 │          Semantic Relation Guard                     │
 ├──────────────────────────────────────────────────────┤
 │  Input:    data.json                                 │
@@ -237,7 +242,7 @@ $ npx contexto guard data.json
 │  Rows:     1000/1000                                 │
 │  Fields:   95.0% (target >= 95%)                     │
 │  RowMatch: 98.5% (target >= 95%)                     │
-╰──────────────────────────────────────────────────────╯
+═°──────────────────────────────────────────────────────═¯
 ```
 
 ---
@@ -267,18 +272,18 @@ Already implemented in `packages/core/src/formatters.ts`:
 
 ```typescript
 // LangChain
-import { ContexLoader } from '@contex/adapters/langchain';
+import { ContexLoader } from '@contex-llm/adapters/langchain';
 const docs = await new ContexLoader({ format: 'markdown' }).load('data.json');
 
 // LlamaIndex
-import { ContexReader } from '@contex/adapters/llamaindex';
+import { ContexReader } from '@contex-llm/adapters/llamaindex';
 const reader = new ContexReader({ model: 'gpt-4o' });
 const optimized = reader.optimizeNodes(nodes);
 ```
 
 ---
 
-## P1-R: Reality Sprint 🚧 In Progress
+## P1-R: Reality Sprint ✅ Complete
 
 **Problem:** Strong claims need repeatable verification
 
@@ -286,8 +291,8 @@ const optimized = reader.optimizeNodes(nodes);
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Average pipeline savings | 43% | 40%+ |
-| Best format savings | 94% (DeepNested) | 50%+ |
+| Average pipeline savings | 72% | 40%+ |
+| Best format savings | 90% (DeepNested) | 50%+ |
 | Data fidelity | 20/20 PASS | 100% |
 
 ### Latest Scorecard Results
@@ -342,7 +347,7 @@ const response = await openai.chat.completions.create({
 ### P3-3: Semantic Fingerprinting (Optional Module)
 
 ```typescript
-import { SemanticFingerprint } from '@contex/core/optional/semantic';
+import { SemanticFingerprint } from '@contex-llm/core/optional/semantic';
 
 const fp = new SemanticFingerprint();
 const ctx1 = Tens.encode([{ text: "The cat sat on the mat" }]);
@@ -357,7 +362,7 @@ console.log(ctx1.semanticHash === ctx2.semanticHash); // true
 ### P3-4: Vercel AI SDK Support
 
 ```typescript
-import { useContex } from '@contex/vercel-ai-sdk';
+import { useContex } from '@contex-llm/vercel-ai-sdk';
 
 const { messages } = useContex({
   data: userData,
@@ -437,7 +442,7 @@ await db.delete(ctxId);
 
 ```typescript
 import { ContexDB } from '@contexdb/core';
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const db = new ContexDB('./.contexdb');
 

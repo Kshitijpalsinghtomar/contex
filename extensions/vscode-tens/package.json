@@ -1,0 +1,87 @@
+{
+  "name": "vscode-tens",
+  "displayName": "TENS Format Support",
+  "description": "Syntax highlighting, file icons, and language support for .tens files (Contex Token-Efficient Notation for Structured data)",
+  "version": "0.1.0",
+  "publisher": "kshitijpalsinghtomar",
+  "author": "Kshitij Pal Singh Tomar <https://github.com/kshitijpalsinghtomar>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kshitijpalsinghtomar/contex-llm",
+    "directory": "extensions/vscode-tens"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters"
+  ],
+  "keywords": [
+    "tens",
+    "contex",
+    "llm",
+    "token",
+    "ai"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "tens",
+        "aliases": [
+          "TENS",
+          "tens",
+          "TENS-Text"
+        ],
+        "extensions": [
+          ".tens"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "tens-text",
+        "aliases": [
+          "TENS-Text"
+        ],
+        "extensions": [
+          ".tens.txt",
+          ".tenstxt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tens",
+        "scopeName": "source.tens",
+        "path": "./syntaxes/tens.tmLanguage.json"
+      },
+      {
+        "language": "tens-text",
+        "scopeName": "source.tens",
+        "path": "./syntaxes/tens.tmLanguage.json"
+      }
+    ],
+    "iconThemes": [],
+    "configurationDefaults": {
+      "[tens]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.wordWrap": "on"
+      },
+      "[tens-text]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.wordWrap": "on"
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^2.22.0"
+  }
+}

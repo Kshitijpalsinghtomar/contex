@@ -1,5 +1,5 @@
 // ============================================================================
-// @contex/core — In-Memory Token Cache
+// @contex-llm/core — In-Memory Token Cache
 // ============================================================================
 //
 // Optional caching layer for format + tokenize results. Avoids re-formatting

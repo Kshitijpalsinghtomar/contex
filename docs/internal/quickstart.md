@@ -24,7 +24,7 @@ const tokens = tens.materialize('gpt-4o');
 const client = createContexOpenAI(openai, { data: { context: tens } });
 ```
 
-That's it! Your data is now **40-94% smaller** and **cache-ready**.
+That's it! Your data is now **46-90% smaller** and **cache-ready**.
 
 ---
 
@@ -42,10 +42,10 @@ That's it! Your data is now **40-94% smaller** and **cache-ready**.
 
 | Package | When to Use | What's Inside |
 |---------|-------------|---------------|
-| `@contex/core` | **Most users** — Encoding, materialization, utilities | `Tens`, `TokenMemory`, formatters |
-| `@contex/engine` | Need budget analysis, multi-model support | `quick()`, model registry, cost calculators |
-| `@contex/middleware` | Want drop-in provider integration | `createContexOpenAI()`, `createContexAnthropic()` |
-| `@contex/cli` | CLI tools, benchmarking | `contex` command-line tool |
+| `@contex-llm/core` | **Most users** — Encoding, materialization, utilities | `Tens`, `TokenMemory`, formatters |
+| `@contex-llm/engine` | Need budget analysis, multi-model support | `quick()`, model registry, cost calculators |
+| `@contex-llm/middleware` | Want drop-in provider integration | `createContexOpenAI()`, `createContexAnthropic()` |
+| `@contex-llm/cli` | CLI tools, benchmarking | `contex` command-line tool |
 
 ### Decision Tree
 
@@ -55,17 +55,17 @@ START
   ▼
 Do you want CLI tools or benchmarking?
   │
-  ├─ YES → @contex/cli
+  ├─ YES → @contex-llm/cli
   │
   ▼ NO
 Do you want drop-in OpenAI/Anthropic integration?
   │
-  ├─ YES → @contex/middleware (+ @contex/core)
+  ├─ YES → @contex-llm/middleware (+ @contex-llm/core)
   │
   ▼ NO
 Just need to encode and tokenize data?
   │
-  └─ YES → @contex/core
+  └─ YES → @contex-llm/core
 ```
 
 ---
@@ -76,17 +76,17 @@ Just need to encode and tokenize data?
 
 ```bash
 # For most users (recommended)
-pnpm add @contex/core @contex/middleware
+pnpm add @contex-llm/core @contex-llm/middleware
 
 # For advanced usage with cost analysis
-pnpm add @contex/core @contex/engine @contex/middleware
+pnpm add @contex-llm/core @contex-llm/engine @contex-llm/middleware
 ```
 
 ### Step 2: Encode & Inject (Most Common)
 
 ```typescript
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 // Your data
 const tickets = [
@@ -122,7 +122,7 @@ const response = await client.chat.completions.create({
 ```
 
 **Result:**
-- ✅ 40-94% token reduction (avg 43%)
+- ✅ 46-90% token reduction (avg 72%)
 - ✅ Deterministic output (100% cache hit rate)
 - ✅ Faster responses
 
@@ -134,7 +134,7 @@ const response = await client.chat.completions.create({
 
 ```typescript
 // build.ts — Run this during deployment/build
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const data = loadYourData();
 
@@ -154,8 +154,8 @@ console.log(`Cached: ${tens.hash}`);
 
 ```typescript
 // runtime.ts — Run this in your API
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 // Load pre-encoded data
 const tens = Tens.loadFromHash(cachedHash);
@@ -182,8 +182,8 @@ const response = await client.chat.completions.create({
 
 ```typescript
 // support-bot.ts
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 export class SupportBot {
   private tens: Tens;
@@ -215,8 +215,8 @@ export class SupportBot {
 
 ```typescript
 // rag.ts
-import { Tens } from '@contex/core';
-import { createContexOpenAI } from '@contex/middleware';
+import { Tens } from '@contex-llm/core';
+import { createContexOpenAI } from '@contex-llm/middleware';
 
 async function ragQuery(query: string, docs: any[]) {
   // Encode documents once
@@ -240,7 +240,7 @@ async function ragQuery(query: string, docs: any[]) {
 
 ```typescript
 // analyze.ts
-import { analyzeSavings } from '@contex/engine';
+import { analyzeSavings } from '@contex-llm/engine';
 
 const data = loadData();
 
@@ -261,7 +261,7 @@ results.forEach(r => {
 
 ### "I don't know which package to use"
 
-Start with `@contex/core` + `@contex/middleware`. Add `@contex/engine` only if you need cost analysis.
+Start with `@contex-llm/core` + `@contex-llm/middleware`. Add `@contex-llm/engine` only if you need cost analysis.
 
 ### "How do I check if cache is warm?"
 

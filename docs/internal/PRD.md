@@ -108,10 +108,10 @@ Data → encodeIR → Canonical IR (model-agnostic)
 
 | Package | Responsibility |
 |---|---|
-| `@contex/core` | IR encoder, materializer, TokenMemory, composition |
-| `@contex/engine` | Budget calculator, `quick()` API, model registry |
-| `@contex/middleware` | OpenAI, Anthropic, Gemini SDK wrappers |
-| `@contex/cli` | IR tools, benchmarks, cost analysis |
+| `@contex-llm/core` | IR encoder, materializer, TokenMemory, composition |
+| `@contex-llm/engine` | Budget calculator, `quick()` API, model registry |
+| `@contex-llm/middleware` | OpenAI, Anthropic, Gemini SDK wrappers |
+| `@contex-llm/cli` | IR tools, benchmarks, cost analysis |
 
 ---
 

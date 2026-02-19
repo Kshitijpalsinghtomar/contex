@@ -112,7 +112,7 @@ Tokens ≥ `200000` are structural markers, placed well above any real tokenizer
 | `DOC_START` | `200010` | Document boundary start |
 | `DOC_END` | `200011` | Document boundary end |
 | `ROW_BREAK` | `200012` | Lightweight row separator (single-schema documents) |
-| `PRESENCE_MASK` | `200013` | Signals that ⌈fieldCount/16⌉ mask chunks follow |
+| `PRESENCE_MASK` | `200013` | Signals that ❌ˆfieldCount/16❌‰ mask chunks follow |
 | `FIXED_ARRAY` | `200014` | Fixed-length array — followed by 1 length token, then N values |
 | `DICT_DEF` | `200015` | Dictionary entry definition — followed by ID + value |
 
@@ -225,7 +225,7 @@ Output Layer    ──►│Contex Compact│ TOON│ CSV│ Markdown│
 | **Dictionary compression** | ✅ Binary dict | ✅ @d/@0 refs | ❌ None | ❌ None |
 | **Lossless roundtrip** | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | **Canonical** | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| **Avg savings vs JSON** | N/A | 43% (best overall) | ~25% | ~38% |
+| **Avg savings vs JSON** | N/A | 72% (best overall) | ~25% | ~38% |
 
 **When to use each**:
 - **TENS**: Internal storage, caching, deduplication, cross-system transfer
@@ -626,7 +626,7 @@ ticket
 #### 6.3.8 Programmatic Usage
 
 ```typescript
-import { TensTextEncoder, TensTextDecoder } from '@contex/core';
+import { TensTextEncoder, TensTextDecoder } from '@contex-llm/core';
 
 // ── Encode ──────────────────────────────────────────────
 const encoder = new TensTextEncoder('o200k_base');
@@ -669,7 +669,7 @@ const { data, document } = decoder.decode(text);
 ### High-Level API (Recommended)
 
 ```typescript
-import { Tens } from '@contex/core';
+import { Tens } from '@contex-llm/core';
 
 const data = [
   { id: 1, name: 'Alice', role: 'admin' },
@@ -693,9 +693,9 @@ console.log(tens.hash);  // SHA-256
 ### Direct Format Output
 
 ```typescript
-import { formatOutput } from '@contex/core';
+import { formatOutput } from '@contex-llm/core';
 
-// Contex Compact (best overall — 43% avg savings)
+// Contex Compact (best overall — 72% avg savings)
 const compact = formatOutput(data, 'contex');
 
 // Other formats
@@ -707,7 +707,7 @@ const markdown = formatOutput(data, 'markdown');
 ### Token Stream (Advanced)
 
 ```typescript
-import { TokenStreamEncoder } from '@contex/core';
+import { TokenStreamEncoder } from '@contex-llm/core';
 
 const stream = new TokenStreamEncoder();
 const tokens = stream.encodeToTokenStream(data);
@@ -719,7 +719,7 @@ const stats = stream.getStats();
 ### TENS-Text (Human-Readable IR)
 
 ```typescript
-import { TensTextEncoder, TensTextDecoder } from '@contex/core';
+import { TensTextEncoder, TensTextDecoder } from '@contex-llm/core';
 
 // Encode to TENS-Text
 const encoder = new TensTextEncoder('o200k_base');
@@ -729,3 +729,218 @@ const text = encoder.encode(data, 'ticket');
 const decoder = new TensTextDecoder();
 const { data: restored } = decoder.decode(text);
 ```
+
+---
+
+## 8. Error Codes
+
+All TENS operations use structured error codes for programmatic handling. Error codes
+follow the pattern `TENS_XXX` where XXX is a 3-digit category code.
+
+### 8.1 Encoding Errors (1xx)
+
+| Code | Name | Description |
+|------|------|-------------|
+| `TENS_100` | `INVALID_INPUT` | Input data is not a valid JavaScript value (undefined at top level) |
+| `TENS_101` | `UNSUPPORTED_TYPE` | Value type not representable in TENS (e.g., Symbol, Function, BigInt) |
+| `TENS_102` | `CIRCULAR_REFERENCE` | Circular reference detected during value tree traversal |
+| `TENS_103` | `STRING_TOO_LONG` | String exceeds maximum LEB128-addressable length (2^28 bytes) |
+| `TENS_104` | `SCHEMA_OVERFLOW` | More than 65,535 distinct object schemas in a single encoding |
+| `TENS_105` | `DICT_OVERFLOW` | Dictionary exceeds 99,999 entries |
+
+### 8.2 Decoding Errors (2xx)
+
+| Code | Name | Description |
+|------|------|-------------|
+| `TENS_200` | `INVALID_MAGIC` | First 4 bytes are not "TENS" (0x54454E53) |
+| `TENS_201` | `UNSUPPORTED_VERSION` | Version byte is not a supported version (currently only v2) |
+| `TENS_202` | `TRUNCATED_INPUT` | Buffer ends before expected based on declared lengths |
+| `TENS_203` | `INVALID_OPCODE` | Encountered an undefined opcode in the value tree |
+| `TENS_204` | `INVALID_STRING_REF` | String reference index exceeds string table size |
+| `TENS_205` | `INVALID_VARINT` | LEB128 varint exceeds 5 bytes (overflow) |
+| `TENS_206` | `MALFORMED_STRUCTURE` | Structural inconsistency (e.g., OBJECT_START without matching key count) |
+
+### 8.3 Pipeline Errors (3xx)
+
+| Code | Name | Description |
+|------|------|-------------|
+| `TENS_300` | `HASH_MISMATCH` | Stored hash does not match re-computed hash (data corruption) |
+| `TENS_301` | `MODEL_NOT_FOUND` | Requested model is not in the model registry |
+| `TENS_302` | `TOKENIZER_UNAVAILABLE` | Tokenizer for the requested encoding is not available |
+| `TENS_303` | `BUDGET_EXCEEDED` | Token count exceeds the specified budget limit |
+| `TENS_304` | `CACHE_MISS` | Requested hash not found in the store |
+
+### 8.4 TENS-Text Errors (4xx)
+
+| Code | Name | Description |
+|------|------|-------------|
+| `TENS_400` | `SYNTAX_ERROR` | TENS-Text parsing failed (invalid indentation, missing directive) |
+| `TENS_401` | `UNKNOWN_DIRECTIVE` | Unrecognized `@`-directive |
+| `TENS_402` | `SCHEMA_MISMATCH` | Row field count does not match `@schema` field count |
+| `TENS_403` | `INVALID_TYPE_TAG` | Unknown type tag in `@schema` (not str/int/float/bool/null/arr/obj) |
+
+---
+
+## 9. Versioning & Migration
+
+### 9.1 Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| **v1** | Jan 2026 | Initial format. Magic + version + schema list + row data. No string table, no dictionary encoding. |
+| **v2** | Feb 2026 | Current version. Added string table, opcode-based value tree, LEB128 varints, schema dedup, dictionary encoding, control token vocabulary. Breaking change from v1. |
+
+### 9.2 Version Detection
+
+The version byte at offset 4 determines the decoder to use:
+
+```
+bytes[0..3] = "TENS"  →  TENS format confirmed
+bytes[4]    = 0x01    →  v1 decoder (legacy, not recommended)
+bytes[4]    = 0x02    →  v2 decoder (current)
+bytes[4]    = other   →  reject with TENS_201
+```
+
+### 9.3 Migration Guide
+
+**v1 → v2:** No automated migration path. Re-encode source data with the v2 encoder.
+v1 and v2 are not wire-compatible. The v2 string table and opcode-based value tree
+are fundamentally different from the v1 row-oriented layout.
+
+### 9.4 Stability Guarantees
+
+- **v2 binary format** is frozen. No new opcodes or structural changes without a
+  version bump to v3.
+- **Control token vocabulary** (200000–200015) is frozen. New control tokens will
+  use values ≥200016.
+- **SHA-256 hash computation** is frozen: `sha256(tens_v2_binary_bytes).hex()`.
+  Any change to the binary layout would change all hashes and is a breaking change.
+- **String table ordering** is frozen: DFS traversal with sorted object keys.
+- **Key sorting** is frozen: lexicographic (codepoint order).
+- **Number canonicalization** is frozen: `-0 → 0`, `NaN → null`, `±Infinity → null`.
+- **String normalization** is frozen: NFKC.
+
+---
+
+## 10. WASM Binding Specification
+
+### 10.1 Overview
+
+The `contex-tens-wasm` package provides a Rust-compiled WASM implementation of the
+TENS v2 encoder/decoder. It is designed for environments where Node.js native crypto
+is unavailable (browsers, edge workers, Cloudflare Workers, Deno Deploy).
+
+### 10.2 Build Target
+
+```bash
+wasm-pack build --target nodejs --release   # Node.js
+wasm-pack build --target web --release      # Browser ESM
+wasm-pack build --target bundler --release  # Webpack/Vite
+```
+
+### 10.3 API Surface
+
+```typescript
+// TensEncoder class — stateful encoder with string table reuse
+class TensEncoder {
+  constructor();
+  encode(val: any): Uint8Array;           // JSON value → TENS v2 binary
+  encodeText(val: any, encoding?: string): string;  // JSON value → TENS-Text
+  hash(val: any): string;                 // JSON value → SHA-256 hex (encode + hash)
+  hashBinary(bytes: Uint8Array): string;  // Pre-encoded bytes → SHA-256 hex
+}
+
+// Standalone decoder functions
+function decodeTens(bytes: Uint8Array): any;    // TENS v2 binary → JSON value
+function decodeTensText(text: string): any;     // TENS-Text string → JSON value
+```
+
+### 10.4 Parity Requirements
+
+The WASM encoder MUST produce byte-for-byte identical output to the TypeScript
+`TensEncoder` for all inputs. This is verified by the shared protocol test vectors at
+`packages/core/src/__tests__/fixtures/protocol-vectors.json`.
+
+Specifically:
+- Same string table ordering (DFS, sorted keys)
+- Same opcode selection (INT8 for -128..127, INT32 for larger, FLOAT64 for non-integer)
+- Same LEB128 varint encoding
+- Same SHA-256 hash for identical bytes
+
+### 10.5 Package Structure
+
+```
+packages/tens-wasm/
+  Cargo.toml          # Rust manifest
+  src/
+    lib.rs            # WASM entry point, #[wasm_bindgen] exports
+    encoder.rs        # TENS v2 binary encoder + decoder
+    schema.rs         # Schema registry (string table, dedup)
+    utils.rs          # LEB128 helpers, panic hook
+  pkg/                # wasm-pack output (generated)
+    contex_tens_wasm.js
+    contex_tens_wasm.d.ts
+    contex_tens_wasm_bg.wasm
+```
+
+---
+
+## 11. Interoperability Test Vectors
+
+### 11.1 Purpose
+
+Test vectors are the formal contract between TENS implementations. Every encoder
+(TypeScript, Rust/WASM, future Python/Go) MUST produce identical bytes for each vector.
+
+### 11.2 Vector Format
+
+Vectors are stored in `packages/core/src/__tests__/fixtures/protocol-vectors.json`:
+
+```json
+[
+  {
+    "name": "descriptive_name",
+    "input": <any JSON value>,
+    "expected_hex": "<lowercase hex of TENS v2 binary>",
+    "expected_hash": "<sha256 hex of the binary>",
+    "byte_length": <integer>
+  }
+]
+```
+
+### 11.3 Current Vectors (v2.0)
+
+| # | Name | Input | Bytes | Description |
+|---|------|-------|-------|-------------|
+| 1 | `null` | `null` | 7 | Header + NULL opcode |
+| 2 | `true` | `true` | 7 | Header + TRUE opcode |
+| 3 | `false` | `false` | 7 | Header + FALSE opcode |
+| 4 | `int_42` | `42` | 8 | INT8 encoding |
+| 5 | `int_neg1` | `-1` | 8 | Signed INT8 (0xFF) |
+| 6 | `int_1000` | `1000` | 11 | INT32 encoding (> 127) |
+| 7 | `float_3_14` | `3.14` | 15 | FLOAT64 encoding |
+| 8 | `string_hello` | `"hello"` | 14 | String table + STRING_REF |
+| 9 | `empty_array` | `[]` | 8 | ARRAY_START with length 0 |
+| 10 | `empty_object` | `{}` | 8 | OBJECT_START with 0 keys |
+| 11 | `simple_object` | `{"a":1,"b":2}` | 18 | Key sorting, string table |
+| 12 | `key_order_invariant` | `{"z":1,"a":2}` | 18 | Canonicalization proof |
+| 13 | `mixed_types` | `{bool,null}` | 34 | All type opcodes in one object |
+| 14 | `array_of_objects` | `[{id,name}x2]` | 42 | Multi-row with string dedup |
+| 15 | `nested_object` | `{user:{...}}` | 36 | Nested object encoding |
+| 16 | `neg_zero_canonicalized` | `0` | 8 | -0 → 0 canonicalization |
+
+### 11.4 Adding New Vectors
+
+1. Add the input/expected entry to `protocol-vectors.json`
+2. Run `npx vitest run src/__tests__/protocol_vectors.test.ts` to verify
+3. Run `cargo test` in `packages/tens-wasm/` to verify WASM parity
+4. Update the table in this section
+
+### 11.5 Conformance Levels
+
+| Level | Requirement |
+|-------|-------------|
+| **MUST** | All 16 base vectors produce identical bytes and hash |
+| **SHOULD** | Encode-twice idempotence for all vectors |
+| **SHOULD** | Key order invariance (vector 12 = vector 11 byte-for-byte for matching keys) |
+| **MAY** | NaN/Infinity handling (implementation-specific, canonicalize layer recommended) |

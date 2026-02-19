@@ -1,5 +1,5 @@
-import { contex } from '@contex/core/vercel';
-import type { VercelMessage } from '@contex/core/vercel';
+import { contex } from '@contex-llm/core/vercel';
+import type { VercelMessage } from '@contex-llm/core/vercel';
 
 // Mock Vercel AI SDK Message structure
 const messages: VercelMessage[] = [
